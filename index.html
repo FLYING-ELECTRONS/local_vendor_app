@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Fresh Market</title>
+
+  <!-- Scripts (load early so onclick handlers can find functions) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="script.js"></script>
+
+  <!-- Fonts & Icons -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@400;500;600&display=swap"
+    rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+
+  <style>
+    :root {
+      --primary: #4caf50;
+      --primary-dark: #2e7d32;
+      --primary-light: #e8f5e9;
+      --accent: #ff9800;
+      --danger: #f44336;
+      --dark: #1e1e1e;
+      --gray: #f5f5f5;
+      --text: #333;
+      --text-light: #666;
+      --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      --glass: rgba(255, 255, 255, 0.95);
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html {
+      background: #e0e0e0;
+    }
+
+    body {
+      margin: 0 auto;
+      max-width: 480px;
+      font-family: 'Outfit', sans-serif;
+      background: #f8f9fa;
+      color: var(--text);
+      padding-bottom: 80px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    }
+
+    /* --- UTILS --- */
+    .hidden {
+      display: none !important;
+    }
+
+    .flex {
+      display: flex;
+    }
+
+    .justify-between {
+      justify-content: space-between;
+    }
+
+    .items-center {
+      align-items: center;
+    }
+
+    .text-center {
+      text-align: center;
+    }
+
+    .text-primary {
+      color: var(--primary);
+    }
+
+    .text-muted {
+      color: var(--text-light);
+    }
+
+    .btn {
+      border: none;
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 15px;
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn-block {
+      width: 100%;
+      display: block;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: white;
+      box-shadow: 0 4px 10px rgba(76, 175, 80, 0.3);
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: white;
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid #ddd;
+      color: var(--text);
+    }
+
+    /* --- LAYOUT --- */
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--glass);
+      backdrop-filter: blur(10px);
+      padding: 16px 20px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .page-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--dark);
+      margin: 0;
+    }
+
+    .padded-container {
+      padding: 20px;
+    }
+
+    /* --- AUTH SCREEN --- */
+    #auth-screen {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 30px;
+      background: linear-gradient(135deg, #e8f5e9 0%, #ffffff 100%);
+    }
+
+    .auth-logo {
+      font-size: 48px;
+      color: var(--primary);
+      margin-bottom: 20px;
+    }
+
+    .input-group {
+      margin-bottom: 20px;
+    }
+
+    .input-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: var(--text-light);
+    }
+
+    .input-group input {
+      width: 100%;
+      padding: 14px;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      font-size: 16px;
+      background: white;
+      transition: border-color 0.2s;
+    }
+
+    .input-group input:focus {
+      border-color: var(--primary);
+      outline: none;
+    }
+
+    /* Phone Input */
+    .phone-input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .phone-input-wrapper span {
+      position: absolute;
+      left: 14px;
+      color: var(--text-light);
+      font-weight: 500;
+    }
+
+    .phone-input-wrapper input {
+      padding-left: 35px;
+    }
+
+    /* --- BOTTOM NAV --- */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      max-width: 480px;
+      background: white;
+      display: flex;
+      justify-content: space-around;
+      padding: 8px 0;
+      box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
+      z-index: 200;
+      border-top-left-radius: 20px;
+      border-top-right-radius: 20px;
+    }
+
+    .nav-item {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #999;
+      font-size: 0;
+      font-weight: 500;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.2s;
+      padding: 4px 2px;
+    }
+
+    .nav-item span {
+      font-size: 18px;
+      margin-bottom: 0;
+      transition: transform 0.2s;
+    }
+
+    .nav-item.active {
+      color: var(--primary-dark);
+    }
+
+    .nav-item.active span {
+      transform: translateY(-2px);
+    }
+
+    .nav-badge {
+      position: absolute;
+      top: -2px;
+      right: -4px;
+      background: var(--danger);
+      color: white;
+      font-size: 10px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+    }
+
+    /* --- CATALOG --- */
+    .search-bar-container {
+      padding: 16px 20px 0;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 12px 40px 12px 16px;
+      border: none;
+      background: white;
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      font-size: 15px;
+    }
+
+    .category-tabs {
+      display: flex;
+      overflow-x: auto;
+      padding: 16px 20px;
+      gap: 10px;
+      scrollbar-width: none;
+    }
+
+    .category-tabs::-webkit-scrollbar {
+      display: none;
+    }
+
+    .cat-chip {
+      padding: 8px 16px;
+      background: white;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-light);
+      white-space: nowrap;
+      border: 1px solid #ddd;
+      transition: all 0.2s;
+    }
+
+    .cat-chip.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+      box-shadow: 0 4px 8px rgba(76, 175, 80, 0.2);
+    }
+
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 16px;
+      padding: 0 20px 20px;
+    }
+
+    .product-card {
+      background: white;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .product-image {
+      height: 120px;
+      background-size: cover;
+      background-position: center;
+    }
+
+    .product-card h3 {
+      font-size: 15px;
+      margin: 10px 12px 4px;
+      font-weight: 600;
+    }
+
+    .product-card .price {
+      font-size: 13px;
+      color: var(--text-light);
+      margin: 0 12px 10px;
+    }
+
+    .product-card .actions {
+      padding: 12px;
+      margin-top: auto;
+    }
+
+    /* --- ADMIN --- */
+    .admin-input-sm {
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 4px 8px;
+    }
+
+    .order-card {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow);
+      border-left: 4px solid var(--primary);
+    }
+
+    .order-status.Pending {
+      color: var(--accent);
+      background: #fff3e0;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+    }
+
+    .order-status.Finalized {
+      color: var(--primary);
+      background: #e8f5e9;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+    }
+
+    /* --- LOADING --- */
+    #loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.8);
+      z-index: 1000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid var(--primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
+  <script>
+    window.onerror = function (msg, url, lineNo, columnNo, error) {
+      alert('System Error: ' + msg + '\nLine: ' + lineNo);
+      return false;
+    };
+  </script>
+</head>
+
+<body>
+
+  <!-- LOADING OVERLAY -->
+  <div id="loading-overlay" class="hidden">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- AUTH SCREEN -->
+  <div id="auth-screen">
+    <div class="text-center">
+      <div class="auth-logo"><span class="material-icons-round" style="font-size:48px;">storefront</span></div>
+      <h1 class="page-title" style="font-size:28px; margin-bottom:8px;">Fresh Market</h1>
+      <p class="text-muted">Order fresh fruits & veggies to your doorstep.</p>
+    </div>
+
+    <div id="auth-form" style="margin-top:30px;">
+      <div class="input-group">
+        <label>Full Name</label>
+        <input type="text" id="auth-name" placeholder="e.g. Rahul Kumar" required>
+      </div>
+      <div class="input-group">
+        <label>Phone Number (10 digits)</label>
+        <input type="tel" id="auth-phone" placeholder="e.g. 9876543210" style="padding-left: 14px;" required>
+      </div>
+      <div class="input-group">
+        <label>House Number / Flat No.</label>
+        <input type="text" id="auth-house" placeholder="e.g. B-402, Green Valley" required>
+      </div>
+      <button type="button" onclick="handleLogin()" class="btn btn-primary btn-block" style="margin-top:20px;">Get
+        Started</button>
+    </div>
+
+    <div style="text-align: center; margin-top: 20px;">
+      <a href="#" onclick="navigateTo('admin-login')"
+        style="color: #999; text-decoration: none; font-size: 12px;">Seller Login</a>
+    </div>
+  </div>
+
+  <!-- MAIN APP -->
+  <div id="main-app" class="hidden">
+    <div class="header">
+      <h1 class="page-title" id="page-title">Fresh Market</h1>
+      <div class="header-right"></div>
+    </div>
+
+    <div id="content-area"></div>
+
+    <div class="bottom-nav">
+      <div class="nav-item active" onclick="navigateTo('catalog')">
+        <span class="material-icons-round">storefront</span>
+        Catalog
+      </div>
+      <div class="nav-item" onclick="navigateTo('cart')">
+        <span class="material-icons-round">shopping_bag</span>
+        Cart
+        <div id="nav-cart-count" class="nav-badge hidden">0</div>
+      </div>
+      <div class="nav-item" onclick="navigateTo('orders')">
+        <span class="material-icons-round">receipt_long</span>
+        Orders
+      </div>
+      <div class="nav-item" onclick="navigateTo('profile')">
+        <span class="material-icons-round">person</span>
+        Profile
+      </div>
+      <div class="nav-item" onclick="navigateTo('admin-portal')">
+        <span class="material-icons-round">admin_panel_settings</span>
+        Seller
+      </div>
+    </div>
+  </div>
+
+  <!-- SCRIPTS (already loaded in head) -->
+
+  <script>
+    // --- RESTORED INLINE FUNCTIONS ---
+
+    // 1. ORDER WINDOW TOGGLE
+    window.toggleOrderWindow = async function () {
+      const toggle = document.getElementById('orders-toggle');
+      const isOpen = toggle.checked;
+
+      try {
+        const { error } = await window.supabase.from('app_settings').upsert({
+          key: 'order_window_open',
+          value: isOpen ? 'true' : 'false',
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'key' });
+
+        if (error) throw error;
+
+        // Sync locally
+        localStorage.setItem('fm_orders_open', isOpen ? 'true' : 'false');
+
+        // Update UI knob
+        const knob = document.getElementById('toggle-knob');
+        if (isOpen) {
+          knob.style.left = '26px';
+          knob.style.background = 'white';
+          toggle.parentElement.querySelector('span').innerText = 'Open';
+        } else {
+          knob.style.left = '2px';
+          toggle.parentElement.querySelector('span').innerText = 'Closed';
+        }
+
+      } catch (e) {
+        console.error(e);
+        alert('Failed to switch. Check internet.');
+        toggle.checked = !isOpen; // Revert
+      }
+    };
+
+    // 2. ADMIN TABS
+    window.switchAdminTab = function (tab) {
+      document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
+      document.getElementById('tab-' + tab).classList.add('active');
+
+      const list = document.getElementById('admin-orders-list');
+      list.innerHTML = '<div class="spinner"></div>';
+
+      switch (tab) {
+        case 'pending':
+        case 'finalized':
+          loadAdminOrders(tab);
+          break;
+        case 'products':
+          loadAdminProducts(); // Ensure this exists or imported
+          break;
+        case 'stats':  // Was analytics
+          if (window.renderAnalytics) window.renderAnalytics();
+          else list.innerHTML = 'Stats coming soon';
+          break;
+        case 'shopping':
+          renderPurchaseList();
+          break;
+        case 'profit':
+          renderProfitReport();
+          break;
+        case 'customers':
+          if (window.renderCustomerHistory) window.renderCustomerHistory();
+          else list.innerHTML = 'Load error';
+          break;
+      }
+    };
+
+
+    // 9. Load Customers Tab
+  </script>
+  <script src="analytics_functions.js"></script>
+
+</body>
+
+</html>
