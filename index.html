@@ -8,7 +8,8 @@
 
   <!-- Scripts (load early so onclick handlers can find functions) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="script.js"></script>
+    <!-- Load Supabase library first -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <!-- Fonts & Icons -->
   <link
@@ -492,7 +493,8 @@
     </div>
   </div>
 
-  <!-- SCRIPTS (already loaded in head) -->
+    <!-- SCRIPTS - Load main script after DOM is ready -->
+  <script src="script.js" defer></script>
 
   <script>
     // --- RESTORED INLINE FUNCTIONS ---
@@ -571,5 +573,6 @@
   <script src="analytics_functions.js"></script>
 
 </body>
+
 
 </html>
