@@ -210,8 +210,8 @@ async function renderCatalogView() {
       <div class="cat-chip" onclick="filterCatalog('fruits', this)">Fruits</div>
       <div class="cat-chip" onclick="filterCatalog('vegetable', this)">Vegetables</div>
       <div class="cat-chip" onclick="filterCatalog('green leafs', this)">Greens</div>
-            div class="cat-chip" onclick="filterCatalog('jaggery', this)">Jaggery</div>
-                  div class="cat-chip" onclick="filterCatalog('honey', this)">Honey</div>
+            <div class<="cat-chip" onclick="filterCatalog('jaggery', this)">Jaggery</div>
+                  <div class="cat-chip" onclick="filterCatalog('honey', this)">Honey</div>
       <div class="cat-chip" onclick="filterCatalog('other', this)">Other</div>
     </div>
     <div id="product-list" class="product-grid">
@@ -1779,4 +1779,5 @@ if (document.readyState === 'loading') {
 } else {
   init();
 }
+
 
