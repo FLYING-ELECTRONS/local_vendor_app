@@ -28,6 +28,17 @@ function safeParse(key, fallback) {
   }
 }
 
+// Cache version - increment this when product units change
+const CACHE_VERSION = '2.0';
+const currentVersion = localStorage.getItem('fm_cache_version');
+
+// Clear cart if cache version changed (fixes packet/gram display issues)
+if (currentVersion !== CACHE_VERSION) {
+  console.log('Cache version updated - clearing cart to refresh product units');
+  localStorage.removeItem('fm_cart');
+  localStorage.setItem('fm_cache_version', CACHE_VERSION);
+}
+
 const app = {
   user: safeParse('fm_user', null),
   cart: safeParse('fm_cart', []),
@@ -85,9 +96,9 @@ function createProductCardHtml(product) {
       <div class="price">Price TBD / ${unitDisplay}</div>
       <div class="actions">
         ${qty === 0 ?
-      `<button class="btn btn-primary btn-sm btn-block" onclick="addToCart('${product.id}')">Add</button>` :
+      \`<button class="btn btn-primary btn-sm btn-block" onclick="addToCart('${product.id}')">Add</button>\` :
       product.minimum_quantity_unit === '250g' ?
-        `<div style="display:flex; align-items:center; justify-content:center; gap:8px;">
+        \`<div style="display:flex; align-items:center; justify-content:center; gap:8px;">
           <button type="button" class="qty-btn" onclick="adjustGrams('${product.id}', -50)">-</button>
           <input type="number"
             id="grams-${product.id}"
@@ -100,12 +111,12 @@ function createProductCardHtml(product) {
           <button type="button" class="qty-btn" onclick="adjustGrams('${product.id}', 50)">+</button>
           <span style="font-size:14px; color:#666;">g</span>
           <button type="button" onclick="removeFromCart('${product.id}')" style="background:#f44336; color:white; border:none; padding:6px 10px; border-radius:6px; cursor:pointer;">✕</button>
-        </div>` :
-        `<div class="qty-selector">
+        </div>\` :
+        \`<div class="qty-selector">
           <button type="button" class="qty-btn" onclick="updateCart('${product.id}', -1)">-</button>
           <span class="qty-val">${qty}</span>
           <button type="button" class="qty-btn" onclick="updateCart('${product.id}', 1)">+</button>
-        </div>`
+        </div>\`
     }
       </div>
     </div>
@@ -168,7 +179,6 @@ function createOrderCardHtml(order) {
     </div>
   `;
 }
-
 // =========================================
 // 4. SCREEN RENDERING FUNCTIONS
 // =========================================
@@ -210,8 +220,8 @@ async function renderCatalogView() {
       <div class="cat-chip" onclick="filterCatalog('fruits', this)">Fruits</div>
       <div class="cat-chip" onclick="filterCatalog('vegetable', this)">Vegetables</div>
       <div class="cat-chip" onclick="filterCatalog('green leafs', this)">Greens</div>
-            <div class<="cat-chip" onclick="filterCatalog('jaggery', this)">Jaggery</div>
-                  <div class="cat-chip" onclick="filterCatalog('honey', this)">Honey</div>
+      <div class="cat-chip" onclick="filterCatalog('jaggery', this)">Jaggery</div>
+      <div class="cat-chip" onclick="filterCatalog('honey', this)">Honey</div>
       <div class="cat-chip" onclick="filterCatalog('other', this)">Other</div>
     </div>
     <div id="product-list" class="product-grid">
@@ -283,8 +293,8 @@ async function renderCustomerCartView() {
 
       <div>
         ${!ordersOpen ?
-      `<button class="btn btn-danger btn-block" disabled style="opacity: 0.6; cursor: not-allowed;">🚫 Orders Closed - Cannot Place Order</button>` :
-      `<button class="btn btn-primary btn-block" onclick="placeOrder()">Place Order (Pay Later)</button>`
+      \`<button class="btn btn-danger btn-block" disabled style="opacity: 0.6; cursor: not-allowed;">🚫 Orders Closed - Cannot Place Order</button>\` :
+      \`<button class="btn btn-primary btn-block" onclick="placeOrder()">Place Order (Pay Later)</button>\`
     }
       </div>
     </div>
@@ -303,11 +313,11 @@ async function renderOrdersScreen() {
     .order('created_at', { ascending: false });
 
   if (error) {
-    return `<p class="text-center text-danger">Error fetching history</p>`;
+    return \`<p class="text-center text-danger">Error fetching history</p>\`;
   }
 
   if (data.length === 0) {
-    return `<p class="text-center text-muted" style="padding: 20px;">No past orders.</p>`;
+    return \`<p class="text-center text-muted" style="padding: 20px;">No past orders.</p>\`;
   }
 
   return `
@@ -344,7 +354,6 @@ async function renderProfileScreen() {
     </div>
   `;
 }
-
 /**
  * Renders the Admin Login screen.
  * @returns {string} HTML string for admin login screen.
@@ -461,7 +470,7 @@ async function renderScreen(screenId, data = {}) {
       case 'admin-dashboard':
         title.innerText = 'Admin Dashboard';
         if (headerRight) {
-          headerRight.innerHTML = `<span class="material-icons-round" onclick="navigateTo('catalog')" style="font-size: 24px;">close</span>`;
+          headerRight.innerHTML = \`<span class="material-icons-round" onclick="navigateTo('catalog')" style="font-size: 24px;">close</span>\`;
         }
         screenHtml = await renderAdminDashboard();
         break;
@@ -509,414 +518,6 @@ function attachScreenSpecificEventListeners(screen) {
       break;
   }
 }
-
-// =========================================
-// 7. EVENT HANDLER FUNCTIONS
-// =========================================
-
-/**
- * Handles catalog search input.
- * @param {Event} e - Input event
- */
-function handleCatalogSearch(e) {
-  const term = e.target.value.toLowerCase();
-  const filtered = app.products.filter(p => p.name.toLowerCase().includes(term));
-  renderProductGrid(filtered);
-}
-
-/**
- * Renders the product grid with filtered products.
- * @param {Array} products - Array of product objects
- */
-function renderProductGrid(products) {
-  const grid = document.getElementById('product-list');
-  if (!grid) return;
-
-  if (products.length === 0) {
-    grid.innerHTML = '<p class="text-center text-muted" style="grid-column: 1/-1;">No products found.</p>';
-    return;
-  }
-
-  grid.innerHTML = products.map(p => createProductCardHtml(p)).join('');
-}
-
-/**
- * Filters catalog by category.
- * @param {string} category - Category to filter by
- * @param {HTMLElement} chipElement - The chip element that was clicked
- */
-window.filterCatalog = function (category, chipElement) {
-  document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
-  chipElement.classList.add('active');
-
-  if (category === 'all') {
-    renderProductGrid(app.products);
-  } else {
-    const filtered = app.products.filter(p => {
-      if (category === 'fruits') {
-        return p.category === 'fruits' || p.category === 'fruit';
-      }
-      return p.category === category;
-    });
-    renderProductGrid(filtered);
-  }
-};
-
-// =========================================
-// 8. NAVIGATION & LIFECYCLE
-// =========================================
-
-/**
- * Navigation function to switch between screens.
- * @param {string} screenId - The screen to navigate to
- */
-function navigateTo(screenId) {
-  console.log(`Navigating to: ${screenId}`);
-
-  // Hide all main views
-  document.getElementById('auth-screen').classList.add('hidden');
-  document.getElementById('main-app').classList.add('hidden');
-  document.getElementById('loading-overlay').classList.add('hidden');
-
-  // Handle specific screens
-  if (screenId === 'auth-screen') {
-    document.getElementById('auth-screen').classList.remove('hidden');
-  } else {
-    document.getElementById('main-app').classList.remove('hidden');
-
-    // Update Bottom Nav Active State
-    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-
-    const navMap = {
-      'catalog': 'Catalog',
-      'cart': 'Cart',
-      'orders': 'Orders',
-      'profile': 'Profile',
-      'admin-portal': 'Seller',
-      'admin-login': 'Seller',
-      'admin-dashboard': 'Seller'
-    };
-
-    const navItems = Array.from(document.querySelectorAll('.nav-item'));
-    const activeItem = navItems.find(item => item.innerText.includes(navMap[screenId]));
-    if (activeItem) activeItem.classList.add('active');
-
-    // Render content using new architecture
-    renderScreen(screenId);
-  }
-}
-
-/**
- * Initializes the application.
- */
-function init() {
-  renderBottomNav();
-
-  if (!app.user) {
-    navigateTo('auth-screen');
-  } else {
-    navigateTo('catalog');
-  }
-
-  setupEventListeners();
-}
-
-/**
- * Renders the bottom navigation cart badge.
- */
-function renderBottomNav() {
-  const badge = document.getElementById('nav-cart-count');
-  if (badge) {
-    const count = app.cart.reduce((sum, i) => sum + i.quantity, 0);
-    if (count > 0) {
-      badge.innerText = count;
-      badge.classList.remove('hidden');
-    } else {
-      badge.classList.add('hidden');
-    }
-  }
-}
-
-// =========================================
-// 9. CART & ORDER ACTIONS
-// =========================================
-
-/**
- * Adds a product to the cart.
- * @param {string} productId - The product ID
- */
-window.addToCart = function (productId) {
-  const product = app.products.find(p => p.id === productId);
-  if (!product) return;
-
-  const existing = app.cart.find(i => i.id === productId);
-  if (existing) {
-    existing.quantity++;
-  } else {
-    app.cart.push({
-      id: productId,
-      name: product.name,
-      quantity: 1,
-      minQtyUnit: product.minimum_quantity_unit
-    });
-  }
-  saveCart();
-  renderProductGrid(app.products);
-  renderBottomNav();
-  toast('Added to cart');
-};
-
-/**
- * Updates cart item quantity.
- * @param {string} productId - The product ID
- * @param {number} change - The quantity change (positive or negative)
- */
-window.updateCart = function (productId, change) {
-  const item = app.cart.find(i => i.id === productId);
-  if (!item) return;
-
-  item.quantity += change;
-  if (item.quantity <= 0) {
-    app.cart = app.cart.filter(i => i.id !== productId);
-  }
-
-  saveCart();
-
-  // Update current view
-  if (app.products.length > 0 && document.getElementById('product-list')) {
-    renderProductGrid(app.products);
-  }
-  if (document.getElementById('content-area')) {
-    const currentScreen = app.currentScreen;
-    if (currentScreen === 'cart') {
-      renderScreen('cart');
-    }
-  }
-  renderBottomNav();
-};
-
-/**
- * Set custom quantity in grams for 250g products.
- * @param {string} prodId - Product ID
- * @param {number} grams - Grams amount
- */
-window.setCustomQuantity = function (prodId, grams) {
-  const gramsNum = parseInt(grams) || 0;
-
-  if (gramsNum === 0) {
-    removeFromCart(prodId);
-    return;
-  }
-
-  const quantity = Math.ceil(gramsNum / 250);
-  const item = app.cart.find(i => i.id === prodId);
-
-  if (item) {
-    item.quantity = quantity;
-    item.customGrams = gramsNum;
-  }
-
-  saveCart();
-  renderProductGrid(app.products);
-  renderBottomNav();
-};
-
-/**
- * Adjust grams input by delta.
- * @param {string} prodId - Product ID
- * @param {number} delta - Grams to add/subtract
- */
-window.adjustGrams = function (prodId, delta) {
-  try {
-    const input = document.getElementById(`grams-${prodId}`);
-    if (!input) return;
-
-    const current = parseInt(input.value) || 0;
-    let next = current + delta;
-    if (next < 0) next = 0;
-    input.value = next;
-
-    const quantity = Math.ceil(next / 250);
-    const item = app.cart.find(i => i.id === prodId);
-
-    if (!item && quantity > 0) {
-      const product = app.products.find(p => p.id === prodId) || { name: 'Item', minimum_quantity_unit: '250g' };
-      app.cart.push({
-        id: prodId,
-        name: product.name,
-        quantity: quantity,
-        minQtyUnit: product.minimum_quantity_unit,
-        customGrams: next
-      });
-    } else if (item) {
-      if (quantity <= 0) {
-        app.cart = app.cart.filter(i => i.id !== prodId);
-      } else {
-        item.quantity = quantity;
-        item.customGrams = next;
-      }
-    }
-
-    saveCart();
-    // Render appropriate view
-    if (document.getElementById('product-list')) {
-      renderProductGrid(app.products);
-    } else {
-      // Assuming we are in cart if product list is not present
-      renderCustomerCartView().then(html => {
-        const contentArea = document.getElementById('content-area');
-        if (contentArea) contentArea.innerHTML = html;
-      });
-    }
-    renderBottomNav();
-  } catch (e) {
-    console.error('adjustGrams error', e);
-  }
-};
-
-/**
- * Remove item from cart.
- * @param {string} prodId - Product ID
- */
-window.removeFromCart = function (prodId) {
-  app.cart = app.cart.filter(i => i.id !== prodId);
-  saveCart();
-  renderProductGrid(app.products);
-  renderBottomNav();
-
-  // If on cart screen, re-render
-  if (document.getElementById('content-area')) {
-    renderScreen('cart');
-  }
-};
-
-/**
- * Saves cart to localStorage.
- */
-function saveCart() {
-  localStorage.setItem('fm_cart', JSON.stringify(app.cart));
-}
-
-/**
- * Place order (checkout).
- */
-window.placeOrder = async function () {
-  // Seller WhatsApp number
-  const SELLER_WHATSAPP = '6361983041';
-
-  // Check if orders are open
-  let ordersOpen = true;
-  try {
-    const { data, error } = await _supabase.from('app_settings').select('value').eq('key', 'order_window_open').single();
-    ordersOpen = (!error && data) ? data.value === 'true' : localStorage.getItem('fm_orders_open') !== 'false';
-  } catch (e) {
-    ordersOpen = localStorage.getItem('fm_orders_open') !== 'false';
-  }
-
-  if (!ordersOpen) {
-    alert('🚫 Orders are currently closed.\n\nWe are not accepting new orders at this time. Please check back later!');
-    return;
-  }
-
-  if (!confirm('Confirm Order? Prices will be finalized by seller.')) return;
-
-  setLoading(true);
-
-  // Build order items list for WhatsApp message
-  const orderItemsList = app.cart.map(i => {
-    const grams = i.customGrams || (i.quantity * 250);
-    const unit = i.minQtyUnit === 'packet' ? `${i.quantity} pkt` : `${grams}g`;
-    return `• ${i.name}: ${unit}`;
-  }).join('\n');
-
-  const orderPayload = {
-    customer_name: app.user.name,
-    customer_phone: app.user.phone,
-    house_no: app.user.house,
-    items: JSON.stringify(app.cart.map(i => ({
-      productId: i.id,
-      name: i.name,
-      orderedQuantity: i.quantity,
-      minQtyUnit: i.minQtyUnit,
-      customGrams: i.customGrams || null,
-      pricePer250gAtOrder: 0,
-      actualWeight: 0,
-      finalPrice: 0
-    }))),
-    status: 'pending',
-    total_amount: 0,
-    created_at: new Date().toISOString()
-  };
-
-  const { error } = await _supabase.from('orders').insert([orderPayload]);
-
-  setLoading(false);
-
-  if (error) {
-    alert('Order failed: ' + error.message);
-  } else {
-    // Build WhatsApp message for seller
-    const timestamp = new Date().toLocaleString('en-IN', {
-      dateStyle: 'short',
-      timeStyle: 'short'
-    });
-
-    const whatsappMessage = encodeURIComponent(
-      `🛒 *NEW ORDER - Fresh Market*\n\n` +
-      `👤 *Customer:* ${app.user.name}\n` +
-      `📞 *Phone:* ${app.user.phone}\n` +
-      `🏠 *House:* ${app.user.house}\n` +
-      `🕐 *Time:* ${timestamp}\n\n` +
-      `📦 *Order Items:*\n${orderItemsList}\n\n` +
-      `💰 *Price:* To be confirmed`
-    );
-
-    // Open WhatsApp to send order to seller
-    window.open(`https://wa.me/91${SELLER_WHATSAPP}?text=${whatsappMessage}`, '_blank');
-
-    alert('Order Placed Successfully!\n\nA WhatsApp message has been opened to send your order to the seller.');
-    app.cart = [];
-    saveCart();
-    renderBottomNav();
-    navigateTo('orders');
-  }
-};
-
-// =========================================
-// 10. PROFILE & AUTH ACTIONS
-// =========================================
-
-/**
- * Logout function.
- */
-window.logout = function () {
-  localStorage.removeItem('fm_user');
-  app.user = null;
-  app.cart = [];
-  saveCart();
-  navigateTo('auth-screen');
-};
-
-/**
- * Update user profile.
- */
-window.updateProfile = function () {
-  const name = document.getElementById('p-name').value;
-  const house = document.getElementById('p-house').value;
-  app.user.name = name;
-  app.user.house = house;
-  localStorage.setItem('fm_user', JSON.stringify(app.user));
-  toast('Profile updated');
-};
-
-/**
- * View order details.
- * @param {string} orderId - Order ID
- */
-window.viewOrderDetails = function (orderId) {
-  toast('Tap on order details coming soon');
-};
-
 // =========================================
 // 11. ADMIN ACTIONS
 // =========================================
@@ -992,10 +593,10 @@ window.loadAdminOrders = async function (statusFilter) {
 
         // Debug: log price auto-fill
         if (!prefillPrice) {
-          console.log(`No price for ${i.name} (ID: ${i.productId}). Available prices:`, Object.keys(currentPrices));
+          console.log(\`No price for ${i.name} (ID: ${i.productId}). Available prices:\`, Object.keys(currentPrices));
         }
 
-        return `
+        return \`
               <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
                 <div style="flex:2;">
                   <div style="font-size:14px; font-weight:500;">${i.name}</div>
@@ -1021,7 +622,7 @@ window.loadAdminOrders = async function (statusFilter) {
                   ₹<span id="sub-${o.id}-${i.productId}">0</span>
                 </div>
               </div>
-            `;
+            \`;
       }).join('')}
         </div>
 
@@ -1032,9 +633,9 @@ window.loadAdminOrders = async function (statusFilter) {
           </div>
           <div style="display:flex; gap:8px;">
             ${o.status === 'finalized' ?
-          `<button class="btn btn-outline" style="padding:8px 12px; font-size:13px;" onclick="rollbackOrder('${o.id}')">↩️ Rollback</button>` :
-          `<button class="btn btn-outline" style="color:red; border-color:red; padding:8px;" onclick="rejectOrder('${o.id}')">✕</button>
-               <button class="btn btn-primary" onclick="saveOrder('${o.id}')">Finalize & Save</button>`
+          \`<button class="btn btn-outline" style="padding:8px 12px; font-size:13px;" onclick="rollbackOrder('${o.id}')">↩️ Rollback</button>\` :
+          \`<button class="btn btn-outline" style="color:red; border-color:red; padding:8px;" onclick="rejectOrder('${o.id}')">✕</button>
+               <button class="btn btn-primary" onclick="saveOrder('${o.id}')">Finalize & Save</button>\`
         }
           </div>
         </div>
@@ -1061,11 +662,11 @@ window.calculateTotal = function (orderId) {
 
   rows.forEach(row => {
     // Extract productId using slice instead of split to handle UUIDs with dashes
-    const prefix = `wt-${orderId}-`;
+    const prefix = \`wt-${orderId}-\`;
     const productId = row.id.slice(prefix.length);
 
-    const wtVal = parseFloat(document.getElementById(`wt-${orderId}-${productId}`).value) || 0;
-    const priceVal = parseFloat(document.getElementById(`price-${orderId}-${productId}`).value) || 0;
+    const wtVal = parseFloat(document.getElementById(\`wt-${orderId}-${productId}\`).value) || 0;
+    const priceVal = parseFloat(document.getElementById(\`price-${orderId}-${productId}\`).value) || 0;
 
     // Calculate subtotal based on weight (grams) or packets
     let subtotal = 0;
@@ -1079,11 +680,11 @@ window.calculateTotal = function (orderId) {
     grandTotal += subtotal;
 
     // Update subtotal display
-    const subSpan = document.getElementById(`sub-${orderId}-${productId}`);
+    const subSpan = document.getElementById(\`sub-${orderId}-${productId}\`);
     if (subSpan) subSpan.innerText = Math.round(subtotal);
   });
 
-  const totalSpan = document.getElementById(`total-${orderId}`);
+  const totalSpan = document.getElementById(\`total-${orderId}\`);
   if (totalSpan) totalSpan.innerText = Math.round(grandTotal);
 };
 
@@ -1094,7 +695,7 @@ window.calculateTotal = function (orderId) {
 window.saveOrder = async function (orderId) {
   if (!confirm('Finalize order and send bill?')) return;
 
-  const totalSpan = document.getElementById(`total-${orderId}`);
+  const totalSpan = document.getElementById(\`total-${orderId}\`);
   const grandTotal = parseFloat(totalSpan.innerText);
 
   const { data: order } = await _supabase.from('orders').select('*').eq('id', orderId).single();
@@ -1102,8 +703,8 @@ window.saveOrder = async function (orderId) {
   const items = typeof order.items === 'string' ? JSON.parse(order.items) : order.items;
 
   const updatedItems = items.map(item => {
-    const wtVal = parseFloat(document.getElementById(`wt-${orderId}-${item.productId}`).value) || 0;
-    const priceVal = parseFloat(document.getElementById(`price-${orderId}-${item.productId}`).value) || 0;
+    const wtVal = parseFloat(document.getElementById(\`wt-${orderId}-${item.productId}\`).value) || 0;
+    const priceVal = parseFloat(document.getElementById(\`price-${orderId}-${item.productId}\`).value) || 0;
 
     let finalPrice = 0;
     if (item.minQtyUnit === 'packet') {
@@ -1128,12 +729,11 @@ window.saveOrder = async function (orderId) {
     status: 'finalized'
   }).eq('id', orderId);
 
-  const message = `*Fresh Market Bill* %0AOrder for ${order.customer_name} %0A%0AItems: %0A${updatedItems.map(i => `${i.name}: ₹${i.finalPrice}`).join('%0A')} %0A%0A*Total: ₹${finalTotal}*`;
-  window.open(`https://wa.me/91${order.customer_phone}?text=${message}`, '_blank');
+  const message = \`*Fresh Market Bill* %0AOrder for ${order.customer_name} %0A%0AItems: %0A${updatedItems.map(i => \`${i.name}: ₹${i.finalPrice}\`).join('%0A')} %0A%0A*Total: ₹${finalTotal}*\`;
+  window.open(\`https://wa.me/91${order.customer_phone}?text=${message}\`, '_blank');
 
   loadAdminOrders('pending');
 };
-
 /**
  * Reject/delete order.
  * @param {string} orderId - Order ID
@@ -1232,7 +832,7 @@ window.handleLogin = function () {
     let phone = phoneInput.value;
     const house = houseInput.value.trim();
 
-    phone = phone.replace(/\D/g, '');
+    phone = phone.replace(/\\D/g, '');
 
     if (!name) { alert('Please enter your name'); return; }
     if (!house) { alert('Please enter your house number'); return; }
@@ -1276,10 +876,10 @@ function setupEventListeners() {
     if (!prod || !action) return;
 
     if (action === 'dec') {
-      if (document.getElementById(`grams-${prod}`)) adjustGrams(prod, -50);
+      if (document.getElementById(\`grams-${prod}\`)) adjustGrams(prod, -50);
       else updateCart(prod, -1);
     } else if (action === 'inc') {
-      if (document.getElementById(`grams-${prod}`)) adjustGrams(prod, 50);
+      if (document.getElementById(\`grams-${prod}\`)) adjustGrams(prod, 50);
       else updateCart(prod, 1);
     }
 
@@ -1359,7 +959,6 @@ window.switchAdminTab = function (tab) {
       break;
   }
 };
-
 /**
  * Load and display products for admin management.
  */
@@ -1384,11 +983,11 @@ window.loadAdminProducts = async function () {
       console.log('================================');
     }
 
-    container.innerHTML = `
+    container.innerHTML = \`
       <div style="padding:16px;">
         <div style="background:white; border-radius:12px; padding:16px;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-            <h3>Products (${products.length})</h3>
+            <h3>Products (\${products.length})</h3>
             <button class="btn btn-primary" onclick="showAddProductModal()">+ Add Product</button>
           </div>
           
@@ -1399,6 +998,17 @@ window.loadAdminProducts = async function () {
               <div>
                 <label style="display:block; font-size:14px; margin-bottom:4px;">Product Name</label>
                 <input type="text" id="product-name" placeholder="e.g., Tomato" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px;">
+              </div>
+              <div>
+                <label style="display:block; font-size:14px; margin-bottom:4px;">Category</label>
+                <select id="product-category" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px;">
+                  <option value="vegetable">Vegetable</option>
+                  <option value="fruits">Fruits</option>
+                  <option value="green leafs">Green Leafs</option>
+                  <option value="jaggery">Jaggery</option>
+                  <option value="honey">Honey</option>
+                  <option value="other">Other</option>
+                </select>
               </div>
               <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
                 <div>
@@ -1437,37 +1047,37 @@ window.loadAdminProducts = async function () {
               </tr>
             </thead>
             <tbody>
-              ${products.map(p => {
+              \${products.map(p => {
       // Use actual Supabase column names (singular: minimum_quantity_unit)
       const unit = p.minimum_quantity_unit || '250g';
       const minQty = 1; // Not stored in DB, always default to 1
       const isAvailable = p.available !== undefined ? p.available : true;
 
-      return `
+      return \`
                 <tr style="border-bottom:1px solid #f9f9f9;">
-                  <td style="padding:10px; font-weight:500;">${p.name}</td>
-                  <td style="padding:10px;">${unit}</td>
-                  <td style="padding:10px;">${minQty}</td>
+                  <td style="padding:10px; font-weight:500;">\${p.name}</td>
+                  <td style="padding:10px;">\${unit}</td>
+                  <td style="padding:10px;">\${minQty}</td>
                   <td style="padding:10px;">
                     <button 
                       class="btn btn-outline" 
-                      style="padding:4px 12px; font-size:12px; ${isAvailable ? 'background:#e8f5e9; color:#4caf50; border-color:#4caf50;' : 'background:#ffebee; color:#f44336; border-color:#f44336;'}" 
-                      onclick="toggleProductStock('${p.id}', ${!isAvailable})">
-                      ${isAvailable ? '✓ In Stock' : '✗ Out of Stock'}
+                      style="padding:4px 12px; font-size:12px; \${isAvailable ? 'background:#e8f5e9; color:#4caf50; border-color:#4caf50;' : 'background:#ffebee; color:#f44336; border-color:#f44336;'}" 
+                      onclick="toggleProductStock('\${p.id}', \${!isAvailable})">
+                      \${isAvailable ? '✓ In Stock' : '✗ Out of Stock'}
                     </button>
                   </td>
                   <td style="padding:10px;">
-                    <button class="btn btn-outline" style="padding:4px 8px; font-size:12px; margin-right:4px;" onclick='editProduct(${JSON.stringify(p)})'>Edit</button>
-                    <button class="btn btn-outline" style="padding:4px 8px; font-size:12px; color:red; border-color:red;" onclick="deleteProduct('${p.id}', '${p.name}')">Delete</button>
+                    <button class="btn btn-outline" style="padding:4px 8px; font-size:12px; margin-right:4px;" onclick='editProduct(\${JSON.stringify(p)})'>Edit</button>
+                    <button class="btn btn-outline" style="padding:4px 8px; font-size:12px; color:red; border-color:red;" onclick="deleteProduct('\${p.id}', '\${p.name}')">Delete</button>
                   </td>
                 </tr>
-              `;
+              \`;
     }).join('')}
             </tbody>
           </table>
         </div>
       </div>
-    `;
+    \`;
   } catch (e) {
     console.error('Error loading products:', e);
     container.innerHTML = '<p class="text-danger" style="padding:20px;">Error loading products</p>';
@@ -1481,6 +1091,7 @@ window.showAddProductModal = function () {
   document.getElementById('modal-title').innerText = 'Add New Product';
   document.getElementById('edit-product-id').value = '';
   document.getElementById('product-name').value = '';
+  document.getElementById('product-category').value = 'vegetable';
   document.getElementById('product-unit').value = '250g';
   document.getElementById('product-min-qty').value = '1';
   document.getElementById('product-available').checked = true;
@@ -1502,6 +1113,7 @@ window.editProduct = function (product) {
   document.getElementById('modal-title').innerText = 'Edit Product';
   document.getElementById('edit-product-id').value = product.id;
   document.getElementById('product-name').value = product.name;
+  document.getElementById('product-category').value = product.category || 'other';
   document.getElementById('product-unit').value = product.minimum_quantity_unit || '250g';
   document.getElementById('product-min-qty').value = 1; // Always 1, not stored in DB
   document.getElementById('product-available').checked = product.available !== undefined ? product.available : true;
@@ -1523,10 +1135,13 @@ window.saveProduct = async function () {
     return;
   }
 
+  const category = document.getElementById('product-category').value;
+
   try {
     // Use actual Supabase column names from schema (singular: minimum_quantity_unit)
     const productData = {
       name: name,
+      category: category,
       minimum_quantity_unit: unit,
       available: available
     };
@@ -1566,7 +1181,7 @@ window.saveProduct = async function () {
  * @param {string} name - Product name
  */
 window.deleteProduct = async function (id, name) {
-  if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
+  if (!confirm(\`Delete "\${name}"? This cannot be undone.\`,)) return;
 
   try {
     const { error } = await _supabase
@@ -1628,26 +1243,26 @@ window.renderPurchaseList = async function () {
     });
   });
 
-  const html = `
+  const html = \`
     <div style="padding:16px;">
       <div style="background:white; border-radius:12px; padding:16px;">
         <h3>Shopping List 🛒</h3>
         <table style="width:100%; border-collapse:collapse;">
           <thead><tr style="text-align:left; border-bottom:1px solid #eee;"><th style="padding:8px;">Item</th><th style="padding:8px;">Qty</th></tr></thead>
           <tbody>
-            ${Object.values(needed).map(i => `
+            \${Object.values(needed).map(i => \`
               <tr style="border-bottom:1px solid #f9f9f9;">
-                <td style="padding:10px;">${i.name}</td>
+                <td style="padding:10px;">\${i.name}</td>
                 <td style="padding:10px; font-weight:600;">
-                  ${i.unit === 'packet' ? i.totalQty + ' pkts' : (i.totalGrams / 1000).toFixed(2) + ' kg'}
+                  \${i.unit === 'packet' ? i.totalQty + ' pkts' : (i.totalGrams / 1000).toFixed(2) + ' kg'}
                 </td>
               </tr>
-            `).join('')}
+            \`).join('')}
           </tbody>
         </table>
       </div>
     </div>
-  `;
+  \`;
   container.innerHTML = html;
 };
 
@@ -1660,12 +1275,12 @@ window.renderProfitReport = async function () {
 
   const lastUpdated = localStorage.getItem('fm_prices_updated') || 'Never';
 
-  container.innerHTML = `
+  container.innerHTML = \`
     <div style="padding:16px;">
       <div style="background:linear-gradient(135deg,#4caf50,#2e7d32); padding:16px; border-radius:12px; color:white; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center;">
         <div>
           <div style="opacity:0.9; font-size:12px;">Current Prices</div>
-          <div style="font-weight:600;">Updated: ${lastUpdated}</div>
+          <div style="font-weight:600;">Updated: \${lastUpdated}</div>
         </div>
         <button class="btn" style="background:white; color:green;" onclick="showPriceSetter()">Edit Prices</button>
       </div>
@@ -1678,7 +1293,7 @@ window.renderProfitReport = async function () {
       
       <div id="profit-data">Loading stats...</div>
     </div>
-  `;
+  \`;
 
   const { data: orders } = await _supabase.from('orders').select('*').eq('status', 'finalized');
 
@@ -1697,28 +1312,28 @@ window.renderProfitReport = async function () {
 
   const profitDataEl = document.getElementById('profit-data');
   if (profitDataEl) {
-    profitDataEl.innerHTML = `
+    profitDataEl.innerHTML = \`
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px;">
         <div style="background:white; padding:12px; border-radius:8px; text-align:center; box-shadow:var(--shadow);">
           <div style="color:#666; font-size:12px;">Total Revenue</div>
-          <div style="font-size:24px; font-weight:700; color:var(--primary);">₹${totalRev.toFixed(0)}</div>
+          <div style="font-size:24px; font-weight:700; color:var(--primary);">₹\${totalRev.toFixed(0)}</div>
         </div>
         <div style="background:white; padding:12px; border-radius:8px; text-align:center; box-shadow:var(--shadow);">
           <div style="color:#666; font-size:12px;">Orders</div>
-          <div style="font-size:24px; font-weight:700;">${orders.length}</div>
+          <div style="font-size:24px; font-weight:700;">\${orders.length}</div>
         </div>
       </div>
       
       <div style="background:white; border-radius:12px; padding:16px;">
         <h4>Item Breakdown</h4>
-        ${Object.values(productStats).map(p => `
+        \${Object.values(productStats).map(p => \`
           <div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid #f5f5f5; padding-bottom:8px;">
-            <span>${p.name}</span>
-            <span style="font-weight:600;">₹${p.revenue.toFixed(0)}</span>
+            <span>\${p.name}</span>
+            <span style="font-weight:600;">₹\${p.revenue.toFixed(0)}</span>
           </div>
-        `).join('')}
+        \`).join('')}
       </div>
-    `;
+    \`;
   }
 };
 
@@ -1735,12 +1350,12 @@ window.showPriceSetter = async function () {
   const { data: products } = await _supabase.from('products').select('*').order('name');
   const current = JSON.parse(localStorage.getItem('fm_current_prices') || '{}');
 
-  container.innerHTML = products.map(p => `
+  container.innerHTML = products.map(p => \`
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-      <label style="font-size:14px; flex:1;">${p.name}</label>
-      <input type="number" id="pset-${p.id}" value="${current[p.id] || ''}" placeholder="Price" style="width:80px; padding:6px; border:1px solid #ddd; border-radius:6px;">
+      <label style="font-size:14px; flex:1;">\${p.name}</label>
+      <input type="number" id="pset-\${p.id}" value="\${current[p.id] || ''}" placeholder="Price" style="width:80px; padding:6px; border:1px solid #ddd; border-radius:6px;">
     </div>
-  `).join('');
+  \`).join('');
 };
 
 /**
@@ -1779,5 +1394,3 @@ if (document.readyState === 'loading') {
 } else {
   init();
 }
-
-
