@@ -568,6 +568,9 @@ window.filterCatalog = function (category, chipElement) {
       if (category === 'fruits') {
         return p.category === 'fruits' || p.category === 'fruit';
       }
+      if (category === 'vegetable') {
+          return p.category === 'vegetable' || p.category === 'vegetables';
+      }
       return p.category === category;
     });
     renderProductGrid(filtered);
