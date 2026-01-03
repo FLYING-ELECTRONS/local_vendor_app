@@ -1092,7 +1092,10 @@ window.loadAdminOrders = async function (statusFilter) {
         return `
               <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
                 <div style="flex:2;">
-                  <div style="font-size:14px; font-weight:500;">${i.name}</div>
+                  <div style="font-size:14px; font-weight:500;">
+                    ${o.status !== 'finalized' ? `<span onclick="deleteItemFromOrder('${o.id}', '${i.productId}')" style="cursor:pointer; margin-right:6px;" title="Remove Item">🗑️</span>` : ''}
+                    ${i.name}
+                  </div>
                   <div style="font-size:11px; color:#666;">
                     Ordered: ${i.minQtyUnit === '250g' ? (i.customGrams || (i.orderedQuantity * 250)) + 'g' : i.orderedQuantity + ' pkt'}
                   </div>
@@ -1224,6 +1227,33 @@ window.saveOrder = async function (orderId) {
 
   const message = `*Fresh Market Bill* %0AOrder for ${order.customer_name} %0A%0AItems: %0A${updatedItems.map(i => `${i.name}: ₹${i.finalPrice}`).join('%0A')} %0A%0A*Total: ₹${finalTotal}*`;
   window.open(`https://wa.me/91${order.customer_phone}?text=${message}`, '_blank');
+
+  loadAdminOrders('pending');
+};
+
+/**
+ * Delete single item from pending order.
+ * @param {string} orderId - Order ID
+ * @param {string} productId - Product ID to remove
+ */
+window.deleteItemFromOrder = async function (orderId, productId) {
+  if (!confirm('Remove this item from the order?')) return;
+
+  const order = app.adminOrdersCache.find(o => o.id === orderId);
+  if (!order) return;
+
+  const items = typeof order.items === 'string' ? JSON.parse(order.items) : order.items;
+  const newItems = items.filter(i => i.productId !== productId);
+
+  if (newItems.length === 0) {
+    if (confirm('This is the last item. Delete the entire order?')) {
+      await _supabase.from('orders').delete().eq('id', orderId);
+    } else {
+      await _supabase.from('orders').update({ items: JSON.stringify([]) }).eq('id', orderId);
+    }
+  } else {
+    await _supabase.from('orders').update({ items: JSON.stringify(newItems) }).eq('id', orderId);
+  }
 
   loadAdminOrders('pending');
 };
