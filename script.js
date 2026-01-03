@@ -1154,7 +1154,8 @@ window.loadAdminOrders = async function (statusFilter) {
           </div>
           <div style="display:flex; gap:8px;">
             ${o.status === 'finalized' ?
-          `<button class="btn btn-outline" style="padding:8px 12px; font-size:13px;" onclick="rollbackOrder('${o.id}')">↩️ Rollback</button>` :
+          `<button class="btn btn-outline" style="padding:6px 10px; font-size:13px; color:#25D366; border-color:#25D366; margin-right:6px;" onclick="shareBill('${o.id}')">Share Bill 📱</button>
+           <button class="btn btn-outline" style="padding:6px 10px; font-size:13px;" onclick="rollbackOrder('${o.id}')">↩️</button>` :
           `<button class="btn btn-outline" style="color:red; border-color:red; padding:8px;" onclick="rejectOrder('${o.id}')">✕</button>
                <button class="btn btn-primary" onclick="saveOrder('${o.id}')">Finalize & Save</button>`
         }
@@ -1373,6 +1374,21 @@ window.rollbackOrder = async function (id) {
   if (!confirm('Move back to pending?')) return;
   await _supabase.from('orders').update({ status: 'pending' }).eq('id', id);
   loadAdminOrders('finalized');
+};
+
+/**
+ * Share finalized bill via WhatsApp.
+ */
+window.shareBill = function (orderId) {
+  const order = app.adminOrdersCache.find(o => o.id === orderId);
+  if (!order) return;
+  const items = typeof order.items === 'string' ? JSON.parse(order.items) : order.items;
+
+  const total = order.total_amount || 0;
+
+  const message = `*Fresh Market Bill* %0AOrder for ${order.customer_name} %0A%0AItems: %0A${items.map(i => `${i.name}: ₹${i.finalPrice || 0}`).join('%0A')} %0A%0A*Total: ₹${total}*`;
+
+  window.open(`https://wa.me/91${order.customer_phone}?text=${message}`, '_blank');
 };
 
 // =========================================
