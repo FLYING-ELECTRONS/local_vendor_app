@@ -576,7 +576,7 @@ window.filterCatalog = function (category, chipElement) {
     });
     renderProductGrid(filtered);
   }
-};
+
 
 // =========================================
 // 8. NAVIGATION & LIFECYCLE
@@ -1827,5 +1827,6 @@ if (document.readyState === 'loading') {
 } else {
   init();
 }
+
 
 
