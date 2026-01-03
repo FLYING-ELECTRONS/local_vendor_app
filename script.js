@@ -1040,6 +1040,30 @@ window.loadAdminOrders = async function (statusFilter) {
 
   container.innerHTML = '<div class="spinner"></div>';
 
+  // Add Item Modal (Hidden by default)
+  const modalHtml = `
+  <div id="add-to-order-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:2000; align-items:center; justify-content:center;">
+    <div style="background:white; width:90%; max-width:400px; padding:20px; border-radius:12px;">
+      <h4>Add Item to Order</h4>
+      <input type="hidden" id="ato-order-id">
+      <div style="margin:16px 0;">
+        <label style="display:block;margin-bottom:4px;font-size:14px;">Product</label>
+        <select id="ato-product" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;"></select>
+      </div>
+      <div style="margin:16px 0;">
+        <label style="display:block;margin-bottom:4px;font-size:14px;">Quantity (Packets or Units of 250g)</label>
+        <div style="display:flex; gap:8px;">
+          <input type="number" id="ato-qty" value="1" min="1" style="flex:1; padding:10px; border:1px solid #ddd; border-radius:6px;">
+          <span id="ato-unit-label" style="display:flex;align-items:center;background:#eee;padding:0 12px;border-radius:6px;font-size:14px;">Qty</span>
+        </div>
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:8px;">
+        <button class="btn" onclick="document.getElementById('add-to-order-modal').style.display='none'">Cancel</button>
+        <button class="btn btn-primary" onclick="confirmAddItem()">Add Item</button>
+      </div>
+    </div>
+  </div>`;
+
   // Sync prices from Supabase first to ensure latest prices are loaded
   await syncPricesFromSupabase();
 
@@ -1061,7 +1085,7 @@ window.loadAdminOrders = async function (statusFilter) {
       return;
     }
 
-    container.innerHTML = data.map(o => {
+    container.innerHTML = modalHtml + data.map(o => {
       const items = typeof o.items === 'string' ? JSON.parse(o.items) : o.items;
       return `
       <div class="order-card">
@@ -1120,6 +1144,7 @@ window.loadAdminOrders = async function (statusFilter) {
               </div>
             `;
       }).join('')}
+          ${o.status !== 'finalized' ? `<div style="text-align:center; margin-top:12px; border-top:1px dashed #eee; padding-top:8px;"><button class="btn btn-outline" style="padding:6px 16px; font-size:12px;" onclick="showAddItemModal('${o.id}')">+ Add Item</button></div>` : ''}
         </div>
 
         <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px;">
@@ -1265,6 +1290,78 @@ window.deleteItemFromOrder = async function (orderId, productId) {
 window.rejectOrder = async function (orderId) {
   if (!confirm('Delete this order?')) return;
   await _supabase.from('orders').delete().eq('id', orderId);
+  loadAdminOrders('pending');
+};
+
+
+
+/**
+ * Show Add Item Modal.
+ */
+window.showAddItemModal = async function (orderId) {
+  document.getElementById('ato-order-id').value = orderId;
+  const modal = document.getElementById('add-to-order-modal');
+  const select = document.getElementById('ato-product');
+
+  select.innerHTML = '<option>Loading...</option>';
+  modal.style.display = 'flex'; // Show modal
+
+  // Fetch products
+  const { data: products } = await _supabase.from('products').select('*').order('name');
+
+  select.innerHTML = products.map(p =>
+    `<option value="${p.id}" data-unit="${p.minimum_quantity_unit}" data-name="${p.name}">${p.name} (${p.minimum_quantity_unit || '250g'})</option>`
+  ).join('');
+
+  select.onchange = updateAtoUnit;
+  updateAtoUnit();
+};
+
+window.updateAtoUnit = function () {
+  const sel = document.getElementById('ato-product');
+  if (sel.options.length === 0) return;
+  const opt = sel.options[sel.selectedIndex];
+  const unit = opt.getAttribute('data-unit') || '250g';
+  document.getElementById('ato-unit-label').innerText = unit === 'packet' ? 'Pkts' : 'x 250g';
+};
+
+window.confirmAddItem = async function () {
+  const orderId = document.getElementById('ato-order-id').value;
+  const select = document.getElementById('ato-product');
+  const opt = select.options[select.selectedIndex];
+  const productId = select.value;
+  const name = opt.getAttribute('data-name');
+  const unit = opt.getAttribute('data-unit') || '250g';
+  const qty = parseFloat(document.getElementById('ato-qty').value);
+
+  if (qty <= 0) return;
+
+  const order = app.adminOrdersCache.find(o => o.id === orderId);
+  let items = typeof order.items === 'string' ? JSON.parse(order.items) : order.items;
+
+  // Check if exists
+  const existing = items.find(i => i.productId === productId);
+  if (existing) {
+    existing.orderedQuantity += qty;
+    if (unit === '250g') {
+      const addedGrams = qty * 250;
+      existing.customGrams = (existing.customGrams || (existing.orderedQuantity * 250)) + addedGrams; // Fix logic to ensure base is present
+    }
+  } else {
+    items.push({
+      productId: productId,
+      name: name,
+      orderedQuantity: qty,
+      minQtyUnit: unit,
+      customGrams: unit === '250g' ? qty * 250 : null,
+      pricePer250gAtOrder: 0,
+      actualWeight: 0,
+      finalPrice: 0
+    });
+  }
+
+  await _supabase.from('orders').update({ items: JSON.stringify(items) }).eq('id', orderId);
+  document.getElementById('add-to-order-modal').style.display = 'none';
   loadAdminOrders('pending');
 };
 
