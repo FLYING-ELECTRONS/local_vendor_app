@@ -1085,6 +1085,22 @@ window.loadAdminOrders = async function (statusFilter) {
       return;
     }
 
+    const searchHtml = `
+    <div style="padding:10px; display:flex; gap:10px; background:white; margin-bottom:12px; border-radius:8px; border:1px solid #eee;">
+      <input type="text" id="admin-search" placeholder="Search customer..." style="flex:1; padding:8px; border:1px solid #ddd; border-radius:6px;" onkeyup="filterAdminOrders()">
+      <select id="admin-sort" style="width:100px; padding:8px; border:1px solid #ddd; border-radius:6px;" onchange="filterAdminOrders()">
+        <option value="newest">Newest</option>
+        <option value="oldest">Oldest</option>
+        <option value="name">Name</option>
+      </select>
+    </div>
+    <div id="filtered-orders-list"></div>
+    `;
+
+    container.innerHTML = modalHtml + searchHtml;
+    filterAdminOrders();
+    return;
+
     container.innerHTML = modalHtml + data.map(o => {
       const items = typeof o.items === 'string' ? JSON.parse(o.items) : o.items;
       return `
@@ -1251,7 +1267,7 @@ window.saveOrder = async function (orderId) {
     status: 'finalized'
   }).eq('id', orderId);
 
-  const message = `*Fresh Market Bill* %0AOrder for ${order.customer_name} %0A%0AItems: %0A${updatedItems.map(i => `${i.name}: ₹${i.finalPrice}`).join('%0A')} %0A%0A*Total: ₹${finalTotal}*`;
+  const message = `*Fresh Market Bill* %0AOrder for ${order.customer_name} %0A%0AItems: %0A${updatedItems.map(i => `${i.name} (${i.actualWeight}${i.minQtyUnit === 'packet' ? 'pkt' : 'g'}): ₹${i.finalPrice}`).join('%0A')} %0A%0A*Total: ₹${finalTotal}*`;
   window.open(`https://wa.me/91${order.customer_phone}?text=${message}`, '_blank');
 
   loadAdminOrders('pending');
@@ -1386,9 +1402,122 @@ window.shareBill = function (orderId) {
 
   const total = order.total_amount || 0;
 
-  const message = `*Fresh Market Bill* %0AOrder for ${order.customer_name} %0A%0AItems: %0A${items.map(i => `${i.name}: ₹${i.finalPrice || 0}`).join('%0A')} %0A%0A*Total: ₹${total}*`;
+  const message = `*Fresh Market Bill* %0AOrder for ${order.customer_name} %0A%0AItems: %0A${items.map(i => `${i.name} (${i.actualWeight}${i.minQtyUnit === 'packet' ? 'pkt' : 'g'}): ₹${i.finalPrice || 0}`).join('%0A')} %0A%0A*Total: ₹${total}*`;
 
   window.open(`https://wa.me/91${order.customer_phone}?text=${message}`, '_blank');
+};
+
+/**
+ * Filter and render admin orders.
+ */
+window.filterAdminOrders = function () {
+  const searchInput = document.getElementById('admin-search');
+  if (!searchInput) return; // Guard
+  const search = searchInput.value.toLowerCase();
+  const sort = document.getElementById('admin-sort').value;
+  const listContainer = document.getElementById('filtered-orders-list');
+
+  if (!app.adminOrdersCache) return;
+
+  const currentPrices = JSON.parse(localStorage.getItem('fm_current_prices') || '{}');
+
+  let filtered = app.adminOrdersCache.filter(o => {
+    const text = (o.customer_name + ' ' + o.house_no + ' ' + o.customer_phone).toLowerCase();
+    return text.includes(search);
+  });
+
+  // Sort
+  if (sort === 'newest') {
+    filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  } else if (sort === 'oldest') {
+    filtered.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+  } else if (sort === 'name') {
+    filtered.sort((a, b) => a.customer_name.localeCompare(b.customer_name));
+  }
+
+  if (filtered.length === 0) {
+    listContainer.innerHTML = '<div class="text-center text-muted" style="padding:40px;">No matching orders</div>';
+    return;
+  }
+
+  listContainer.innerHTML = filtered.map(o => {
+    const items = typeof o.items === 'string' ? JSON.parse(o.items) : o.items;
+    return `
+      <div class="order-card">
+        <div style="display:flex; justify-content:space-between; margin-bottom:12px; border-bottom:1px solid #f0f0f0; padding-bottom:8px;">
+          <div>
+            <div style="font-weight:700;">${o.customer_name}</div>
+            <div class="text-muted" style="font-size:12px;">${o.house_no}</div>
+          </div>
+          <div class="text-right">
+            <div style="font-weight:700;">${o.id.slice(0, 6).toUpperCase()}</div>
+            <div style="font-size:12px; color:#666;">${new Date(o.created_at).toLocaleTimeString()}</div>
+            <a href="https://wa.me/91${o.customer_phone}" target="_blank" style="font-size:12px; color:#25D366; text-decoration:none; display:flex; align-items:center; gap:4px; justify-content:flex-end; margin-top:2px;">
+              <span class="material-icons-round" style="font-size:14px;">chat</span> WhatsApp
+            </a>
+          </div>
+        </div>
+
+        <div style="background:#f9f9f9; padding:10px; border-radius:8px;">
+          ${items.map(i => {
+      const unit = i.minQtyUnit === 'packet' ? 'pkt' : '250g';
+      const prefillPrice = i.pricePer250gAtOrder || currentPrices[i.productId] || '';
+      const actualWeight = i.actualWeight || (i.minQtyUnit === '250g' ? (i.customGrams || (i.orderedQuantity * 250)) : i.orderedQuantity);
+
+      return `
+              <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+                ${o.status !== 'finalized' ?
+          `<div onclick="deleteItemFromOrder('${o.id}', '${i.productId}')" style="color:#d32f2f; font-weight:bold; font-size:18px; cursor:pointer; padding:0 4px; line-height:1;">✕</div>`
+          : ''}
+                <div style="flex:2;">
+                  <div style="font-size:14px; font-weight:500;">${i.name}</div>
+                  <div style="font-size:11px; color:#666;">
+                    Ordered: ${i.minQtyUnit === '250g' ? (i.customGrams || (i.orderedQuantity * 250)) + 'g' : i.orderedQuantity + ' pkt'}
+                  </div>
+                </div>
+                <div style="flex:1;">
+                  <input type="number" id="wt-${o.id}-${i.productId}" 
+                    class="admin-input-sm" style="width:100%"
+                    placeholder="Wt"
+                    value="${actualWeight}"
+                    onchange="calculateTotal('${o.id}')">
+                </div>
+                <div style="flex:1;">
+                  <input type="number" id="price-${o.id}-${i.productId}" 
+                    class="admin-input-sm" style="width:100%" 
+                    placeholder="Rate"
+                    value="${prefillPrice}"
+                    onchange="calculateTotal('${o.id}')">
+                </div>
+                <div style="width:60px; text-align:right;">
+                  <div style="font-weight:600; font-size:14px;">₹<span id="sub-${o.id}-${i.productId}">0</span></div>
+                </div>
+              </div>
+            `;
+    }).join('')}
+          ${o.status !== 'finalized' ? `<div style="text-align:center; margin-top:12px; border-top:1px dashed #eee; padding-top:8px;"><button class="btn btn-outline" style="padding:6px 16px; font-size:12px;" onclick="showAddItemModal('${o.id}')">+ Add Item</button></div>` : ''}
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px;">
+          <div>
+            <div style="font-size:12px; color:#666;">Total</div>
+            <div style="font-size:20px; font-weight:700; color:var(--primary);">₹<span id="total-${o.id}">${o.total_amount || 0}</span></div>
+          </div>
+          <div style="display:flex; gap:8px;">
+            ${o.status === 'finalized' ?
+        `<button class="btn btn-outline" style="padding:6px 10px; font-size:13px; color:#25D366; border-color:#25D366; margin-right:6px;" onclick="shareBill('${o.id}')">Share Bill 📱</button>
+             <button class="btn btn-outline" style="padding:6px 10px; font-size:13px;" onclick="rollbackOrder('${o.id}')">↩️</button>` :
+        `<button class="btn btn-outline" style="color:red; border-color:red; padding:8px;" onclick="rejectOrder('${o.id}')">✕</button>
+             <button class="btn btn-primary" onclick="saveOrder('${o.id}')">Finalize & Save</button>`
+      }
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  // Init totals
+  filtered.forEach(o => calculateTotal(o.id));
 };
 
 // =========================================
