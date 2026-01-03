@@ -11,9 +11,16 @@ window.renderPurchaseList = async function () {
   orders.forEach(o => {
     const items = typeof o.items === 'string' ? JSON.parse(o.items) : o.items;
     items.forEach(i => {
-      if (!needed[i.productId]) needed[i.productId] = { name: i.name, unit: i.minQtyUnit, totalQty: 0, totalGrams: 0 };
+      // Logic from script.js: It is a packet if it is NOT '250g'
+      // This handles 'packet', '1 packet', null, etc. correctly as non-weight-based
+      const isPacket = i.minQtyUnit !== '250g';
+
+      if (!needed[i.productId]) needed[i.productId] = { name: i.name, isPacket: isPacket, totalQty: 0, totalGrams: 0 };
+
       needed[i.productId].totalQty += i.orderedQuantity;
-      if (i.minQtyUnit !== 'packet') {
+
+      if (!isPacket) {
+        // It is strictly 250g based
         const grams = i.customGrams || (i.orderedQuantity * 250);
         needed[i.productId].totalGrams += grams;
       }
@@ -31,7 +38,7 @@ window.renderPurchaseList = async function () {
               <tr style="border-bottom:1px solid #f9f9f9;">
                 <td style="padding:10px;">${i.name}</td>
                 <td style="padding:10px; font-weight:600;">
-                  ${i.unit === 'packet' ? i.totalQty + ' pkts' : (i.totalGrams / 1000).toFixed(2) + ' kg'} 
+                  ${i.isPacket ? i.totalQty + ' pkts' : (i.totalGrams / 1000).toFixed(2) + ' kg'} 
                 </td>
               </tr>
             `).join('')}
