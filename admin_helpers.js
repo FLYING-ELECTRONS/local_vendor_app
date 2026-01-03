@@ -13,7 +13,7 @@ window.renderPurchaseList = async function () {
     items.forEach(i => {
       if (!needed[i.productId]) needed[i.productId] = { name: i.name, unit: i.minQtyUnit, totalQty: 0, totalGrams: 0 };
       needed[i.productId].totalQty += i.orderedQuantity;
-      if (i.minQtyUnit === '250g') {
+      if (i.minQtyUnit !== 'packet') {
         const grams = i.customGrams || (i.orderedQuantity * 250);
         needed[i.productId].totalGrams += grams;
       }

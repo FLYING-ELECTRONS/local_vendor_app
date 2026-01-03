@@ -412,6 +412,7 @@ async function renderAdminDashboard() {
       <div class="category-tabs">
         <div class="cat-chip active" id="tab-pending" onclick="switchAdminTab('pending')">Pending</div>
         <div class="cat-chip" id="tab-finalized" onclick="switchAdminTab('finalized')">Finalized</div>
+        <div class="cat-chip" id="tab-sent" onclick="switchAdminTab('sent')">Sent</div>
         <div class="cat-chip" id="tab-products" onclick="switchAdminTab('products')">Products</div>
         <div class="cat-chip" id="tab-stats" onclick="switchAdminTab('stats')">Stats</div>
         <div class="cat-chip" id="tab-shopping" onclick="switchAdminTab('shopping')">Shopping</div>
@@ -1072,8 +1073,8 @@ window.loadAdminOrders = async function (statusFilter) {
 
   try {
     let query = _supabase.from('orders').select('*').order('created_at', { ascending: false });
-    if (statusFilter === 'pending') query = query.neq('status', 'finalized');
-    else query = query.eq('status', 'finalized');
+    if (statusFilter === 'pending') query = query.neq('status', 'finalized').neq('status', 'sent');
+    else query = query.eq('status', statusFilter);
 
     const { data, error } = await query;
     if (error) throw error;
@@ -1267,9 +1268,7 @@ window.saveOrder = async function (orderId) {
     status: 'finalized'
   }).eq('id', orderId);
 
-  const message = `*Fresh Market Bill* %0AOrder for ${order.customer_name} %0A%0AItems: %0A${updatedItems.map(i => `${i.name} (${i.actualWeight}${i.minQtyUnit === 'packet' ? 'pkt' : 'g'}): ₹${i.finalPrice}`).join('%0A')} %0A%0A*Total: ₹${finalTotal}*`;
-  window.open(`https://wa.me/91${order.customer_phone}?text=${message}`, '_blank');
-
+  toast('Order Finalized. Moved to "Finalized" tab.');
   loadAdminOrders('pending');
 };
 
@@ -1395,7 +1394,7 @@ window.rollbackOrder = async function (id) {
 /**
  * Share finalized bill via WhatsApp.
  */
-window.shareBill = function (orderId) {
+window.shareBill = async function (orderId) {
   const order = app.adminOrdersCache.find(o => o.id === orderId);
   if (!order) return;
   const items = typeof order.items === 'string' ? JSON.parse(order.items) : order.items;
@@ -1404,7 +1403,47 @@ window.shareBill = function (orderId) {
 
   const message = `*Fresh Market Bill* %0AOrder for ${order.customer_name} %0A%0AItems: %0A${items.map(i => `${i.name} (${i.actualWeight}${i.minQtyUnit === 'packet' ? 'pkt' : 'g'}): ₹${i.finalPrice || 0}`).join('%0A')} %0A%0A*Total: ₹${total}*`;
 
+  await _supabase.from('orders').update({ status: 'sent' }).eq('id', orderId);
   window.open(`https://wa.me/91${order.customer_phone}?text=${message}`, '_blank');
+
+  // Refresh current view (will remove from Finalized, or refresh Sent)
+  const currentTab = document.querySelector('.cat-chip.active').id.replace('tab-', '');
+  loadAdminOrders(currentTab);
+};
+
+// Override switchAdminTab to support 'sent' and preserve logic
+window.switchAdminTab = function (tab) {
+  document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
+  const tabEl = document.getElementById('tab-' + tab);
+  if (tabEl) tabEl.classList.add('active');
+
+  const list = document.getElementById('admin-orders-list');
+  if (list) list.innerHTML = '<div class="spinner"></div>';
+
+  switch (tab) {
+    case 'pending':
+    case 'finalized':
+    case 'sent':
+      loadAdminOrders(tab);
+      break;
+    case 'products':
+      loadAdminProducts();
+      break;
+    case 'stats':
+      if (window.renderAnalytics) window.renderAnalytics();
+      else list.innerHTML = '<p class="text-center">Analytics Module Loading...</p>';
+      break;
+    case 'shopping':
+      renderPurchaseList();
+      break;
+    case 'profit':
+      renderProfitReport();
+      break;
+    case 'customers':
+      if (window.renderCustomerHistory) window.renderCustomerHistory();
+      else list.innerHTML = '<p class="text-center">History Module Loading...</p>';
+      break;
+  }
 };
 
 /**
