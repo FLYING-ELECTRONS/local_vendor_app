@@ -564,7 +564,7 @@ window.filterCatalog = function (category, chipElement) {
   if (category === 'all') {
     renderProductGrid(app.products);
   } else {
-   const filtered = app.products.filter(p => {
+    const filtered = app.products.filter(p => {
       if (category === 'fruits') {
         return p.category === 'fruits' || p.category === 'fruit';
       }
@@ -572,11 +572,10 @@ window.filterCatalog = function (category, chipElement) {
         return p.category === 'vegetable' || p.category === 'vegetables';
       }
       return p.category === category;
-    
     });
     renderProductGrid(filtered);
   }
-
+};
 
 // =========================================
 // 8. NAVIGATION & LIFECYCLE
@@ -1827,6 +1826,3 @@ if (document.readyState === 'loading') {
 } else {
   init();
 }
-
-
-
