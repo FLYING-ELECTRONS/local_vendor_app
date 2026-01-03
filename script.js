@@ -1091,6 +1091,9 @@ window.loadAdminOrders = async function (statusFilter) {
 
         return `
               <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+                ${o.status !== 'finalized' ?
+            `<div onclick="deleteItemFromOrder('${o.id}', '${i.productId}')" style="color:#d32f2f; font-weight:bold; font-size:18px; cursor:pointer; padding:0 4px; line-height:1;">✕</div>`
+            : ''}
                 <div style="flex:2;">
                   <div style="font-size:14px; font-weight:500;">${i.name}</div>
                   <div style="font-size:11px; color:#666;">
@@ -1113,7 +1116,6 @@ window.loadAdminOrders = async function (statusFilter) {
                 </div>
                 <div style="width:60px; text-align:right;">
                   <div style="font-weight:600; font-size:14px;">₹<span id="sub-${o.id}-${i.productId}">0</span></div>
-                  ${o.status !== 'finalized' ? `<div onclick="deleteItemFromOrder('${o.id}', '${i.productId}')" style="color:#ff4444; font-size:16px; cursor:pointer; margin-top:4px;">🗑️</div>` : ''}
                 </div>
               </div>
             `;
