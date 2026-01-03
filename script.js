@@ -837,63 +837,142 @@ window.placeOrder = async function () {
 
   setLoading(true);
 
-  // Build order items list for WhatsApp message
-  const orderItemsList = app.cart.map(i => {
-    const grams = i.customGrams || (i.quantity * 250);
-    const unit = i.minQtyUnit === 'packet' ? `${i.quantity} pkt` : `${grams}g`;
-    return `• ${i.name}: ${unit}`;
-  }).join('\n');
+  try {
+    // 1. Check for existing PENDING order for this user
+    const { data: existingOrders } = await _supabase
+      .from('orders')
+      .select('*')
+      .eq('customer_phone', app.user.phone)
+      .eq('status', 'pending');
 
-  const orderPayload = {
-    customer_name: app.user.name,
-    customer_phone: app.user.phone,
-    house_no: app.user.house,
-    items: JSON.stringify(app.cart.map(i => ({
-      productId: i.id,
-      name: i.name,
-      orderedQuantity: i.quantity,
-      minQtyUnit: i.minQtyUnit,
-      customGrams: i.customGrams || null,
-      pricePer250gAtOrder: 0,
-      actualWeight: 0,
-      finalPrice: 0
-    }))),
-    status: 'pending',
-    total_amount: 0,
-    created_at: new Date().toISOString()
-  };
+    const existingOrder = existingOrders && existingOrders.length > 0 ? existingOrders[0] : null;
 
-  const { error } = await _supabase.from('orders').insert([orderPayload]);
+    let finalItems = [];
+    let isUpdate = false;
 
-  setLoading(false);
+    if (existingOrder) {
+      // --- MERGE WITH EXISTING ORDER ---
+      isUpdate = true;
+      console.log('Found existing pending order:', existingOrder.id);
 
-  if (error) {
-    alert('Order failed: ' + error.message);
-  } else {
-    // Build WhatsApp message for seller
+      const oldItems = typeof existingOrder.items === 'string' ? JSON.parse(existingOrder.items) : existingOrder.items;
+
+      // valid deep copy
+      finalItems = JSON.parse(JSON.stringify(oldItems));
+
+      // Merge new items from cart
+      app.cart.forEach(newItem => {
+        // Find if this product is already in the order
+        const existingItemIndex = finalItems.findIndex(i => i.productId === newItem.id);
+
+        if (existingItemIndex > -1) {
+          // Update quantity & grams
+          finalItems[existingItemIndex].orderedQuantity += newItem.quantity;
+
+          if (newItem.customGrams) {
+            const oldGrams = finalItems[existingItemIndex].customGrams || 0;
+            finalItems[existingItemIndex].customGrams = oldGrams + newItem.customGrams;
+          }
+        } else {
+          // Add new item to list
+          finalItems.push({
+            productId: newItem.id,
+            name: newItem.name,
+            orderedQuantity: newItem.quantity,
+            minQtyUnit: newItem.minQtyUnit,
+            customGrams: newItem.customGrams || null,
+            pricePer250gAtOrder: 0,
+            actualWeight: 0,
+            finalPrice: 0
+          });
+        }
+      });
+
+      // Update Supabase
+      const { error: updateError } = await _supabase
+        .from('orders')
+        .update({
+          items: JSON.stringify(finalItems),
+          // We don't update created_at so it keeps its queue position
+        })
+        .eq('id', existingOrder.id);
+
+      if (updateError) throw updateError;
+
+    } else {
+      // --- CREATE NEW ORDER ---
+      finalItems = app.cart.map(i => ({
+        productId: i.id,
+        name: i.name,
+        orderedQuantity: i.quantity,
+        minQtyUnit: i.minQtyUnit,
+        customGrams: i.customGrams || null,
+        pricePer250gAtOrder: 0,
+        actualWeight: 0,
+        finalPrice: 0
+      }));
+
+      const orderPayload = {
+        customer_name: app.user.name,
+        customer_phone: app.user.phone,
+        house_no: app.user.house,
+        items: JSON.stringify(finalItems),
+        status: 'pending',
+        total_amount: 0,
+        created_at: new Date().toISOString()
+      };
+
+      const { error: insertError } = await _supabase.from('orders').insert([orderPayload]);
+      if (insertError) throw insertError;
+    }
+
+    setLoading(false);
+
+    // --- WhatsApp Message Construction ---
+    const orderItemsList = finalItems.map(i => {
+      const grams = i.customGrams || (i.orderedQuantity * 250);
+      const unit = i.minQtyUnit === 'packet' ? `${i.orderedQuantity} pkt` : `${grams}g`;
+      return `• ${i.name}: ${unit}`;
+    }).join('\n');
+
     const timestamp = new Date().toLocaleString('en-IN', {
       dateStyle: 'short',
       timeStyle: 'short'
     });
 
+    const header = isUpdate ? `🛒 *UPDATED ORDER - Fresh Market*` : `🛒 *NEW ORDER - Fresh Market*`;
+    const note = isUpdate ? `\n\n_Note: Customer added items to previous pending order._` : ``;
+
     const whatsappMessage = encodeURIComponent(
-      `🛒 *NEW ORDER - Fresh Market*\n\n` +
+      `${header}\n\n` +
       `👤 *Customer:* ${app.user.name}\n` +
       `📞 *Phone:* ${app.user.phone}\n` +
       `🏠 *House:* ${app.user.house}\n` +
       `🕐 *Time:* ${timestamp}\n\n` +
-      `📦 *Order Items:*\n${orderItemsList}\n\n` +
-      `💰 *Price:* To be confirmed`
+      `📦 *Total Items (Combined):*\n${orderItemsList}\n\n` +
+      `💰 *Price:* To be confirmed` +
+      note
     );
 
-    // Open WhatsApp to send order to seller
+    // Open WhatsApp
     window.open(`https://wa.me/91${SELLER_WHATSAPP}?text=${whatsappMessage}`, '_blank');
 
-    alert('Order Placed Successfully!\n\nA WhatsApp message has been opened to send your order to the seller.');
+    if (isUpdate) {
+      alert('Items added to your existing pending order!\n\nCheck WhatsApp for the updated full list.');
+    } else {
+      alert('Order Placed Successfully!\n\nA WhatsApp message has been opened to send your order to the seller.');
+    }
+
+    // Clear cart and go to orders
     app.cart = [];
     saveCart();
     renderBottomNav();
     navigateTo('orders');
+
+  } catch (error) {
+    setLoading(false);
+    console.error(error);
+    alert('Order processing failed: ' + error.message);
   }
 };
 
