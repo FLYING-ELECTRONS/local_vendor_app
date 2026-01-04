@@ -91,7 +91,7 @@ function createProductCardHtml(product) {
   const unitDisplay = isStdPacket ? (product.minimum_quantity_unit === 'pc' ? 'pc' : 'pkt') : '250g';
 
   return `
-    <div class="product-card">
+    <div class="product-card" id="product-card-${product.id}">
       <div class="product-image" style="background-image: url('${product.image}')"></div>
       <h3>${product.name}</h3>
       <div class="price">Price TBD / ${unitDisplay}</div>
@@ -112,7 +112,7 @@ function createProductCardHtml(product) {
         </div>` :
         `<div class="qty-selector">
           <button type="button" class="qty-btn" onclick="updateCart('${product.id}', -1)">-</button>
-          <span class="qty-val">${qty}</span>
+          <span id="catalog-qty-${product.id}" class="qty-val">${qty}</span>
           <button type="button" class="qty-btn" onclick="updateCart('${product.id}', 1)">+</button>
         </div>`
     }
@@ -846,18 +846,29 @@ window.updateCart = function (prodId, delta) {
     app.cart = app.cart.filter(i => i.id !== prodId);
     saveCart();
     renderBottomNav();
-    // Need to re-render cart to remove the item
-    renderScreen('cart');
+    // Need to re-render to remove the item - check which screen we're on
+    const cartQty = document.getElementById(`cart-qty-${prodId}`);
+    const catalogQty = document.getElementById(`catalog-qty-${prodId}`);
+    if (cartQty) {
+      renderScreen('cart');
+    } else if (catalogQty) {
+      refreshCatalog();
+    }
   } else {
     // Just update the quantity
     item.quantity = newQty;
     saveCart();
     renderBottomNav();
 
-    // Update only the quantity display (no full re-render!)
-    const qtyDisplay = document.getElementById(`cart-qty-${prodId}`);
-    if (qtyDisplay) {
-      qtyDisplay.textContent = newQty;
+    // Update BOTH cart and catalog quantity displays (no full re-render!)
+    const cartQtyDisplay = document.getElementById(`cart-qty-${prodId}`);
+    if (cartQtyDisplay) {
+      cartQtyDisplay.textContent = newQty;
+    }
+
+    const catalogQtyDisplay = document.getElementById(`catalog-qty-${prodId}`);
+    if (catalogQtyDisplay) {
+      catalogQtyDisplay.textContent = newQty;
     }
   }
 };
