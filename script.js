@@ -1850,6 +1850,10 @@ window.printOrders = function () {
 
   let grandTotal = 0;
   let orderCount = 0;
+  let paidCount = 0;
+  let unpaidCount = 0;
+  let cashTotal = 0;
+  let onlineTotal = 0;
 
   // Generate order cards
   app.adminOrdersCache.forEach(o => {
@@ -1858,13 +1862,34 @@ window.printOrders = function () {
     grandTotal += orderTotal;
     orderCount++;
 
+    // Get payment status from localStorage
+    const paymentStatus = getPaymentStatus(o.id);
+    const isPaid = paymentStatus.received;
+    const paymentType = paymentStatus.type || 'cash';
+
+    if (isPaid) {
+      paidCount++;
+      if (paymentType === 'online') {
+        onlineTotal += orderTotal;
+      } else {
+        cashTotal += orderTotal;
+      }
+    } else {
+      unpaidCount++;
+    }
+
     const orderTime = new Date(o.created_at).toLocaleString('en-IN', {
       dateStyle: 'short',
       timeStyle: 'short'
     });
 
+    // Payment status badge HTML
+    const paymentBadge = isPaid
+      ? `<span style="background:#e8f5e9; color:#388e3c; padding:3px 8px; border-radius:4px; font-size:10px; font-weight:bold;">✓ ${paymentType === 'online' ? '📱 Online' : '💵 Cash'}</span>`
+      : `<span style="background:#fff3e0; color:#f57c00; padding:3px 8px; border-radius:4px; font-size:10px; font-weight:bold;">⏳ Pending</span>`;
+
     printHtml += `
-      <div class="order-card">
+      <div class="order-card" style="border-left: 4px solid ${isPaid ? '#4caf50' : '#ff9800'};">
         <div class="order-header">
           <div>
             <div class="customer-name">${o.customer_name}</div>
@@ -1873,6 +1898,7 @@ window.printOrders = function () {
           <div style="text-align: right;">
             <div class="order-id">#${o.id.slice(0, 6).toUpperCase()}</div>
             <div class="order-time">${orderTime}</div>
+            <div style="margin-top:4px;">${paymentBadge}</div>
           </div>
         </div>
         <table class="items-table">
@@ -1901,12 +1927,26 @@ window.printOrders = function () {
     `;
   });
 
-  // Add summary
+  // Add summary with payment breakdown
   printHtml += `
       <div class="summary">
         <h3>📊 Summary</h3>
-        <p><strong>Total Orders:</strong> ${orderCount}</p>
-        <p><strong>Grand Total:</strong> ₹${grandTotal}</p>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;">
+          <div>
+            <p><strong>Total Orders:</strong> ${orderCount}</p>
+            <p><strong>Grand Total:</strong> ₹${grandTotal}</p>
+          </div>
+          <div style="border-left:2px solid #ddd; padding-left:15px;">
+            <p style="color:#388e3c;"><strong>✓ Paid:</strong> ${paidCount} orders</p>
+            <p style="color:#f57c00;"><strong>⏳ Pending:</strong> ${unpaidCount} orders</p>
+          </div>
+        </div>
+        ${paidCount > 0 ? `
+        <div style="margin-top:12px; padding-top:12px; border-top:1px solid #eee;">
+          <p><strong>💵 Cash Collected:</strong> ₹${cashTotal}</p>
+          <p><strong>📱 Online Received:</strong> ₹${onlineTotal}</p>
+        </div>
+        ` : ''}
       </div>
       <div class="no-print" style="margin-top: 20px; text-align: center;">
         <button onclick="window.print()" style="padding: 12px 24px; font-size: 16px; background: #4caf50; color: white; border: none; border-radius: 8px; cursor: pointer;">🖨️ Print / Save PDF</button>
