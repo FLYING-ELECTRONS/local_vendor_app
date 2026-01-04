@@ -130,24 +130,40 @@ function createCartItemHtml(item) {
   if (!product) return '';
 
   const grams = item.customGrams ? item.customGrams : (item.quantity * 250);
+  // Calculate total: If price is available, show approximate. Else TBD.
+  // Note: For 250g items, quantity is number of 250g units.
+  // Price is per 250g. So quantity * price is correct.
   const perItemTotal = (product && product.price) ? (product.price * item.quantity) : null;
+
+  const isPacket = product.minimum_quantity_unit === 'packet';
+
+  const controls = isPacket ?
+    `<div style="display:flex; align-items:center; gap:2px;">
+       <button type="button" class="qty-btn" onclick="updateCart('${item.id}', -1)" style="width:28px; height:28px; padding:0; display:flex; align-items:center; justify-content:center;">-</button>
+       <div style="width:30px; text-align:center; font-weight:600;">${item.quantity}</div>
+       <button type="button" class="qty-btn" onclick="updateCart('${item.id}', 1)" style="width:28px; height:28px; padding:0; display:flex; align-items:center; justify-content:center;">+</button>
+     </div>`
+    :
+    `<div style="display:flex; align-items:center; gap:2px;">
+       <button type="button" class="qty-btn" onclick="adjustGrams('${item.id}', -50)" style="width:28px; height:28px; padding:0; display:flex; align-items:center; justify-content:center;">-</button>
+       <input type="number" 
+          value="${grams}" 
+          min="0" step="50" 
+          onchange="setCustomQuantity('${item.id}', this.value)"
+          style="width:55px; padding:4px; border:2px solid #4caf50; border-radius:6px; text-align:center; font-size:14px; font-weight:600; height:30px;">
+       <button type="button" class="qty-btn" onclick="adjustGrams('${item.id}', 50)" style="width:28px; height:28px; padding:0; display:flex; align-items:center; justify-content:center;">+</button>
+     </div>`;
 
   return `
     <div style="display:flex; gap:12px; align-items:center; background:white; padding:12px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
       <div style="width:84px; height:84px; background-image: url('${product.image}'); background-size:cover; background-position:center; border-radius:8px; flex-shrink:0;"></div>
       <div style="flex:1;">
         <div style="font-weight:700; margin-bottom:6px;">${product.name}</div>
-        <div style="color:#666; font-size:13px; margin-bottom:8px;">${perItemTotal ? '₹' + perItemTotal + ' (final on delivery)' : 'Price confirmed on delivery'}</div>
-        <div style="display:flex; align-items:center; gap:8px;">
-          <input type="hidden" id="grams-${item.id}" value="${grams}">
-          <button type="button" class="qty-btn" data-action="dec" data-prod="${item.id}">-</button>
-          <div style="min-width:28px; text-align:center; font-weight:600;">${item.quantity}</div>
-          <button type="button" class="qty-btn" data-action="inc" data-prod="${item.id}">+</button>
-          <div style="margin-left:12px; color:#444; font-size:13px;">${grams} g</div>
-        </div>
+        <div style="color:#666; font-size:13px; margin-bottom:8px;">${perItemTotal ? '₹' + perItemTotal + ' (est)' : 'Price TBD'}</div>
+        ${controls}
       </div>
-      <div style="text-align:right; min-width:110px;">
-        <div style="font-size:13px; color:#666;">Item Total</div>
+      <div style="text-align:right; min-width:80px;">
+        <div style="font-size:13px; color:#666;">Total</div>
         <div style="font-weight:700; font-size:16px;">${perItemTotal ? '₹' + perItemTotal : 'TBD'}</div>
       </div>
     </div>
@@ -658,6 +674,22 @@ function renderBottomNav() {
  * Adds a product to the cart.
  * @param {string} productId - The product ID
  */
+window.refreshCatalog = function () {
+  const searchInput = document.getElementById('search-input');
+  if (searchInput && searchInput.value.trim() !== '') {
+    const term = searchInput.value.toLowerCase().trim();
+    const filtered = app.products.filter(p => p.name.toLowerCase().includes(term));
+    renderProductGrid(filtered);
+  } else {
+    const activeChip = document.querySelector('.cat-chip.active');
+    if (activeChip) {
+      activeChip.click();
+    } else {
+      renderProductGrid(app.products);
+    }
+  }
+};
+
 window.addToCart = function (productId) {
   const product = app.products.find(p => p.id === productId);
   if (!product) return;
@@ -674,7 +706,7 @@ window.addToCart = function (productId) {
     });
   }
   saveCart();
-  renderProductGrid(app.products);
+  refreshCatalog();
   renderBottomNav();
   toast('Added to cart');
 };
@@ -697,7 +729,7 @@ window.updateCart = function (productId, change) {
 
   // Update current view
   if (app.products.length > 0 && document.getElementById('product-list')) {
-    renderProductGrid(app.products);
+    refreshCatalog();
   }
   if (document.getElementById('content-area')) {
     const currentScreen = app.currentScreen;
@@ -730,7 +762,7 @@ window.setCustomQuantity = function (prodId, grams) {
   }
 
   saveCart();
-  renderProductGrid(app.products);
+  refreshCatalog();
   renderBottomNav();
 };
 
@@ -773,7 +805,7 @@ window.adjustGrams = function (prodId, delta) {
     saveCart();
     // Render appropriate view
     if (document.getElementById('product-list')) {
-      renderProductGrid(app.products);
+      refreshCatalog();
     } else {
       // Assuming we are in cart if product list is not present
       renderCustomerCartView().then(html => {
@@ -794,7 +826,7 @@ window.adjustGrams = function (prodId, delta) {
 window.removeFromCart = function (prodId) {
   app.cart = app.cart.filter(i => i.id !== prodId);
   saveCart();
-  renderProductGrid(app.products);
+  refreshCatalog();
   renderBottomNav();
 
   // If on cart screen, re-render
@@ -1402,7 +1434,7 @@ window.shareBill = async function (orderId) {
 
   const total = order.total_amount || 0;
 
-  const message = `*Fresh Market Bill* %0AOrder for ${order.customer_name} %0A%0AItems: %0A${items.map(i => `${i.name} (${i.actualWeight}${i.minQtyUnit === 'packet' ? 'pkt' : 'g'}): ₹${i.finalPrice || 0}`).join('%0A')} %0A%0A*Total: ₹${total}*`;
+  const message = `*Fresh Market Bill* %0AOrder for: *${order.customer_name}* %0APhone: ${newPhone} %0AHouse: ${order.customer_house_number || 'N/A'} %0A%0AItems: %0A${items.map(i => `${i.name} (${i.actualWeight}${i.minQtyUnit === 'packet' ? 'pkt' : 'g'}): ₹${i.finalPrice || 0}`).join('%0A')} %0A%0A*Total: ₹${total}*`;
 
   // Update DB: Status -> Sent, and Phone if changed
   const updateData = { status: 'sent' };
