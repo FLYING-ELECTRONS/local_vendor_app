@@ -1454,11 +1454,14 @@ window.rollbackSentOrder = async function (id) {
 
 /**
  * Update payment status for a sent order.
+ * Uses localStorage to persist payment status without requiring DB schema changes.
  * @param {string} orderId - Order ID
  */
-window.updatePaymentStatus = async function (orderId) {
+window.updatePaymentStatus = function (orderId) {
   const paidCheckbox = document.getElementById(`paid-${orderId}`);
   const typeSelect = document.getElementById(`payment-type-${orderId}`);
+
+  if (!paidCheckbox || !typeSelect) return;
 
   const paymentReceived = paidCheckbox.checked;
   const paymentType = typeSelect.value;
@@ -1466,22 +1469,59 @@ window.updatePaymentStatus = async function (orderId) {
   // Enable/disable the type selector based on checkbox
   typeSelect.disabled = !paymentReceived;
 
-  // Save to Supabase
-  await _supabase.from('orders').update({
-    payment_received: paymentReceived,
-    payment_type: paymentReceived ? paymentType : null
-  }).eq('id', orderId);
+  // Get existing payment data from localStorage
+  const paymentData = JSON.parse(localStorage.getItem('fm_payment_status') || '{}');
 
-  // Update local cache
+  // Update payment status for this order
+  if (paymentReceived) {
+    paymentData[orderId] = { received: true, type: paymentType };
+  } else {
+    delete paymentData[orderId];
+  }
+
+  // Save to localStorage
+  localStorage.setItem('fm_payment_status', JSON.stringify(paymentData));
+
+  // Update local cache for immediate UI update
   const order = app.adminOrdersCache.find(o => o.id === orderId);
   if (order) {
     order.payment_received = paymentReceived;
     order.payment_type = paymentReceived ? paymentType : null;
   }
 
-  // Refresh the UI to update colors
-  loadAdminOrders('sent');
+  // Update the UI colors without full reload
+  const container = paidCheckbox.closest('div[style*="padding:12px"]');
+  if (container) {
+    if (paymentReceived) {
+      container.style.background = '#e8f5e9';
+      container.style.borderColor = '#c8e6c9';
+    } else {
+      container.style.background = '#fff3e0';
+      container.style.borderColor = '#ffe0b2';
+    }
+    // Update the status text
+    const statusSpan = container.querySelector('span:last-child');
+    if (statusSpan) {
+      if (paymentReceived) {
+        statusSpan.style.color = '#388e3c';
+        statusSpan.textContent = `✓ ${paymentType === 'online' ? 'Online' : 'Cash'} Payment`;
+      } else {
+        statusSpan.style.color = '#f57c00';
+        statusSpan.textContent = '⏳ Pending';
+      }
+    }
+  }
 };
+
+/**
+ * Get payment status from localStorage for an order.
+ * @param {string} orderId - Order ID
+ * @returns {object} Payment status object
+ */
+function getPaymentStatus(orderId) {
+  const paymentData = JSON.parse(localStorage.getItem('fm_payment_status') || '{}');
+  return paymentData[orderId] || { received: false, type: 'cash' };
+}
 
 /**
  * Share finalized bill via WhatsApp.
@@ -1616,6 +1656,10 @@ window.filterAdminOrders = function () {
 
     listContainer.innerHTML = filtered.map(o => {
       const items = typeof o.items === 'string' ? JSON.parse(o.items) : o.items;
+      // Load payment status from localStorage
+      const paymentStatus = getPaymentStatus(o.id);
+      o.payment_received = paymentStatus.received;
+      o.payment_type = paymentStatus.type;
       return `
       <div class="order-card">
         <div style="display:flex; justify-content:space-between; margin-bottom:12px; border-bottom:1px solid #f0f0f0; padding-bottom:8px;">
