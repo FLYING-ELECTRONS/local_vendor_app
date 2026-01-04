@@ -2551,35 +2551,57 @@ window.renderPurchaseList = async function () {
   const { data: orders } = await _supabase.from('orders').select('items').eq('status', 'pending');
 
   const needed = {};
-  orders.forEach(o => {
-    const items = typeof o.items === 'string' ? JSON.parse(o.items) : o.items;
-    items.forEach(i => {
-      if (!needed[i.productId]) needed[i.productId] = { name: i.name, unit: i.minQtyUnit, totalQty: 0, totalGrams: 0 };
-      needed[i.productId].totalQty += i.orderedQuantity;
-      if (i.minQtyUnit === '250g') {
-        const grams = i.customGrams || (i.orderedQuantity * 250);
-        needed[i.productId].totalGrams += grams;
-      }
+  if (orders && orders.length > 0) {
+    orders.forEach(o => {
+      const items = typeof o.items === 'string' ? JSON.parse(o.items) : o.items;
+      items.forEach(i => {
+        // Check if it's a packet/piece item (NOT 250g)
+        const isPacketItem = i.minQtyUnit !== '250g';
+
+        if (!needed[i.productId]) {
+          needed[i.productId] = {
+            name: i.name,
+            unit: i.minQtyUnit,
+            isPacket: isPacketItem,
+            totalQty: 0,
+            totalGrams: 0
+          };
+        }
+
+        if (isPacketItem) {
+          // For packets/pieces, add the quantity directly
+          needed[i.productId].totalQty += i.orderedQuantity;
+        } else {
+          // For weight-based items (250g), calculate grams
+          const grams = i.customGrams || (i.orderedQuantity * 250);
+          needed[i.productId].totalGrams += grams;
+        }
+      });
     });
-  });
+  }
+
+  const itemsList = Object.values(needed);
 
   const html = `
     <div style="padding:16px;">
       <div style="background:white; border-radius:12px; padding:16px;">
         <h3>Shopping List 🛒</h3>
-        <table style="width:100%; border-collapse:collapse;">
-          <thead><tr style="text-align:left; border-bottom:1px solid #eee;"><th style="padding:8px;">Item</th><th style="padding:8px;">Qty</th></tr></thead>
-          <tbody>
-            ${Object.values(needed).map(i => `
-              <tr style="border-bottom:1px solid #f9f9f9;">
-                <td style="padding:10px;">${i.name}</td>
-                <td style="padding:10px; font-weight:600;">
-                  ${i.unit === 'packet' ? i.totalQty + ' pkts' : (i.totalGrams / 1000).toFixed(2) + ' kg'}
-                </td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
+        ${itemsList.length === 0 ?
+      '<p style="color:#666; text-align:center; padding:20px;">No pending orders. Shopping list is empty.</p>' :
+      `<table style="width:100%; border-collapse:collapse;">
+            <thead><tr style="text-align:left; border-bottom:1px solid #eee;"><th style="padding:8px;">Item</th><th style="padding:8px;">Qty</th></tr></thead>
+            <tbody>
+              ${itemsList.map(i => `
+                <tr style="border-bottom:1px solid #f9f9f9;">
+                  <td style="padding:10px;">${i.name}</td>
+                  <td style="padding:10px; font-weight:600;">
+                    ${i.isPacket ? i.totalQty + ' pkts' : (i.totalGrams / 1000).toFixed(2) + ' kg'}
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>`
+    }
       </div>
     </div>
   `;
