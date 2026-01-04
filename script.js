@@ -831,6 +831,33 @@ window.adjustGrams = function (prodId, delta) {
 };
 
 /**
+ * Update cart quantity for packet/piece items.
+ * @param {string} prodId - Product ID
+ * @param {number} delta - Amount to add/subtract (1 or -1)
+ */
+window.updateCart = function (prodId, delta) {
+  const item = app.cart.find(i => i.id === prodId);
+  if (!item) return;
+
+  const newQty = item.quantity + delta;
+
+  if (newQty <= 0) {
+    // Remove item if quantity becomes 0 or less
+    app.cart = app.cart.filter(i => i.id !== prodId);
+  } else {
+    item.quantity = newQty;
+  }
+
+  saveCart();
+  renderBottomNav();
+
+  // If on cart screen, re-render
+  if (document.getElementById('content-area')) {
+    renderScreen('cart');
+  }
+};
+
+/**
  * Remove item from cart.
  * @param {string} prodId - Product ID
  */
