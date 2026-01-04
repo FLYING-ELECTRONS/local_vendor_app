@@ -142,6 +142,7 @@ function createCartItemHtml(item) {
        <button type="button" class="qty-btn" onclick="updateCart('${item.id}', -1)" style="width:28px; height:28px; padding:0; display:flex; align-items:center; justify-content:center;">-</button>
        <div style="width:30px; text-align:center; font-weight:600;">${item.quantity}</div>
        <button type="button" class="qty-btn" onclick="updateCart('${item.id}', 1)" style="width:28px; height:28px; padding:0; display:flex; align-items:center; justify-content:center;">+</button>
+       <button type="button" onclick="removeFromCart('${item.id}')" style="background:#f44336; color:white; border:none; width:28px; height:28px; border-radius:6px; cursor:pointer; display:flex; align-items:center; justify-content:center; margin-left:4px;">✕</button>
      </div>`
     :
     `<div style="display:flex; align-items:center; gap:2px;">
@@ -153,6 +154,7 @@ function createCartItemHtml(item) {
           onchange="setCustomQuantity('${item.id}', this.value)"
           style="width:55px; padding:4px; border:2px solid #4caf50; border-radius:6px; text-align:center; font-size:14px; font-weight:600; height:30px;">
        <button type="button" class="qty-btn" onclick="adjustGrams('${item.id}', 50)" style="width:28px; height:28px; padding:0; display:flex; align-items:center; justify-content:center;">+</button>
+       <button type="button" onclick="removeFromCart('${item.id}')" style="background:#f44336; color:white; border:none; width:28px; height:28px; border-radius:6px; cursor:pointer; display:flex; align-items:center; justify-content:center; margin-left:4px;">✕</button>
      </div>`;
 
   return `
