@@ -2547,7 +2547,8 @@ window.renderPurchaseList = async function () {
   if (!container) return;
   container.innerHTML = '<div class="spinner"></div>';
 
-  const { data: orders } = await _supabase.from('orders').select('items').neq('status', 'finalized');
+  // Only get PENDING orders for shopping list (not finalized or sent)
+  const { data: orders } = await _supabase.from('orders').select('items').eq('status', 'pending');
 
   const needed = {};
   orders.forEach(o => {
