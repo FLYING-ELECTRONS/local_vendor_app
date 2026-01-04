@@ -1229,6 +1229,7 @@ window.loadAdminOrders = async function (statusFilter) {
                   <input type="number" id="wt-${o.id}-${i.productId}" 
                     class="admin-input-sm" style="width:100%"
                     placeholder="Wt"
+                    data-unit="${i.minQtyUnit !== '250g' ? (i.minQtyUnit || 'pkt') : '250g'}"
                     value="${i.actualWeight || (i.minQtyUnit === '250g' ? (i.customGrams || (i.orderedQuantity * 250)) : i.orderedQuantity)}"
                     onchange="calculateTotal('${o.id}')">
                 </div>
@@ -1741,7 +1742,7 @@ window.filterAdminOrders = function () {
                 </div>
                 <div style="flex:1;">
                   <input type="number" id="wt-${o.id}-${i.productId}" 
-                    data-unit="${i.minQtyUnit || '250g'}"
+                    data-unit="${i.minQtyUnit !== '250g' ? (i.minQtyUnit || 'pkt') : '250g'}"
                     class="admin-input-sm" style="width:100%"
                     placeholder="${isPacket ? 'Qty' : 'Wt (g)'}"
                     value="${actualWeight}"
