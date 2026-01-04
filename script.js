@@ -141,7 +141,7 @@ function createCartItemHtml(item) {
   const controls = isPacket ?
     `<div style="display:flex; align-items:center; gap:2px;">
        <button type="button" class="qty-btn" onclick="updateCart('${item.id}', -1)" style="width:28px; height:28px; padding:0; display:flex; align-items:center; justify-content:center;">-</button>
-       <div style="width:30px; text-align:center; font-weight:600;">${item.quantity}</div>
+       <div id="cart-qty-${item.id}" style="width:30px; text-align:center; font-weight:600;">${item.quantity}</div>
        <button type="button" class="qty-btn" onclick="updateCart('${item.id}', 1)" style="width:28px; height:28px; padding:0; display:flex; align-items:center; justify-content:center;">+</button>
        <button type="button" onclick="removeFromCart('${item.id}')" style="background:#f44336; color:white; border:none; width:28px; height:28px; border-radius:6px; cursor:pointer; display:flex; align-items:center; justify-content:center; margin-left:4px;">✕</button>
      </div>`
@@ -159,7 +159,7 @@ function createCartItemHtml(item) {
      </div>`;
 
   return `
-    <div style="display:flex; gap:12px; align-items:center; background:white; padding:12px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+    <div id="cart-item-${item.id}" style="display:flex; gap:12px; align-items:center; background:white; padding:12px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
       <div style="width:84px; height:84px; background-image: url('${product.image}'); background-size:cover; background-position:center; border-radius:8px; flex-shrink:0;"></div>
       <div style="flex:1;">
         <div style="font-weight:700; margin-bottom:6px;">${product.name}</div>
@@ -844,16 +844,21 @@ window.updateCart = function (prodId, delta) {
   if (newQty <= 0) {
     // Remove item if quantity becomes 0 or less
     app.cart = app.cart.filter(i => i.id !== prodId);
-  } else {
-    item.quantity = newQty;
-  }
-
-  saveCart();
-  renderBottomNav();
-
-  // If on cart screen, re-render
-  if (document.getElementById('content-area')) {
+    saveCart();
+    renderBottomNav();
+    // Need to re-render cart to remove the item
     renderScreen('cart');
+  } else {
+    // Just update the quantity
+    item.quantity = newQty;
+    saveCart();
+    renderBottomNav();
+
+    // Update only the quantity display (no full re-render!)
+    const qtyDisplay = document.getElementById(`cart-qty-${prodId}`);
+    if (qtyDisplay) {
+      qtyDisplay.textContent = newQty;
+    }
   }
 };
 
