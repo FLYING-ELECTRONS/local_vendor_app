@@ -508,78 +508,7 @@
   <script src="script.js" defer></script>
 
   <script>
-    // --- RESTORED INLINE FUNCTIONS ---
-
-    // 1. ORDER WINDOW TOGGLE
-    window.toggleOrderWindow = async function () {
-      const toggle = document.getElementById('orders-toggle');
-      const isOpen = toggle.checked;
-
-      try {
-        const { error } = await window.supabase.from('app_settings').upsert({
-          key: 'order_window_open',
-          value: isOpen ? 'true' : 'false',
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'key' });
-
-        if (error) throw error;
-
-        // Sync locally
-        localStorage.setItem('fm_orders_open', isOpen ? 'true' : 'false');
-
-        // Update UI knob
-        const knob = document.getElementById('toggle-knob');
-        if (isOpen) {
-          knob.style.left = '26px';
-          knob.style.background = 'white';
-          toggle.parentElement.querySelector('span').innerText = 'Open';
-        } else {
-          knob.style.left = '2px';
-          toggle.parentElement.querySelector('span').innerText = 'Closed';
-        }
-
-      } catch (e) {
-        console.error(e);
-        alert('Failed to switch. Check internet.');
-        toggle.checked = !isOpen; // Revert
-      }
-    };
-
-    // 2. ADMIN TABS
-    window.switchAdminTab = function (tab) {
-      document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
-      document.getElementById('tab-' + tab).classList.add('active');
-
-      const list = document.getElementById('admin-orders-list');
-      list.innerHTML = '<div class="spinner"></div>';
-
-      switch (tab) {
-        case 'pending':
-        case 'finalized':
-          loadAdminOrders(tab);
-          break;
-        case 'products':
-          loadAdminProducts(); // Ensure this exists or imported
-          break;
-        case 'stats':  // Was analytics
-          if (window.renderAnalytics) window.renderAnalytics();
-          else list.innerHTML = 'Stats coming soon';
-          break;
-        case 'shopping':
-          renderPurchaseList();
-          break;
-        case 'profit':
-          renderProfitReport();
-          break;
-        case 'customers':
-          if (window.renderCustomerHistory) window.renderCustomerHistory();
-          else list.innerHTML = 'Load error';
-          break;
-      }
-    };
-
-
-    // 9. Load Customers Tab
+    // Inline scripts removed to prefer script.js versions
   </script>
   <script src="admin_helpers.js"></script>
   <script src="analytics_functions.js"></script>
