@@ -1333,7 +1333,10 @@ window.deleteItemFromOrder = async function (orderId, productId) {
     await _supabase.from('orders').update({ items: JSON.stringify(newItems) }).eq('id', orderId);
   }
 
-  loadAdminOrders('pending');
+  // Refresh current active tab instead of always 'pending'
+  const activeTab = document.querySelector('.cat-chip.active');
+  const currentTab = activeTab ? activeTab.id.replace('tab-', '') : 'pending';
+  loadAdminOrders(currentTab);
 };
 
 /**
@@ -1343,7 +1346,10 @@ window.deleteItemFromOrder = async function (orderId, productId) {
 window.rejectOrder = async function (orderId) {
   if (!confirm('Delete this order?')) return;
   await _supabase.from('orders').delete().eq('id', orderId);
-  loadAdminOrders('pending');
+  // Refresh current active tab instead of always 'pending'
+  const activeTab = document.querySelector('.cat-chip.active');
+  const currentTab = activeTab ? activeTab.id.replace('tab-', '') : 'pending';
+  loadAdminOrders(currentTab);
 };
 
 
