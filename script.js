@@ -87,7 +87,8 @@ async function syncPricesFromSupabase() {
 function createProductCardHtml(product) {
   const cartItem = app.cart.find(i => i.id === product.id);
   const qty = cartItem ? cartItem.quantity : 0;
-  const unitDisplay = product.minimum_quantity_unit === 'packet' ? 'pkt' : '250g';
+  const isStdPacket = product.minimum_quantity_unit !== '250g';
+  const unitDisplay = isStdPacket ? (product.minimum_quantity_unit === 'pc' ? 'pc' : 'pkt') : '250g';
 
   return `
     <div class="product-card">
@@ -135,7 +136,7 @@ function createCartItemHtml(item) {
   // Price is per 250g. So quantity * price is correct.
   const perItemTotal = (product && product.price) ? (product.price * item.quantity) : null;
 
-  const isPacket = product.minimum_quantity_unit === 'packet';
+  const isPacket = product.minimum_quantity_unit !== '250g';
 
   const controls = isPacket ?
     `<div style="display:flex; align-items:center; gap:2px;">
@@ -1236,16 +1237,20 @@ window.calculateTotal = function (orderId) {
     const prefix = `wt-${orderId}-`;
     const productId = row.id.slice(prefix.length);
 
-    const wtVal = parseFloat(document.getElementById(`wt-${orderId}-${productId}`).value) || 0;
+    // Get input element to check data-unit
+    const inputEl = document.getElementById(`wt-${orderId}-${productId}`);
+    const unit = inputEl.getAttribute('data-unit') || '250g';
+
+    const wtVal = parseFloat(inputEl.value) || 0;
     const priceVal = parseFloat(document.getElementById(`price-${orderId}-${productId}`).value) || 0;
 
-    // Calculate subtotal based on weight (grams) or packets
+    // Calculate subtotal
     let subtotal = 0;
-    if (wtVal < 100) {
-      // Likely packets
+    if (unit !== '250g') {
+      // Packets / Pieces / Bunches -> Price per Unit * Quantity
       subtotal = wtVal * priceVal;
     } else {
-      // Weight in grams
+      // Weight in grams -> Price per 250g
       subtotal = (wtVal / 250) * priceVal;
     }
     grandTotal += subtotal;
@@ -1278,7 +1283,7 @@ window.saveOrder = async function (orderId) {
     const priceVal = parseFloat(document.getElementById(`price-${orderId}-${item.productId}`).value) || 0;
 
     let finalPrice = 0;
-    if (item.minQtyUnit === 'packet') {
+    if (item.minQtyUnit !== '250g') {
       finalPrice = wtVal * priceVal;
     } else {
       finalPrice = (wtVal / 250) * priceVal;
@@ -1542,9 +1547,12 @@ window.filterAdminOrders = function () {
 
         <div style="background:#f9f9f9; padding:10px; border-radius:8px;">
           ${items.map(i => {
-      const unit = i.minQtyUnit === 'packet' ? 'pkt' : '250g';
+      const isPacket = i.minQtyUnit !== '250g';
+      const unitLabel = isPacket ? (i.minQtyUnit === 'pc' ? 'pc' : 'pkt') : 'g';
       const prefillPrice = i.pricePer250gAtOrder || currentPrices[i.productId] || '';
-      const actualWeight = i.actualWeight || (i.minQtyUnit === '250g' ? (i.customGrams || (i.orderedQuantity * 250)) : i.orderedQuantity);
+
+      // If packet/pc, weight is Quantity (e.g. 1, 2). If 250g, weight is Grams (250, 500).
+      const actualWeight = i.actualWeight || (isPacket ? i.orderedQuantity : (i.customGrams || (i.orderedQuantity * 250)));
 
       return `
               <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
@@ -1554,20 +1562,21 @@ window.filterAdminOrders = function () {
                 <div style="flex:2;">
                   <div style="font-size:14px; font-weight:500;">${i.name}</div>
                   <div style="font-size:11px; color:#666;">
-                    Ordered: ${i.minQtyUnit === '250g' ? (i.customGrams || (i.orderedQuantity * 250)) + 'g' : i.orderedQuantity + ' pkt'}
+                    Ordered: ${isPacket ? i.orderedQuantity + ' ' + unitLabel : (i.customGrams || (i.orderedQuantity * 250)) + 'g'}
                   </div>
                 </div>
                 <div style="flex:1;">
                   <input type="number" id="wt-${o.id}-${i.productId}" 
+                    data-unit="${i.minQtyUnit || '250g'}"
                     class="admin-input-sm" style="width:100%"
-                    placeholder="Wt"
+                    placeholder="${isPacket ? 'Qty' : 'Wt (g)'}"
                     value="${actualWeight}"
                     onchange="calculateTotal('${o.id}')">
                 </div>
                 <div style="flex:1;">
                   <input type="number" id="price-${o.id}-${i.productId}" 
                     class="admin-input-sm" style="width:100%" 
-                    placeholder="Rate"
+                    placeholder="${isPacket ? 'Rate/Unit' : 'Rate/250g'}"
                     value="${prefillPrice}"
                     onchange="calculateTotal('${o.id}')">
                 </div>
