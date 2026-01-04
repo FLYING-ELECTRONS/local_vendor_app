@@ -88,7 +88,7 @@ function createProductCardHtml(product) {
   const cartItem = app.cart.find(i => i.id === product.id);
   const qty = cartItem ? cartItem.quantity : 0;
   const isStdPacket = product.minimum_quantity_unit !== '250g';
-  const unitDisplay = isStdPacket ? (product.minimum_quantity_unit === 'pc' ? 'pc' : 'pkt') : '250g';
+  const unitDisplay = isStdPacket ? (product.minimum_quantity_unit || 'pkt') : '250g';
 
   return `
     <div class="product-card" id="product-card-${product.id}">
@@ -1723,7 +1723,7 @@ window.filterAdminOrders = function () {
         <div style="background:#f9f9f9; padding:10px; border-radius:8px;">
           ${items.map(i => {
         const isPacket = i.minQtyUnit !== '250g';
-        const unitLabel = isPacket ? (i.minQtyUnit === 'pc' ? 'pc' : 'pkt') : 'g';
+        const unitLabel = isPacket ? (i.minQtyUnit || 'pkt') : 'g';
         const prefillPrice = i.pricePer250gAtOrder || currentPrices[i.productId] || '';
 
         // If packet/pc, weight is Quantity (e.g. 1, 2). If 250g, weight is Grams (250, 500).
@@ -1954,7 +1954,7 @@ window.printOrders = function () {
 
     items.forEach(item => {
       const isPacket = item.minQtyUnit !== '250g';
-      const unitLabel = isPacket ? (item.minQtyUnit === 'pc' ? 'pc' : 'pkt') : 'g';
+      const unitLabel = isPacket ? (item.minQtyUnit || 'pkt') : 'g';
       const ordered = isPacket ? `${item.orderedQuantity} ${unitLabel}` : `${item.customGrams || (item.orderedQuantity * 250)}g`;
       const actual = item.actualWeight ? (isPacket ? `${item.actualWeight} ${unitLabel}` : `${item.actualWeight}g`) : '-';
       const rate = item.pricePer250gAtOrder ? `₹${item.pricePer250gAtOrder}/${isPacket ? unitLabel : '250g'}` : '-';
