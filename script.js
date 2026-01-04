@@ -98,19 +98,16 @@ function createProductCardHtml(product) {
         ${qty === 0 ?
       `<button class="btn btn-primary btn-sm btn-block" onclick="addToCart('${product.id}')">Add</button>` :
       product.minimum_quantity_unit === '250g' ?
-        `<div style="display:flex; align-items:center; justify-content:center; gap:8px;">
-          <button type="button" class="qty-btn" onclick="adjustGrams('${product.id}', -50)">-</button>
+        `<div style="display:flex; align-items:center; justify-content:center; gap:2px;">
+          <button type="button" class="qty-btn" onclick="adjustGrams('${product.id}', -50)" style="width:28px; height:28px; padding:0; display:flex; align-items:center; justify-content:center;">-</button>
           <input type="number"
             id="grams-${product.id}"
             value="${cartItem && cartItem.customGrams ? cartItem.customGrams : qty * 250}"
             min="0"
             step="50"
-            placeholder="grams"
             onchange="setCustomQuantity('${product.id}', this.value)"
-            style="width:80px; padding:8px; border:2px solid #4caf50; border-radius:8px; text-align:center; font-size:16px; font-weight:600;">
-          <button type="button" class="qty-btn" onclick="adjustGrams('${product.id}', 50)">+</button>
-          <span style="font-size:14px; color:#666;">g</span>
-          <button type="button" onclick="removeFromCart('${product.id}')" style="background:#f44336; color:white; border:none; padding:6px 10px; border-radius:6px; cursor:pointer;">✕</button>
+            style="width:55px; padding:4px; border:2px solid #4caf50; border-radius:6px; text-align:center; font-size:14px; font-weight:600; height:30px;">
+          <button type="button" class="qty-btn" onclick="adjustGrams('${product.id}', 50)" style="width:28px; height:28px; padding:0; display:flex; align-items:center; justify-content:center;">+</button>
         </div>` :
         `<div class="qty-selector">
           <button type="button" class="qty-btn" onclick="updateCart('${product.id}', -1)">-</button>
