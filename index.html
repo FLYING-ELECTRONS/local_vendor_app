@@ -410,6 +410,77 @@
         transform: rotate(360deg);
       }
     }
+
+    /* --- PRINT STYLES --- */
+    @media print {
+      body {
+        max-width: 100%;
+        padding: 0;
+        box-shadow: none;
+        background: white;
+      }
+
+      .header,
+      .bottom-nav,
+      #auth-screen,
+      #loading-overlay,
+      .category-tabs,
+      .search-bar-container,
+      .no-print {
+        display: none !important;
+      }
+
+      #main-app {
+        display: block !important;
+      }
+
+      #content-area {
+        padding: 10px;
+      }
+
+      .order-card {
+        page-break-inside: avoid;
+        break-inside: avoid;
+        border: 1px solid #ccc;
+        box-shadow: none;
+        margin-bottom: 15px;
+      }
+
+      .btn,
+      button {
+        display: none !important;
+      }
+
+      .admin-input-sm {
+        border: none;
+        background: transparent;
+        font-weight: 600;
+      }
+
+      /* Print header */
+      .print-header {
+        display: block !important;
+        text-align: center;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #333;
+      }
+
+      .print-header h1 {
+        margin: 0;
+        font-size: 24px;
+      }
+
+      .print-header .print-date {
+        color: #666;
+        font-size: 12px;
+      }
+    }
+
+    /* Hidden by default, shown only in print */
+    .print-header {
+      display: none;
+    }
   </style>
   <script>
     window.onerror = function (msg, url, lineNo, columnNo, error) {
