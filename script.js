@@ -339,8 +339,15 @@ async function renderOrdersScreen() {
     return `<p class="text-center text-muted" style="padding: 20px;">No past orders.</p>`;
   }
 
+  // Store for printing
+  app.customerOrdersCache = data;
+
   return `
     <div class="padded-container">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <h3 style="margin:0;">My Orders</h3>
+        <button class="btn btn-outline" style="padding:8px 12px; font-size:13px;" onclick="printMyOrders()">🖨️ Print</button>
+      </div>
       ${data.map(order => createOrderCardHtml(order)).join('')}
     </div>
   `;
@@ -1120,13 +1127,14 @@ window.loadAdminOrders = async function (statusFilter) {
     }
 
     const searchHtml = `
-    <div style="padding:10px; display:flex; gap:10px; background:white; margin-bottom:12px; border-radius:8px; border:1px solid #eee;">
-      <input type="text" id="admin-search" placeholder="Search customer..." style="flex:1; padding:8px; border:1px solid #ddd; border-radius:6px;" onkeyup="filterAdminOrders()">
+    <div style="padding:10px; display:flex; gap:10px; background:white; margin-bottom:12px; border-radius:8px; border:1px solid #eee; flex-wrap:wrap;">
+      <input type="text" id="admin-search" placeholder="Search customer..." style="flex:1; min-width:120px; padding:8px; border:1px solid #ddd; border-radius:6px;" onkeyup="filterAdminOrders()">
       <select id="admin-sort" style="width:100px; padding:8px; border:1px solid #ddd; border-radius:6px;" onchange="filterAdminOrders()">
         <option value="newest">Newest</option>
         <option value="oldest">Oldest</option>
         <option value="name">Name</option>
       </select>
+      <button class="btn btn-outline no-print" style="padding:8px 12px; font-size:13px;" onclick="printOrders()">🖨️ Print</button>
     </div>
     <div id="filtered-orders-list"></div>
     `;
@@ -1683,6 +1691,262 @@ function setLoading(isLoading) {
     else overlay.classList.add('hidden');
   }
 }
+
+/**
+ * Print all visible orders in the current tab.
+ * Opens a new window with a clean printable view.
+ */
+window.printOrders = function () {
+  if (!app.adminOrdersCache || app.adminOrdersCache.length === 0) {
+    alert('No orders to print!');
+    return;
+  }
+
+  // Get current tab name
+  const activeTab = document.querySelector('.cat-chip.active');
+  const tabName = activeTab ? activeTab.textContent.trim() : 'Orders';
+
+  // Get current date
+  const today = new Date().toLocaleDateString('en-IN', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+
+  // Build printable HTML
+  let printHtml = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Orders - Shree Gor Veggies</title>
+      <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: Arial, sans-serif; padding: 20px; font-size: 12px; }
+        .print-header { text-align: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #333; }
+        .print-header h1 { font-size: 22px; margin-bottom: 5px; }
+        .print-header .subtitle { color: #666; font-size: 14px; }
+        .print-header .date { color: #888; font-size: 11px; margin-top: 5px; }
+        .order-card { border: 1px solid #ccc; border-radius: 8px; padding: 12px; margin-bottom: 15px; page-break-inside: avoid; }
+        .order-header { display: flex; justify-content: space-between; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 10px; }
+        .customer-name { font-weight: bold; font-size: 14px; }
+        .customer-info { color: #666; font-size: 11px; }
+        .order-id { font-weight: bold; color: #4caf50; }
+        .order-time { font-size: 10px; color: #888; }
+        .items-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+        .items-table th, .items-table td { padding: 5px 8px; text-align: left; border-bottom: 1px solid #f0f0f0; }
+        .items-table th { background: #f9f9f9; font-size: 10px; text-transform: uppercase; color: #666; }
+        .items-table td { font-size: 11px; }
+        .total-row { font-weight: bold; background: #e8f5e9; }
+        .summary { margin-top: 20px; padding: 15px; background: #f9f9f9; border-radius: 8px; }
+        .summary h3 { margin-bottom: 10px; }
+        @media print {
+          body { padding: 10px; }
+          .no-print { display: none !important; }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="print-header">
+        <h1>🥬 Shree Gor Veggies</h1>
+        <div class="subtitle">${tabName} Orders</div>
+        <div class="date">${today}</div>
+      </div>
+  `;
+
+  let grandTotal = 0;
+  let orderCount = 0;
+
+  // Generate order cards
+  app.adminOrdersCache.forEach(o => {
+    const items = typeof o.items === 'string' ? JSON.parse(o.items) : o.items;
+    const orderTotal = o.total_amount || 0;
+    grandTotal += orderTotal;
+    orderCount++;
+
+    const orderTime = new Date(o.created_at).toLocaleString('en-IN', {
+      dateStyle: 'short',
+      timeStyle: 'short'
+    });
+
+    printHtml += `
+      <div class="order-card">
+        <div class="order-header">
+          <div>
+            <div class="customer-name">${o.customer_name}</div>
+            <div class="customer-info">📞 ${o.customer_phone} | 🏠 ${o.house_no || 'N/A'}</div>
+          </div>
+          <div style="text-align: right;">
+            <div class="order-id">#${o.id.slice(0, 6).toUpperCase()}</div>
+            <div class="order-time">${orderTime}</div>
+          </div>
+        </div>
+        <table class="items-table">
+          <thead>
+            <tr><th>Item</th><th>Ordered</th><th>Actual</th><th>Rate</th><th style="text-align:right;">Amount</th></tr>
+          </thead>
+          <tbody>
+    `;
+
+    items.forEach(item => {
+      const isPacket = item.minQtyUnit !== '250g';
+      const unitLabel = isPacket ? (item.minQtyUnit === 'pc' ? 'pc' : 'pkt') : 'g';
+      const ordered = isPacket ? `${item.orderedQuantity} ${unitLabel}` : `${item.customGrams || (item.orderedQuantity * 250)}g`;
+      const actual = item.actualWeight ? (isPacket ? `${item.actualWeight} ${unitLabel}` : `${item.actualWeight}g`) : '-';
+      const rate = item.pricePer250gAtOrder ? `₹${item.pricePer250gAtOrder}/${isPacket ? unitLabel : '250g'}` : '-';
+      const amount = item.finalPrice ? `₹${item.finalPrice}` : '-';
+
+      printHtml += `<tr><td>${item.name}</td><td>${ordered}</td><td>${actual}</td><td>${rate}</td><td style="text-align:right;">${amount}</td></tr>`;
+    });
+
+    printHtml += `
+            <tr class="total-row"><td colspan="4">Order Total</td><td style="text-align:right;">₹${orderTotal}</td></tr>
+          </tbody>
+        </table>
+      </div>
+    `;
+  });
+
+  // Add summary
+  printHtml += `
+      <div class="summary">
+        <h3>📊 Summary</h3>
+        <p><strong>Total Orders:</strong> ${orderCount}</p>
+        <p><strong>Grand Total:</strong> ₹${grandTotal}</p>
+      </div>
+      <div class="no-print" style="margin-top: 20px; text-align: center;">
+        <button onclick="window.print()" style="padding: 12px 24px; font-size: 16px; background: #4caf50; color: white; border: none; border-radius: 8px; cursor: pointer;">🖨️ Print / Save PDF</button>
+      </div>
+    </body>
+    </html>
+  `;
+
+  // Open print window
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(printHtml);
+  printWindow.document.close();
+};
+
+/**
+ * Print customer's own orders.
+ * Opens a new window with a clean printable view of their order history.
+ */
+window.printMyOrders = function () {
+  if (!app.customerOrdersCache || app.customerOrdersCache.length === 0) {
+    alert('No orders to print!');
+    return;
+  }
+
+  const today = new Date().toLocaleDateString('en-IN', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+
+  let printHtml = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>My Orders - Shree Gor Veggies</title>
+      <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: Arial, sans-serif; padding: 20px; font-size: 12px; }
+        .print-header { text-align: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #333; }
+        .print-header h1 { font-size: 22px; margin-bottom: 5px; }
+        .print-header .customer-name { color: #4caf50; font-size: 16px; font-weight: bold; }
+        .print-header .date { color: #888; font-size: 11px; margin-top: 5px; }
+        .order-card { border: 1px solid #ccc; border-radius: 8px; padding: 12px; margin-bottom: 15px; page-break-inside: avoid; }
+        .order-header { display: flex; justify-content: space-between; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 10px; }
+        .order-id { font-weight: bold; color: #4caf50; font-size: 14px; }
+        .order-time { font-size: 11px; color: #666; }
+        .status { padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; }
+        .status-pending { background: #fff3e0; color: #f57c00; }
+        .status-finalized { background: #e3f2fd; color: #1976d2; }
+        .status-sent { background: #e8f5e9; color: #388e3c; }
+        .items-list { margin-bottom: 10px; }
+        .item-row { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #f0f0f0; }
+        .item-name { font-weight: 500; }
+        .item-details { color: #666; font-size: 11px; }
+        .order-total { text-align: right; font-weight: bold; font-size: 14px; margin-top: 8px; padding-top: 8px; border-top: 1px solid #eee; }
+        .summary { margin-top: 20px; padding: 15px; background: #f9f9f9; border-radius: 8px; }
+        @media print {
+          body { padding: 10px; }
+          .no-print { display: none !important; }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="print-header">
+        <h1>🥬 Shree Gor Veggies</h1>
+        <div class="customer-name">${app.user.name}</div>
+        <div class="date">${today}</div>
+      </div>
+  `;
+
+  let grandTotal = 0;
+
+  app.customerOrdersCache.forEach(o => {
+    const items = typeof o.items === 'string' ? JSON.parse(o.items) : o.items;
+    const orderTotal = o.total_amount || 0;
+    grandTotal += orderTotal;
+
+    const orderTime = new Date(o.created_at).toLocaleString('en-IN', {
+      dateStyle: 'short',
+      timeStyle: 'short'
+    });
+
+    const statusClass = o.status === 'sent' ? 'status-sent' : (o.status === 'finalized' ? 'status-finalized' : 'status-pending');
+    const statusText = o.status === 'sent' ? 'Delivered' : (o.status === 'finalized' ? 'Ready' : 'Pending');
+
+    printHtml += `
+      <div class="order-card">
+        <div class="order-header">
+          <div>
+            <div class="order-id">#${o.id.slice(0, 6).toUpperCase()}</div>
+            <div class="order-time">${orderTime}</div>
+          </div>
+          <div class="status ${statusClass}">${statusText}</div>
+        </div>
+        <div class="items-list">
+    `;
+
+    items.forEach(item => {
+      const isPacket = item.minQtyUnit !== '250g';
+      const unitLabel = isPacket ? (item.minQtyUnit === 'pc' ? 'pc' : 'pkt') : 'g';
+      const qty = isPacket ? `${item.orderedQuantity} ${unitLabel}` : `${item.customGrams || (item.orderedQuantity * 250)}g`;
+      const price = item.finalPrice ? `₹${item.finalPrice}` : (orderTotal > 0 ? '-' : 'TBD');
+
+      printHtml += `
+        <div class="item-row">
+          <div><span class="item-name">${item.name}</span> <span class="item-details">(${qty})</span></div>
+          <div>${price}</div>
+        </div>
+      `;
+    });
+
+    printHtml += `
+        </div>
+        <div class="order-total">Total: ₹${orderTotal || 'TBD'}</div>
+      </div>
+    `;
+  });
+
+  printHtml += `
+      <div class="summary">
+        <strong>All Orders Total: ₹${grandTotal}</strong>
+      </div>
+      <div class="no-print" style="margin-top: 20px; text-align: center;">
+        <button onclick="window.print()" style="padding: 12px 24px; font-size: 16px; background: #4caf50; color: white; border: none; border-radius: 8px; cursor: pointer;">🖨️ Print / Save PDF</button>
+      </div>
+    </body>
+    </html>
+  `;
+
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(printHtml);
+  printWindow.document.close();
+};
 
 /**
  * Show toast notification.
