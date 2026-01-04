@@ -1170,7 +1170,7 @@ window.loadAdminOrders = async function (statusFilter) {
     }
 
     const searchHtml = `
-    <div style="padding:10px; display:flex; gap:10px; background:white; margin-bottom:12px; border-radius:8px; border:1px solid #eee; flex-wrap:wrap;">
+    <div style="padding:10px; display:flex; gap:10px; background:white; margin-bottom:12px; border-radius:8px; border:1px solid #eee; flex-wrap:wrap; align-items:center;">
       <input type="text" id="admin-search" placeholder="Search customer..." style="flex:1; min-width:120px; padding:8px; border:1px solid #ddd; border-radius:6px;" onkeyup="filterAdminOrders()">
       <select id="admin-sort" style="width:100px; padding:8px; border:1px solid #ddd; border-radius:6px;" onchange="filterAdminOrders()">
         <option value="newest">Newest</option>
@@ -1178,6 +1178,7 @@ window.loadAdminOrders = async function (statusFilter) {
         <option value="name">Name</option>
       </select>
       <button class="btn btn-outline no-print" style="padding:8px 12px; font-size:13px;" onclick="printOrders()">🖨️ Print</button>
+      <button class="btn btn-outline no-print" style="padding:8px 12px; font-size:13px; color: #f44336; border-color: #f44336;" onclick="deleteAllOrders('${statusFilter}')">🗑️ All</button>
     </div>
     <div id="filtered-orders-list"></div>
     `;
@@ -1188,6 +1189,28 @@ window.loadAdminOrders = async function (statusFilter) {
 
     container.innerHTML = modalHtml + data.map(o => {
       const items = typeof o.items === 'string' ? JSON.parse(o.items) : o.items;
+
+      // Determine buttons based on status
+      let actionButtons = '';
+      if (o.status === 'finalized') {
+        actionButtons = `
+           <button class="btn btn-outline" style="padding:6px 10px; font-size:13px; color:#25D366; border-color:#25D366; margin-right:6px;" onclick="shareBill('${o.id}')">Share Bill 📱</button>
+           <button class="btn btn-outline" style="padding:6px 10px; font-size:13px;" onclick="rollbackOrder('${o.id}')">↩️</button>
+           <button class="btn btn-outline" style="padding:6px 10px; font-size:13px; color:red; border-color:red; margin-left:6px;" onclick="deleteOrder('${o.id}')">🗑️</button>
+        `;
+      } else if (o.status === 'sent') {
+        actionButtons = `
+           <button class="btn btn-outline" style="padding:6px 10px; font-size:13px;" onclick="rollbackSentOrder('${o.id}')">Order Sent ↩️</button>
+           <button class="btn btn-outline" style="padding:6px 10px; font-size:13px; color:red; border-color:red; margin-left:6px;" onclick="deleteOrder('${o.id}')">🗑️</button>
+         `;
+      } else {
+        // Pending
+        actionButtons = `
+           <button class="btn btn-outline" style="color:red; border-color:red; padding:8px;" onclick="deleteOrder('${o.id}')">✕</button>
+           <button class="btn btn-primary" onclick="saveOrder('${o.id}')">Finalize & Save</button>
+        `;
+      }
+
       return `
       <div class="order-card">
         <div style="display:flex; justify-content:space-between; margin-bottom:12px; border-bottom:1px solid #f0f0f0; padding-bottom:8px;">
@@ -1216,7 +1239,7 @@ window.loadAdminOrders = async function (statusFilter) {
 
         return `
               <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-                ${o.status !== 'finalized' ?
+                ${o.status !== 'finalized' && o.status !== 'sent' ?
             `<div onclick="deleteItemFromOrder('${o.id}', '${i.productId}')" style="color:#d32f2f; font-weight:bold; font-size:18px; cursor:pointer; padding:0 4px; line-height:1;">✕</div>`
             : ''}
                 <div style="flex:2;">
@@ -1246,7 +1269,7 @@ window.loadAdminOrders = async function (statusFilter) {
               </div>
             `;
       }).join('')}
-          ${o.status !== 'finalized' ? `<div style="text-align:center; margin-top:12px; border-top:1px dashed #eee; padding-top:8px;"><button class="btn btn-outline" style="padding:6px 16px; font-size:12px;" onclick="showAddItemModal('${o.id}')">+ Add Item</button></div>` : ''}
+          ${o.status !== 'finalized' && o.status !== 'sent' ? `<div style="text-align:center; margin-top:12px; border-top:1px dashed #eee; padding-top:8px;"><button class="btn btn-outline" style="padding:6px 16px; font-size:12px;" onclick="showAddItemModal('${o.id}')">+ Add Item</button></div>` : ''}
         </div>
 
         <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px;">
@@ -1255,12 +1278,7 @@ window.loadAdminOrders = async function (statusFilter) {
             <div style="font-size:20px; font-weight:700; color:var(--primary);">₹<span id="total-${o.id}">${o.total_amount || 0}</span></div>
           </div>
           <div style="display:flex; gap:8px;">
-            ${o.status === 'finalized' ?
-          `<button class="btn btn-outline" style="padding:6px 10px; font-size:13px; color:#25D366; border-color:#25D366; margin-right:6px;" onclick="shareBill('${o.id}')">Share Bill 📱</button>
-           <button class="btn btn-outline" style="padding:6px 10px; font-size:13px;" onclick="rollbackOrder('${o.id}')">↩️</button>` :
-          `<button class="btn btn-outline" style="color:red; border-color:red; padding:8px;" onclick="rejectOrder('${o.id}')">✕</button>
-               <button class="btn btn-primary" onclick="saveOrder('${o.id}')">Finalize & Save</button>`
-        }
+            ${actionButtons}
           </div>
         </div>
       </div>
@@ -1275,6 +1293,68 @@ window.loadAdminOrders = async function (statusFilter) {
     container.innerHTML = '<p class="text-danger">Error loading orders</p>';
   }
 };
+
+/**
+ * Delete a specific order (Reject/Delete).
+ * @param {string} orderId - Order ID
+ */
+window.deleteOrder = async function (orderId) {
+  if (!confirm('Are you sure you want to DELETE this order permanently?')) return;
+
+  const { error } = await _supabase.from('orders').delete().eq('id', orderId);
+
+  if (error) {
+    alert('Error deleting order: ' + error.message);
+  } else {
+    // Refresh current active tab
+    const activeTab = document.querySelector('.cat-chip.active');
+    const currentTab = activeTab ? activeTab.id.replace('tab-', '') : 'pending';
+    loadAdminOrders(currentTab);
+    toast('Order deleted');
+  }
+};
+
+/**
+ * Delete ALL orders in the current category/status.
+ * @param {string} statusFilter - The current status filter (e.g., 'pending', 'finalized', 'sent')
+ */
+window.deleteAllOrders = async function (statusFilter) {
+  if (!statusFilter) return;
+
+  // Confirm with user (double confirmation for safety)
+  if (!confirm(`WARNING: This will delete ALL visible ${statusFilter.toUpperCase()} orders.\n\nAre you sure?`)) return;
+  if (!confirm(`Final Confirmation: Delete ALL ${statusFilter.toUpperCase()} orders? This cannot be undone.`)) return;
+
+  setLoading(true);
+
+  let query = _supabase.from('orders').delete();
+
+  if (statusFilter === 'pending') {
+    // Pending means NOT finalized AND NOT sent
+    query = query.neq('status', 'finalized').neq('status', 'sent');
+  } else {
+    // Exact match for other statuses (finalized, sent)
+    query = query.eq('status', statusFilter);
+  }
+
+  const { error } = await query;
+
+  setLoading(false);
+
+  if (error) {
+    console.error('Delete All Error:', error);
+    alert('Failed to delete orders: ' + error.message);
+  } else {
+    alert(`All ${statusFilter} orders have been deleted.`);
+    loadAdminOrders(statusFilter);
+  }
+};
+
+/**
+ * Reject/delete order (Legacy alias).
+ * @param {string} orderId - Order ID
+ */
+window.rejectOrder = window.deleteOrder;
 
 /**
  * Calculate order total dynamically.
@@ -1302,7 +1382,7 @@ window.calculateTotal = function (orderId) {
       // Packets / Pieces / Bunches -> Price per Unit * Quantity
       subtotal = wtVal * priceVal;
     } else {
-      // Weight in grams -> Price per 250g
+      // Weight in grams / 250 * Price per 250g
       subtotal = (wtVal / 250) * priceVal;
     }
     grandTotal += subtotal;
@@ -1385,19 +1465,6 @@ window.deleteItemFromOrder = async function (orderId, productId) {
     await _supabase.from('orders').update({ items: JSON.stringify(newItems) }).eq('id', orderId);
   }
 
-  // Refresh current active tab instead of always 'pending'
-  const activeTab = document.querySelector('.cat-chip.active');
-  const currentTab = activeTab ? activeTab.id.replace('tab-', '') : 'pending';
-  loadAdminOrders(currentTab);
-};
-
-/**
- * Reject/delete order.
- * @param {string} orderId - Order ID
- */
-window.rejectOrder = async function (orderId) {
-  if (!confirm('Delete this order?')) return;
-  await _supabase.from('orders').delete().eq('id', orderId);
   // Refresh current active tab instead of always 'pending'
   const activeTab = document.querySelector('.cat-chip.active');
   const currentTab = activeTab ? activeTab.id.replace('tab-', '') : 'pending';
