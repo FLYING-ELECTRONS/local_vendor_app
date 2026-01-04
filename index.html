@@ -223,7 +223,7 @@
       align-items: center;
       justify-content: center;
       color: #999;
-      font-size: 0;
+      font-size: 11px;
       font-weight: 500;
       cursor: pointer;
       position: relative;
@@ -441,7 +441,20 @@
       </div>
       <div class="input-group">
         <label>Phone Number (10 digits)</label>
-        <input type="tel" id="auth-phone" placeholder="e.g. 9876543210" style="padding-left: 14px;" required>
+        <input type="tel" id="auth-phone" placeholder="e.g. 9876543210" style="padding-left: 14px;" required
+          oninput="updatePhoneConfirm()">
+      </div>
+
+      <!-- CONFIRMATION UI -->
+      <div id="phone-confirm-ui"
+        style="display:none; margin-bottom:15px; padding:12px; background:#e8f5e9; border:1px solid #c8e6c9; border-radius:8px;">
+        <div style="font-size:12px; color:#2e7d32; margin-bottom:4px;">Please confirm your number:</div>
+        <div id="phone-display"
+          style="font-size:24px; font-weight:bold; color:#1b5e20; letter-spacing:1px; margin-bottom:8px;"></div>
+        <label style="display:flex; align-items:center; gap:8px; font-size:14px; font-weight:500; cursor:pointer;">
+          <input type="checkbox" id="phone-confirm-check" style="width:18px; height:18px;">
+          Yes, this is correct
+        </label>
       </div>
       <div class="input-group">
         <label>House Number / Flat No.</label>

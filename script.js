@@ -1399,12 +1399,23 @@ window.shareBill = async function (orderId) {
   if (!order) return;
   const items = typeof order.items === 'string' ? JSON.parse(order.items) : order.items;
 
+  // Prompt to verify phone number
+  const newPhone = prompt(`Confirm WhatsApp Number for ${order.customer_name}:`, order.customer_phone);
+  if (!newPhone) return; // Cancelled
+
   const total = order.total_amount || 0;
 
   const message = `*Fresh Market Bill* %0AOrder for ${order.customer_name} %0A%0AItems: %0A${items.map(i => `${i.name} (${i.actualWeight}${i.minQtyUnit === 'packet' ? 'pkt' : 'g'}): ₹${i.finalPrice || 0}`).join('%0A')} %0A%0A*Total: ₹${total}*`;
 
-  await _supabase.from('orders').update({ status: 'sent' }).eq('id', orderId);
-  window.open(`https://wa.me/91${order.customer_phone}?text=${message}`, '_blank');
+  // Update DB: Status -> Sent, and Phone if changed
+  const updateData = { status: 'sent' };
+  if (newPhone !== order.customer_phone) {
+    updateData.customer_phone = newPhone;
+  }
+
+  await _supabase.from('orders').update(updateData).eq('id', orderId);
+
+  window.open(`https://wa.me/91${newPhone}?text=${message}`, '_blank');
 
   // Refresh current view (will remove from Finalized, or refresh Sent)
   const currentTab = document.querySelector('.cat-chip.active').id.replace('tab-', '');
@@ -1621,6 +1632,26 @@ function toast(msg) {
 /**
  * Global login handler.
  */
+window.updatePhoneConfirm = function () {
+  const input = document.getElementById('auth-phone');
+  const ui = document.getElementById('phone-confirm-ui');
+  const display = document.getElementById('phone-display');
+
+  let val = input.value.replace(/\D/g, '');
+  if (val.length > 10) val = val.slice(-10); // Enforce max 10
+
+  if (val.length === 10) {
+    ui.style.display = 'block';
+    display.textContent = val.replace(/(\d{5})(\d{5})/, '$1 $2');
+  } else {
+    ui.style.display = 'none';
+    document.getElementById('phone-confirm-check').checked = false;
+  }
+};
+
+/**
+ * Global login handler.
+ */
 window.handleLogin = function () {
   console.log('Login clicked');
   try {
@@ -1648,6 +1679,13 @@ window.handleLogin = function () {
 
     if (phone.length !== 10) {
       alert('Please enter a valid 10-digit phone number. Current digits: ' + phone.length);
+      return;
+    }
+
+    // Check confirmation
+    const confirmCheck = document.getElementById('phone-confirm-check');
+    if (confirmCheck && !confirmCheck.checked) {
+      alert('Please check the box to confirm your phone number is correct.');
       return;
     }
 
