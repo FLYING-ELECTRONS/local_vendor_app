@@ -147,6 +147,7 @@ function createCartItemHtml(item) {
     `<div style="display:flex; align-items:center; gap:2px;">
        <button type="button" class="qty-btn" onclick="adjustGrams('${item.id}', -50)" style="width:28px; height:28px; padding:0; display:flex; align-items:center; justify-content:center;">-</button>
        <input type="number" 
+          id="grams-${item.id}"
           value="${grams}" 
           min="0" step="50" 
           onchange="setCustomQuantity('${item.id}', this.value)"
