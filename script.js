@@ -1453,6 +1453,37 @@ window.rollbackSentOrder = async function (id) {
 };
 
 /**
+ * Update payment status for a sent order.
+ * @param {string} orderId - Order ID
+ */
+window.updatePaymentStatus = async function (orderId) {
+  const paidCheckbox = document.getElementById(`paid-${orderId}`);
+  const typeSelect = document.getElementById(`payment-type-${orderId}`);
+
+  const paymentReceived = paidCheckbox.checked;
+  const paymentType = typeSelect.value;
+
+  // Enable/disable the type selector based on checkbox
+  typeSelect.disabled = !paymentReceived;
+
+  // Save to Supabase
+  await _supabase.from('orders').update({
+    payment_received: paymentReceived,
+    payment_type: paymentReceived ? paymentType : null
+  }).eq('id', orderId);
+
+  // Update local cache
+  const order = app.adminOrdersCache.find(o => o.id === orderId);
+  if (order) {
+    order.payment_received = paymentReceived;
+    order.payment_type = paymentReceived ? paymentType : null;
+  }
+
+  // Refresh the UI to update colors
+  loadAdminOrders('sent');
+};
+
+/**
  * Share finalized bill via WhatsApp.
  */
 window.shareBill = async function (orderId) {
@@ -1644,6 +1675,25 @@ window.filterAdminOrders = function () {
       }).join('')}
           ${o.status !== 'finalized' ? `<div style="text-align:center; margin-top:12px; border-top:1px dashed #eee; padding-top:8px;"><button class="btn btn-outline" style="padding:6px 16px; font-size:12px;" onclick="showAddItemModal('${o.id}')">+ Add Item</button></div>` : ''}
         </div>
+
+        ${o.status === 'sent' ? `
+        <div style="margin-top:12px; padding:12px; background:${o.payment_received ? '#e8f5e9' : '#fff3e0'}; border-radius:8px; border:1px solid ${o.payment_received ? '#c8e6c9' : '#ffe0b2'};">
+          <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+            <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-weight:500;">
+              <input type="checkbox" id="paid-${o.id}" ${o.payment_received ? 'checked' : ''} 
+                onchange="updatePaymentStatus('${o.id}')" 
+                style="width:18px; height:18px; accent-color:#4caf50;">
+              Payment Received
+            </label>
+            <select id="payment-type-${o.id}" style="padding:6px 10px; border:1px solid #ddd; border-radius:6px; font-size:13px;" 
+              onchange="updatePaymentStatus('${o.id}')" ${!o.payment_received ? 'disabled' : ''}>
+              <option value="cash" ${o.payment_type === 'cash' ? 'selected' : ''}>💵 Cash</option>
+              <option value="online" ${o.payment_type === 'online' ? 'selected' : ''}>📱 Online</option>
+            </select>
+            ${o.payment_received ? `<span style="color:#388e3c; font-size:12px;">✓ ${o.payment_type === 'online' ? 'Online' : 'Cash'} Payment</span>` : `<span style="color:#f57c00; font-size:12px;">⏳ Pending</span>`}
+          </div>
+        </div>
+        ` : ''}
 
         <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px;">
           <div>
@@ -2462,18 +2512,24 @@ window.renderProfitReport = async function () {
 
   container.innerHTML = `
     <div style="padding:16px;">
-      <div style="background:linear-gradient(135deg,#4caf50,#2e7d32); padding:16px; border-radius:12px; color:white; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center;">
+      <div style="background:linear-gradient(135deg,#4caf50,#2e7d32); padding:16px; border-radius:12px; color:white; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
         <div>
           <div style="opacity:0.9; font-size:12px;">Current Prices</div>
           <div style="font-weight:600;">Updated: ${lastUpdated}</div>
         </div>
-        <button class="btn" style="background:white; color:green;" onclick="showPriceSetter()">Edit Prices</button>
+        <div style="display:flex; gap:8px;">
+          <button class="btn" style="background:#ff5252; color:white;" onclick="resetAllPrices()">🔄 Reset All</button>
+          <button class="btn" style="background:white; color:green;" onclick="showPriceSetter()">Edit Prices</button>
+        </div>
       </div>
 
       <div id="price-setter-modal" class="hidden" style="background:white; padding:16px; border-radius:12px; margin-bottom:16px; border:1px solid #eee;">
         <h4>Set Today's Selling Prices (₹/250g)</h4>
         <div id="price-inputs" style="max-height:300px; overflow-y:auto; margin-bottom:12px;"></div>
-        <button class="btn btn-primary btn-block" onclick="saveCurrentPrices()">Save Prices</button>
+        <div style="display:flex; gap:8px;">
+          <button class="btn btn-outline" style="flex:1; color:#ff5252; border-color:#ff5252;" onclick="resetAllPrices()">🔄 Reset to 0</button>
+          <button class="btn btn-primary" style="flex:2;" onclick="saveCurrentPrices()">Save Prices</button>
+        </div>
       </div>
       
       <div id="profit-data">Loading stats...</div>
@@ -2571,6 +2627,33 @@ window.saveCurrentPrices = async function () {
 
   renderProfitReport();
   alert('Prices Saved!');
+};
+
+/**
+ * Reset all product prices to 0 for the new week.
+ */
+window.resetAllPrices = async function () {
+  if (!confirm('🔄 Reset ALL prices to ₹0?\n\nThis will clear all saved prices. You\'ll need to set new prices for the week.')) {
+    return;
+  }
+
+  // Clear localStorage
+  localStorage.removeItem('fm_current_prices');
+  localStorage.setItem('fm_prices_updated', 'Reset on ' + new Date().toLocaleString());
+
+  // Clear in Supabase
+  await _supabase.from('app_settings').upsert({
+    key: 'current_prices',
+    value: JSON.stringify({})
+  }, { onConflict: 'key' });
+
+  // Clear input fields if modal is open
+  const inputs = document.querySelectorAll('[id^="price-input-"]');
+  inputs.forEach(input => input.value = '');
+
+  // Refresh the view
+  renderProfitReport();
+  alert('✅ All prices reset to ₹0!\n\nGo to "Edit Prices" to set new prices for this week.');
 };
 
 // Start App when DOM is ready
