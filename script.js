@@ -1442,7 +1442,7 @@ window.shareBill = async function (orderId) {
 
   const total = order.total_amount || 0;
 
-  const message = `*Fresh Market Bill* %0AOrder for: *${order.customer_name}* %0APhone: ${newPhone} %0AHouse: ${order.customer_house_number || 'N/A'} %0A%0AItems: %0A${items.map(i => `${i.name} (${i.actualWeight}${i.minQtyUnit !== '250g' ? (i.minQtyUnit === 'pc' ? 'pc' : 'pkt') : 'g'}): ₹${i.finalPrice || 0}`).join('%0A')} %0A%0A*Total: ₹${total}*`;
+  const message = `*Fresh Market Bill* %0AOrder for: *${order.customer_name}* %0APhone: ${newPhone} %0AHouse: ${order.house_no || 'N/A'} %0A%0AItems: %0A${items.map(i => `${i.name} (${i.actualWeight}${i.minQtyUnit !== '250g' ? (i.minQtyUnit === 'pc' ? 'pc' : 'pkt') : 'g'}): ₹${i.finalPrice || 0}`).join('%0A')} %0A%0A*Total: ₹${total}*`;
 
   // Update DB: Status -> Sent, and Phone if changed
   const updateData = { status: 'sent' };
