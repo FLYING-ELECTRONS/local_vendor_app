@@ -29,7 +29,7 @@ function safeParse(key, fallback) {
 }
 
 // Cache version - increment this when product units change
-const CACHE_VERSION = '2.0';
+const CACHE_VERSION = '2.1';
 const currentVersion = localStorage.getItem('fm_cache_version');
 
 // Clear cart if cache version changed (fixes packet/gram display issues)
@@ -45,8 +45,132 @@ const app = {
   products: [],
   currentScreen: 'loading',
   isAdmin: false,
-  adminOrdersCache: []
+  adminOrdersCache: [],
+  pushSubscription: null,
+  swRegistration: null
 };
+
+// =========================================
+// PUSH NOTIFICATIONS SERVICE WORKER
+// =========================================
+
+/**
+ * Register service worker for push notifications
+ */
+async function registerServiceWorker() {
+  if ('serviceWorker' in navigator) {
+    try {
+      const registration = await navigator.serviceWorker.register('/service-worker.js');
+      console.log('Service Worker registered:', registration);
+      app.swRegistration = registration;
+
+      // Check if user already has a push subscription
+      const existingSubscription = await registration.pushManager.getSubscription();
+      if (existingSubscription) {
+        console.log('Existing push subscription found');
+        app.pushSubscription = existingSubscription;
+      }
+
+      return registration;
+    } catch (error) {
+      console.error('Service Worker registration failed:', error);
+    }
+  }
+}
+
+/**
+ * Request notification permission and subscribe
+ */
+async function subscribeToPushNotifications() {
+  if (!app.swRegistration) {
+    console.error('Service worker not registered yet');
+    return false;
+  }
+
+  try {
+    const permission = await Notification.requestPermission();
+
+    if (permission !== 'granted') {
+      console.log('Notification permission denied');
+      return false;
+    }
+
+    // Subscribe to push notifications
+    const subscription = await app.swRegistration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(getVAPIDPublicKey())
+    });
+
+    app.pushSubscription = subscription;
+    console.log('Push subscription:', subscription);
+
+    // Save subscription to Supabase
+    await savePushSubscription(subscription);
+
+    return true;
+  } catch (error) {
+    console.error('Error subscribing to push:', error);
+    return false;
+  }
+}
+
+/**
+ * Convert VAPID key to Uint8Array
+ */
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding)
+    .replace(/\-/g, '+')
+    .replace(/_/g, '/');
+
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
+/**
+ * Get VAPID public key (replace with your own key when you generate one)
+ */
+function getVAPIDPublicKey() {
+  // This is a placeholder - you'll need to generate your own VAPID keys
+  // For now, we'll store this in localStorage for testing
+  return localStorage.getItem('vapid_public_key') || '';
+}
+
+/**
+ * Save push subscription to Supabase
+ */
+async function savePushSubscription(subscription) {
+  if (!app.user) return;
+
+  try {
+    const subscriptionJSON = subscription.toJSON();
+
+    const { error } = await _supabase
+      .from('push_subscriptions')
+      .upsert({
+        user_id: app.user.id,
+        endpoint: subscriptionJSON.endpoint,
+        p256dh_key: subscriptionJSON.keys.p256dh,
+        auth_key: subscriptionJSON.keys.auth,
+        last_used: new Date().toISOString()
+      }, {
+        onConflict: 'endpoint'
+      });
+
+    if (error) {
+      console.error('Error saving push subscription:', error);
+    } else {
+      console.log('Push subscription saved to database');
+    }
+  } catch (error) {
+    console.error('Error in savePushSubscription:', error);
+  }
+}
 
 /**
  * Sync prices from Supabase to localStorage.
@@ -84,9 +208,20 @@ async function syncPricesFromSupabase() {
  * @param {object} product - The product object from Supabase.
  * @returns {string} HTML string for a product card.
  */
+/**
+ * Helper to format unit string for display.
+ * Removes leading "1" or "1 " from units like "1 kg" to show "kg".
+ */
+function formatUnit(unit) {
+  // console.log('Formatting unit:', unit);
+  if (!unit || unit === 'packet' || unit === '250g') return '';
+  return unit.replace(/^1\s?/, '');
+}
+
 function createProductCardHtml(product) {
   const cartItem = app.cart.find(i => i.id === product.id);
   const qty = cartItem ? cartItem.quantity : 0;
+  // console.log(`Render card: ${product.name}, Qty: ${qty}, Unit: ${product.minimum_quantity_unit}`);
   const isStdPacket = product.minimum_quantity_unit !== '250g';
   const unitDisplay = isStdPacket ? (product.minimum_quantity_unit || 'pkt') : '250g';
 
@@ -112,7 +247,9 @@ function createProductCardHtml(product) {
         </div>` :
         `<div class="qty-selector">
           <button type="button" class="qty-btn" onclick="updateCart('${product.id}', -1)">-</button>
-          <span id="catalog-qty-${product.id}" class="qty-val">${qty}</span>
+          <span id="catalog-qty-${product.id}" class="qty-val">
+            ${qty} ${formatUnit(product.minimum_quantity_unit)}
+          </span>
           <button type="button" class="qty-btn" onclick="updateCart('${product.id}', 1)">+</button>
         </div>`
     }
@@ -128,20 +265,23 @@ function createProductCardHtml(product) {
  */
 function createCartItemHtml(item) {
   const product = app.products.find(p => p.id === item.id);
-  if (!product) return '';
+  // Fallback if product not found (should be rare)
+  const unit = product ? product.minimum_quantity_unit : (item.minQtyUnit || '');
+  const name = product ? product.name : item.name;
+  const image = product ? product.image : '';
+
+  if (!product && !item) return '';
 
   const grams = item.customGrams ? item.customGrams : (item.quantity * 250);
-  // Calculate total: If price is available, show approximate. Else TBD.
-  // Note: For 250g items, quantity is number of 250g units.
-  // Price is per 250g. So quantity * price is correct.
   const perItemTotal = (product && product.price) ? (product.price * item.quantity) : null;
-
-  const isPacket = product.minimum_quantity_unit !== '250g';
+  const isPacket = unit !== '250g';
 
   const controls = isPacket ?
     `<div style="display:flex; align-items:center; gap:2px;">
        <button type="button" class="qty-btn" onclick="updateCart('${item.id}', -1)" style="width:28px; height:28px; padding:0; display:flex; align-items:center; justify-content:center;">-</button>
-       <div id="cart-qty-${item.id}" style="width:30px; text-align:center; font-weight:600;">${item.quantity}</div>
+       <div id="cart-qty-${item.id}" style="width:auto; min-width:30px; padding:0 4px; text-align:center; font-weight:600;">
+         ${item.quantity} ${formatUnit(unit)}
+       </div>
        <button type="button" class="qty-btn" onclick="updateCart('${item.id}', 1)" style="width:28px; height:28px; padding:0; display:flex; align-items:center; justify-content:center;">+</button>
        <button type="button" onclick="removeFromCart('${item.id}')" style="background:#f44336; color:white; border:none; width:28px; height:28px; border-radius:6px; cursor:pointer; display:flex; align-items:center; justify-content:center; margin-left:4px;">✕</button>
      </div>`
@@ -2400,9 +2540,14 @@ window.loadAdminProducts = async function () {
     container.innerHTML = `
       <div style="padding:16px;">
         <div style="background:white; border-radius:12px; padding:16px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
             <h3>Products (${products.length})</h3>
-            <button class="btn btn-primary" onclick="showAddProductModal()">+ Add Product</button>
+            <div style="display:flex; gap:10px; flex:1; justify-content:flex-end;">
+              <input type="text" id="admin-product-search" placeholder="Search products..." 
+                style="padding:8px; border:1px solid #ddd; border-radius:6px; min-width:200px;"
+                onkeyup="filterAdminProducts()">
+              <button class="btn btn-primary" onclick="showAddProductModal()">+ Add Product</button>
+            </div>
           </div>
           
           <div id="product-modal" class="hidden" style="background:white; padding:16px; border-radius:12px; margin-bottom:16px; border:2px solid var(--primary);">
@@ -2427,10 +2572,12 @@ window.loadAdminProducts = async function () {
               <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
                 <div>
                   <label style="display:block; font-size:14px; margin-bottom:4px;">Unit Type</label>
-                  <select id="product-unit" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px;">
+                  <select id="product-unit" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px;" onchange="toggleCustomUnitInput()">
                     <option value="250g">250g</option>
                     <option value="packet">Packet</option>
+                    <option value="custom">Custom...</option>
                   </select>
+                  <input type="text" id="product-unit-custom" placeholder="e.g. 1 kg, Bunch" style="display:none; width:100%; padding:8px; border:1px solid #ddd; border-radius:6px; margin-top:4px;">
                 </div>
                 <div>
                   <label style="display:block; font-size:14px; margin-bottom:4px;">Min Quantity</label>
@@ -2450,7 +2597,7 @@ window.loadAdminProducts = async function () {
             </div>
           </div>
           
-          <table style="width:100%; border-collapse:collapse;">
+          <table class="admin-product-table" style="width:100%; border-collapse:collapse;">
             <thead>
               <tr style="text-align:left; border-bottom:2px solid #eee;">
                 <th style="padding:8px;">Name</th>
@@ -2460,7 +2607,7 @@ window.loadAdminProducts = async function () {
                 <th style="padding:8px;">Actions</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody id="admin-product-list-body">
               ${products.map(p => {
       // Use actual Supabase column names (singular: minimum_quantity_unit)
       const unit = p.minimum_quantity_unit || '250g';
@@ -2468,7 +2615,7 @@ window.loadAdminProducts = async function () {
       const isAvailable = p.available !== undefined ? p.available : true;
 
       return `
-                <tr style="border-bottom:1px solid #f9f9f9;">
+                <tr style="border-bottom:1px solid #f9f9f9;" class="product-row" data-name="${p.name.toLowerCase()}">
                   <td style="padding:10px; font-weight:500;">${p.name}</td>
                   <td style="padding:10px;">${unit}</td>
                   <td style="padding:10px;">${minQty}</td>
@@ -2499,6 +2646,37 @@ window.loadAdminProducts = async function () {
 };
 
 /**
+ * Filter admin products table.
+ */
+window.filterAdminProducts = function () {
+  const input = document.getElementById('admin-product-search');
+  const filter = input.value.toLowerCase();
+  const rows = document.querySelectorAll('.product-row');
+
+  rows.forEach(row => {
+    const name = row.getAttribute('data-name');
+    if (name.includes(filter)) {
+      row.style.display = '';
+    } else {
+      row.style.display = 'none';
+    }
+  });
+};
+
+/**
+ * Handle custom unit input visibility.
+ */
+window.toggleCustomUnitInput = function () {
+  const select = document.getElementById('product-unit');
+  const customInput = document.getElementById('product-unit-custom');
+  if (select.value === 'custom') {
+    customInput.style.display = 'block';
+  } else {
+    customInput.style.display = 'none';
+  }
+};
+
+/**
  * Show modal to add new product.
  */
 window.showAddProductModal = function () {
@@ -2506,7 +2684,12 @@ window.showAddProductModal = function () {
   document.getElementById('edit-product-id').value = '';
   document.getElementById('product-name').value = '';
   document.getElementById('product-category').value = 'vegetable';
-  document.getElementById('product-unit').value = '250g';
+
+  const unitSelect = document.getElementById('product-unit');
+  unitSelect.value = '250g';
+  document.getElementById('product-unit-custom').value = '';
+  toggleCustomUnitInput();
+
   document.getElementById('product-min-qty').value = '1';
   document.getElementById('product-available').checked = true;
   document.getElementById('product-modal').classList.remove('hidden');
@@ -2528,7 +2711,20 @@ window.editProduct = function (product) {
   document.getElementById('edit-product-id').value = product.id;
   document.getElementById('product-name').value = product.name;
   document.getElementById('product-category').value = product.category || 'other';
-  document.getElementById('product-unit').value = product.minimum_quantity_unit || '250g';
+
+  const unit = product.minimum_quantity_unit || '250g';
+  const unitSelect = document.getElementById('product-unit');
+  const customInput = document.getElementById('product-unit-custom');
+
+  if (unit === '250g' || unit === 'packet') {
+    unitSelect.value = unit;
+    customInput.value = '';
+  } else {
+    unitSelect.value = 'custom';
+    customInput.value = unit;
+  }
+  toggleCustomUnitInput();
+
   document.getElementById('product-min-qty').value = 1; // Always 1, not stored in DB
   document.getElementById('product-available').checked = product.available !== undefined ? product.available : true;
   document.getElementById('product-modal').classList.remove('hidden');
@@ -2540,7 +2736,18 @@ window.editProduct = function (product) {
 window.saveProduct = async function () {
   const id = document.getElementById('edit-product-id').value;
   const name = document.getElementById('product-name').value.trim();
-  const unit = document.getElementById('product-unit').value;
+  const unitSelect = document.getElementById('product-unit');
+  let unit = unitSelect.value;
+
+  if (unit === 'custom') {
+    const customUnit = document.getElementById('product-unit-custom').value.trim();
+    if (!customUnit) {
+      alert('Please enter a custom unit name (e.g., 1 kg)');
+      return;
+    }
+    unit = customUnit;
+  }
+
   const minQty = parseInt(document.getElementById('product-min-qty').value);
   const available = document.getElementById('product-available').checked;
 

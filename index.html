@@ -15,6 +15,15 @@
     rel="stylesheet">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
 
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#4caf50">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Shree Gor">
+  <link rel="apple-touch-icon" href="/icon-192.png">
+
+
   <style>
     :root {
       --primary: #4caf50;
@@ -205,14 +214,16 @@
       bottom: 0;
       width: 100%;
       max-width: 480px;
-      background: white;
+      background: rgba(255, 255, 255, 0.98);
+      backdrop-filter: blur(10px);
       display: flex;
       justify-content: space-around;
       padding: 8px 0;
-      box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
+      box-shadow: 0 -2px 30px rgba(0, 0, 0, 0.15);
       z-index: 200;
       border-top-left-radius: 20px;
       border-top-right-radius: 20px;
+      border-top: 1px solid rgba(76, 175, 80, 0.1);
     }
 
     .nav-item {
@@ -576,10 +587,15 @@
   </div>
 
   <!-- SCRIPTS - Load main script after DOM is ready -->
-  <script src="script.js?v=2" defer></script>
+  <script src="script.js?v=2.2" defer></script>
 
   <script>
-    // Inline scripts removed to prefer script.js versions
+    // Register service worker when page loads
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        registerServiceWorker();
+      });
+    }
   </script>
   <script src="admin_helpers.js"></script>
   <script src="analytics_functions.js"></script>
