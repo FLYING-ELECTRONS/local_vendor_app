@@ -1812,44 +1812,7 @@ window.toggleOrderWindow = async function () {
   }
 };
 
-/**
- * Switch admin tab.
- * @param {string} tab - Tab name
- */
-window.switchAdminTab = function (tab) {
-  document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
-  const tabEl = document.getElementById('tab-' + tab);
-  if (tabEl) tabEl.classList.add('active');
 
-  const list = document.getElementById('admin-orders-list');
-  if (!list) return;
-  list.innerHTML = '<div class="spinner"></div>';
-
-  switch (tab) {
-    case 'pending':
-    case 'finalized':
-      loadAdminOrders(tab);
-      break;
-    case 'products':
-      if (window.loadAdminProducts) window.loadAdminProducts();
-      else list.innerHTML = '<p style="padding:20px; text-align:center;">Products tab coming soon</p>';
-      break;
-    case 'stats':
-      if (window.renderAnalytics) window.renderAnalytics();
-      else list.innerHTML = '<p style="padding:20px; text-align:center;">Stats coming soon</p>';
-      break;
-    case 'shopping':
-      renderPurchaseList();
-      break;
-    case 'profit':
-      renderProfitReport();
-      break;
-    case 'customers':
-      if (window.renderCustomerHistory) window.renderCustomerHistory();
-      else list.innerHTML = '<p style="padding:20px; text-align:center;">Customer history coming soon</p>';
-      break;
-  }
-};
 
 /**
  * Load and display products for admin management.
