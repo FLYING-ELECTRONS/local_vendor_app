@@ -1442,7 +1442,7 @@ window.shareBill = async function (orderId) {
 
   const total = order.total_amount || 0;
 
-  const message = `*Fresh Market Bill* %0AOrder for: *${order.customer_name}* %0APhone: ${newPhone} %0AHouse: ${order.customer_house_number || 'N/A'} %0A%0AItems: %0A${items.map(i => `${i.name} (${i.actualWeight}${i.minQtyUnit === 'packet' ? 'pkt' : 'g'}): ₹${i.finalPrice || 0}`).join('%0A')} %0A%0A*Total: ₹${total}*`;
+  const message = `*Fresh Market Bill* %0AOrder for: *${order.customer_name}* %0APhone: ${newPhone} %0AHouse: ${order.customer_house_number || 'N/A'} %0A%0AItems: %0A${items.map(i => `${i.name} (${i.actualWeight}${i.minQtyUnit !== '250g' ? (i.minQtyUnit === 'pc' ? 'pc' : 'pkt') : 'g'}): ₹${i.finalPrice || 0}`).join('%0A')} %0A%0A*Total: ₹${total}*`;
 
   // Update DB: Status -> Sent, and Phone if changed
   const updateData = { status: 'sent' };
@@ -1498,38 +1498,39 @@ window.switchAdminTab = function (tab) {
  * Filter and render admin orders.
  */
 window.filterAdminOrders = function () {
-  const searchInput = document.getElementById('admin-search');
-  if (!searchInput) return; // Guard
-  const search = searchInput.value.toLowerCase();
-  const sort = document.getElementById('admin-sort').value;
-  const listContainer = document.getElementById('filtered-orders-list');
+  try {
+    const searchInput = document.getElementById('admin-search');
+    if (!searchInput) return; // Guard
+    const search = searchInput.value.toLowerCase();
+    const sort = document.getElementById('admin-sort').value;
+    const listContainer = document.getElementById('filtered-orders-list');
 
-  if (!app.adminOrdersCache) return;
+    if (!app.adminOrdersCache) return;
 
-  const currentPrices = JSON.parse(localStorage.getItem('fm_current_prices') || '{}');
+    const currentPrices = JSON.parse(localStorage.getItem('fm_current_prices') || '{}');
 
-  let filtered = app.adminOrdersCache.filter(o => {
-    const text = (o.customer_name + ' ' + o.house_no + ' ' + o.customer_phone).toLowerCase();
-    return text.includes(search);
-  });
+    let filtered = app.adminOrdersCache.filter(o => {
+      const text = (o.customer_name + ' ' + o.house_no + ' ' + o.customer_phone).toLowerCase();
+      return text.includes(search);
+    });
 
-  // Sort
-  if (sort === 'newest') {
-    filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-  } else if (sort === 'oldest') {
-    filtered.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-  } else if (sort === 'name') {
-    filtered.sort((a, b) => a.customer_name.localeCompare(b.customer_name));
-  }
+    // Sort
+    if (sort === 'newest') {
+      filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    } else if (sort === 'oldest') {
+      filtered.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    } else if (sort === 'name') {
+      filtered.sort((a, b) => a.customer_name.localeCompare(b.customer_name));
+    }
 
-  if (filtered.length === 0) {
-    listContainer.innerHTML = '<div class="text-center text-muted" style="padding:40px;">No matching orders</div>';
-    return;
-  }
+    if (filtered.length === 0) {
+      listContainer.innerHTML = '<div class="text-center text-muted" style="padding:40px;">No matching orders</div>';
+      return;
+    }
 
-  listContainer.innerHTML = filtered.map(o => {
-    const items = typeof o.items === 'string' ? JSON.parse(o.items) : o.items;
-    return `
+    listContainer.innerHTML = filtered.map(o => {
+      const items = typeof o.items === 'string' ? JSON.parse(o.items) : o.items;
+      return `
       <div class="order-card">
         <div style="display:flex; justify-content:space-between; margin-bottom:12px; border-bottom:1px solid #f0f0f0; padding-bottom:8px;">
           <div>
@@ -1547,18 +1548,18 @@ window.filterAdminOrders = function () {
 
         <div style="background:#f9f9f9; padding:10px; border-radius:8px;">
           ${items.map(i => {
-      const isPacket = i.minQtyUnit !== '250g';
-      const unitLabel = isPacket ? (i.minQtyUnit === 'pc' ? 'pc' : 'pkt') : 'g';
-      const prefillPrice = i.pricePer250gAtOrder || currentPrices[i.productId] || '';
+        const isPacket = i.minQtyUnit !== '250g';
+        const unitLabel = isPacket ? (i.minQtyUnit === 'pc' ? 'pc' : 'pkt') : 'g';
+        const prefillPrice = i.pricePer250gAtOrder || currentPrices[i.productId] || '';
 
-      // If packet/pc, weight is Quantity (e.g. 1, 2). If 250g, weight is Grams (250, 500).
-      const actualWeight = i.actualWeight || (isPacket ? i.orderedQuantity : (i.customGrams || (i.orderedQuantity * 250)));
+        // If packet/pc, weight is Quantity (e.g. 1, 2). If 250g, weight is Grams (250, 500).
+        const actualWeight = i.actualWeight || (isPacket ? i.orderedQuantity : (i.customGrams || (i.orderedQuantity * 250)));
 
-      return `
+        return `
               <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
                 ${o.status !== 'finalized' ?
-          `<div onclick="deleteItemFromOrder('${o.id}', '${i.productId}')" style="color:#d32f2f; font-weight:bold; font-size:18px; cursor:pointer; padding:0 4px; line-height:1;">✕</div>`
-          : ''}
+            `<div onclick="deleteItemFromOrder('${o.id}', '${i.productId}')" style="color:#d32f2f; font-weight:bold; font-size:18px; cursor:pointer; padding:0 4px; line-height:1;">✕</div>`
+            : ''}
                 <div style="flex:2;">
                   <div style="font-size:14px; font-weight:500;">${i.name}</div>
                   <div style="font-size:11px; color:#666;">
@@ -1585,7 +1586,7 @@ window.filterAdminOrders = function () {
                 </div>
               </div>
             `;
-    }).join('')}
+      }).join('')}
           ${o.status !== 'finalized' ? `<div style="text-align:center; margin-top:12px; border-top:1px dashed #eee; padding-top:8px;"><button class="btn btn-outline" style="padding:6px 16px; font-size:12px;" onclick="showAddItemModal('${o.id}')">+ Add Item</button></div>` : ''}
         </div>
 
@@ -1596,19 +1597,25 @@ window.filterAdminOrders = function () {
           </div>
           <div style="display:flex; gap:8px;">
             ${o.status === 'finalized' ?
-        `<button class="btn btn-outline" style="padding:6px 10px; font-size:13px; color:#25D366; border-color:#25D366; margin-right:6px;" onclick="shareBill('${o.id}')">Share Bill 📱</button>
+          `<button class="btn btn-outline" style="padding:6px 10px; font-size:13px; color:#25D366; border-color:#25D366; margin-right:6px;" onclick="shareBill('${o.id}')">Share Bill 📱</button>
              <button class="btn btn-outline" style="padding:6px 10px; font-size:13px;" onclick="rollbackOrder('${o.id}')">↩️</button>` :
-        `<button class="btn btn-outline" style="color:red; border-color:red; padding:8px;" onclick="rejectOrder('${o.id}')">✕</button>
+          `<button class="btn btn-outline" style="color:red; border-color:red; padding:8px;" onclick="rejectOrder('${o.id}')">✕</button>
              <button class="btn btn-primary" onclick="saveOrder('${o.id}')">Finalize & Save</button>`
-      }
+        }
           </div>
         </div>
       </div>
     `;
-  }).join('');
+    }).join('');
 
-  // Init totals
-  filtered.forEach(o => calculateTotal(o.id));
+    // Init totals
+    filtered.forEach(o => calculateTotal(o.id));
+
+  } catch (e) {
+    console.error('Render Error:', e);
+    const list = document.getElementById('admin-orders-list');
+    if (list) list.innerHTML = `<div class="text-danger" style="padding:20px; text-align:center;">Error displaying orders: ${e.message}</div>`;
+  }
 };
 
 // =========================================
