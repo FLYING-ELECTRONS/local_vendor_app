@@ -1450,30 +1450,61 @@ window.rollbackSentOrder = async function (id) {
 window.shareBill = async function (orderId) {
   const order = app.adminOrdersCache.find(o => o.id === orderId);
   if (!order) return;
-  const items = typeof order.items === 'string' ? JSON.parse(order.items) : order.items;
+  let items = typeof order.items === 'string' ? JSON.parse(order.items) : order.items;
 
   // Prompt to verify phone number
   const newPhone = prompt(`Confirm WhatsApp Number for ${order.customer_name}:`, order.customer_phone);
   if (!newPhone) return; // Cancelled
 
-  const total = order.total_amount || 0;
+  // Read current values from input fields and calculate final prices
+  let calculatedTotal = 0;
+  const updatedItems = items.map(i => {
+    const wtInput = document.getElementById(`wt-${orderId}-${i.productId}`);
+    const priceInput = document.getElementById(`price-${orderId}-${i.productId}`);
 
-  const message = `*Fresh Market Bill* %0AOrder for: *${order.customer_name}* %0APhone: ${newPhone} %0AHouse: ${order.house_no || 'N/A'} %0A%0AItems: %0A${items.map(i => `${i.name} (${i.actualWeight}${i.minQtyUnit !== '250g' ? (i.minQtyUnit === 'pc' ? 'pc' : 'pkt') : 'g'}): ₹${i.finalPrice || 0}`).join('%0A')} %0A%0A*Total: ₹${total}*`;
+    const actualWeight = wtInput ? parseFloat(wtInput.value) || 0 : (i.actualWeight || 0);
+    const pricePerUnit = priceInput ? parseFloat(priceInput.value) || 0 : (i.pricePer250gAtOrder || 0);
 
-  // Update DB: Status -> Sent, and Phone if changed
-  const updateData = { status: 'sent' };
-  if (newPhone !== order.customer_phone) {
-    updateData.customer_phone = newPhone;
-  }
+    const isPacket = i.minQtyUnit !== '250g';
+    let finalPrice = 0;
 
-  await _supabase.from('orders').update(updateData).eq('id', orderId);
+    if (isPacket) {
+      // For packets: price per unit * quantity
+      finalPrice = Math.round(pricePerUnit * actualWeight);
+    } else {
+      // For grams: (price per 250g / 250) * actual grams
+      finalPrice = Math.round((pricePerUnit / 250) * actualWeight);
+    }
+
+    calculatedTotal += finalPrice;
+
+    return {
+      ...i,
+      actualWeight: actualWeight,
+      pricePer250gAtOrder: pricePerUnit,
+      finalPrice: finalPrice
+    };
+  });
+
+  // Save updated items and total to database before sharing
+  await _supabase.from('orders').update({
+    items: JSON.stringify(updatedItems),
+    total_amount: calculatedTotal,
+    status: 'sent',
+    customer_phone: newPhone !== order.customer_phone ? newPhone : order.customer_phone
+  }).eq('id', orderId);
+
+  // Generate bill message with updated values
+  const message = `*Fresh Market Bill* %0AOrder for: *${order.customer_name}* %0APhone: ${newPhone} %0AHouse: ${order.house_no || 'N/A'} %0A%0AItems: %0A${updatedItems.map(i => `${i.name} (${i.actualWeight}${i.minQtyUnit !== '250g' ? (i.minQtyUnit === 'pc' ? 'pc' : 'pkt') : 'g'}): ₹${i.finalPrice || 0}`).join('%0A')} %0A%0A*Total: ₹${calculatedTotal}*`;
 
   window.open(`https://wa.me/91${newPhone}?text=${message}`, '_blank');
 
   // Refresh current view (will remove from Finalized, or refresh Sent)
-  const currentTab = document.querySelector('.cat-chip.active').id.replace('tab-', '');
+  const activeTab = document.querySelector('.cat-chip.active');
+  const currentTab = activeTab ? activeTab.id.replace('tab-', '') : 'finalized';
   loadAdminOrders(currentTab);
 };
+
 
 // Override switchAdminTab to support 'sent' and preserve logic
 window.switchAdminTab = function (tab) {
