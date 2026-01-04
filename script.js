@@ -1435,6 +1435,16 @@ window.rollbackOrder = async function (id) {
 };
 
 /**
+ * Rollback sent order to finalized.
+ * @param {string} id - Order ID
+ */
+window.rollbackSentOrder = async function (id) {
+  if (!confirm('Move back to Finalized?')) return;
+  await _supabase.from('orders').update({ status: 'finalized' }).eq('id', id);
+  loadAdminOrders('sent');
+};
+
+/**
  * Share finalized bill via WhatsApp.
  */
 window.shareBill = async function (orderId) {
@@ -1604,8 +1614,11 @@ window.filterAdminOrders = function () {
           <div style="display:flex; gap:8px;">
             ${o.status === 'finalized' ?
           `<button class="btn btn-outline" style="padding:6px 10px; font-size:13px; color:#25D366; border-color:#25D366; margin-right:6px;" onclick="shareBill('${o.id}')">Share Bill 📱</button>
-             <button class="btn btn-outline" style="padding:6px 10px; font-size:13px;" onclick="rollbackOrder('${o.id}')">↩️</button>` :
-          `<button class="btn btn-outline" style="color:red; border-color:red; padding:8px;" onclick="rejectOrder('${o.id}')">✕</button>
+             <button class="btn btn-outline" style="padding:6px 10px; font-size:13px;" onclick="rollbackOrder('${o.id}')" title="Rollback to Pending">↩️</button>` :
+          o.status === 'sent' ?
+            `<button class="btn btn-outline" style="color:red; border-color:red; padding:8px;" onclick="rejectOrder('${o.id}')" title="Delete Order">✕</button>
+             <button class="btn btn-outline" style="padding:6px 10px; font-size:13px; color:#ff9800; border-color:#ff9800;" onclick="rollbackSentOrder('${o.id}')" title="Rollback to Finalized">↩️ Finalized</button>` :
+            `<button class="btn btn-outline" style="color:red; border-color:red; padding:8px;" onclick="rejectOrder('${o.id}')">✕</button>
              <button class="btn btn-primary" onclick="saveOrder('${o.id}')">Finalize & Save</button>`
         }
           </div>
