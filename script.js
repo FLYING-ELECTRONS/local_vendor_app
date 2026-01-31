@@ -1312,10 +1312,11 @@ window.loadAdminOrders = async function (statusFilter) {
     const searchHtml = `
     <div style="padding:10px; display:flex; gap:10px; background:white; margin-bottom:12px; border-radius:8px; border:1px solid #eee; flex-wrap:wrap; align-items:center;">
       <input type="text" id="admin-search" placeholder="Search customer..." style="flex:1; min-width:120px; padding:8px; border:1px solid #ddd; border-radius:6px;" onkeyup="filterAdminOrders()">
-      <select id="admin-sort" style="width:100px; padding:8px; border:1px solid #ddd; border-radius:6px;" onchange="filterAdminOrders()">
+      <select id="admin-sort" style="width:110px; padding:8px; border:1px solid #ddd; border-radius:6px;" onchange="filterAdminOrders()">
         <option value="newest">Newest</option>
         <option value="oldest">Oldest</option>
         <option value="name">Name</option>
+        <option value="house">House No</option>
       </select>
       <button class="btn btn-outline no-print" style="padding:8px 12px; font-size:13px;" onclick="printOrders()">🖨️ Print</button>
       <button class="btn btn-outline no-print" style="padding:8px 12px; font-size:13px; color: #f44336; border-color: #f44336;" onclick="deleteAllOrders('${statusFilter}')">🗑️ All</button>
@@ -1898,6 +1899,13 @@ window.filterAdminOrders = function () {
       filtered.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
     } else if (sort === 'name') {
       filtered.sort((a, b) => a.customer_name.localeCompare(b.customer_name));
+    } else if (sort === 'house') {
+      // Alphanumeric sorting for house numbers (A1, A2, B1, B2, etc.)
+      filtered.sort((a, b) => {
+        const houseA = (a.house_no || a.customer_house_number || '').toString().toUpperCase();
+        const houseB = (b.house_no || b.customer_house_number || '').toString().toUpperCase();
+        return houseA.localeCompare(houseB, undefined, { numeric: true, sensitivity: 'base' });
+      });
     }
 
     if (filtered.length === 0) {
