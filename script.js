@@ -1498,6 +1498,19 @@ window.deleteAllOrders = async function (statusFilter) {
 window.rejectOrder = window.deleteOrder;
 
 /**
+Smart rounding: Keep decimals if < 0.50, round to whole number if >= 0.50
+ */
+function smartRound(value) {
+  const decimal = value - Math.floor(value);
+  if (decimal >= 0.50) {
+    return Math.ceil(value); // Round up to next whole number
+  } else {
+    return parseFloat(value.toFixed(2)); // Keep 2 decimals
+  }
+}
+
+
+/**
  * Calculate order total dynamically.
  * @param {string} orderId - Order ID
  */
@@ -1530,11 +1543,11 @@ window.calculateTotal = function (orderId) {
 
     // Update subtotal display
     const subSpan = document.getElementById(`sub-${orderId}-${productId}`);
-    if (subSpan) subSpan.innerText = Math.round(subtotal);
+    if (subSpan) subSpan.innerText = smartRound(subtotal);
   });
 
   const totalSpan = document.getElementById(`total-${orderId}`);
-  if (totalSpan) totalSpan.innerText = Math.round(grandTotal);
+  if (totalSpan) totalSpan.innerText = smartRound(grandTotal);
 };
 
 /**
@@ -1566,7 +1579,7 @@ window.saveOrder = async function (orderId) {
       ...item,
       actualWeight: wtVal,
       pricePer250gAtOrder: priceVal,
-      finalPrice: Math.round(finalPrice)
+      finalPrice: smartRound(finalPrice)
     };
   });
 
@@ -1801,10 +1814,10 @@ window.shareBill = async function (orderId) {
 
     if (isPacket) {
       // For packets: price per unit * quantity
-      finalPrice = Math.round(pricePerUnit * actualWeight);
+      finalPrice = smartRound(pricePerUnit * actualWeight);
     } else {
       // For grams: (price per 250g / 250) * actual grams
-      finalPrice = Math.round((pricePerUnit / 250) * actualWeight);
+      finalPrice = smartRound((pricePerUnit / 250) * actualWeight);
     }
 
     calculatedTotal += finalPrice;
