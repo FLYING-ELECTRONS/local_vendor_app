@@ -2981,6 +2981,7 @@ window.renderProfitReport = async function () {
 
       <div id="price-setter-modal" class="hidden" style="background:white; padding:16px; border-radius:12px; margin-bottom:16px; border:1px solid #eee;">
         <h4>Set Today's Selling Prices (₹/250g)</h4>
+        <input type="text" id="price-search" placeholder="🔍 Search products..." style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; margin-bottom:12px; font-size:14px;" onkeyup="filterPriceInputs()">
         <div id="price-inputs" style="max-height:300px; overflow-y:auto; margin-bottom:12px;"></div>
         <div style="display:flex; gap:8px;">
           <button class="btn btn-outline" style="flex:1; color:#ff5252; border-color:#ff5252;" onclick="resetAllPrices()">🔄 Reset to 0</button>
@@ -3048,11 +3049,15 @@ window.showPriceSetter = async function () {
   const current = JSON.parse(localStorage.getItem('fm_current_prices') || '{}');
 
   container.innerHTML = products.map(p => `
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+    <div class="price-item" data-name="${p.name.toLowerCase()}" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
       <label style="font-size:14px; flex:1;">${p.name}</label>
       <input type="number" id="pset-${p.id}" value="${current[p.id] || ''}" placeholder="Price" style="width:80px; padding:6px; border:1px solid #ddd; border-radius:6px;">
     </div>
   `).join('');
+  
+  // Clear search box when opening
+  const searchBox = document.getElementById('price-search');
+  if (searchBox) searchBox.value = '';
 };
 
 /**
@@ -3110,6 +3115,26 @@ window.resetAllPrices = async function () {
   // Refresh the view
   renderProfitReport();
   alert('✅ All prices reset to ₹0!\n\nGo to "Edit Prices" to set new prices for this week.');
+};
+
+/**
+ * Filter price inputs based on search query.
+ */
+window.filterPriceInputs = function () {
+  const searchBox = document.getElementById('price-search');
+  if (!searchBox) return;
+  
+  const search = searchBox.value.toLowerCase().trim();
+  const priceItems = document.querySelectorAll('.price-item');
+  
+  priceItems.forEach(item => {
+    const productName = item.getAttribute('data-name') || '';
+    if (productName.includes(search)) {
+      item.style.display = 'flex';
+    } else {
+      item.style.display = 'none';
+    }
+  });
 };
 
 // Start App when DOM is ready
