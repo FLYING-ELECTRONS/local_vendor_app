@@ -2114,8 +2114,31 @@ window.printOrders = function () {
   let cashTotal = 0;
   let onlineTotal = 0;
 
+
+  // Get current sort preference and apply it
+  const sortSelect = document.getElementById('admin-sort');
+  const currentSort = sortSelect ? sortSelect.value : 'newest';
+  
+  // Create a sorted copy of orders for printing
+  let ordersToPrint = [...app.adminOrdersCache];
+  
+  if (currentSort === 'newest') {
+    ordersToPrint.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  } else if (currentSort === 'oldest') {
+    ordersToPrint.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+  } else if (currentSort === 'name') {
+    ordersToPrint.sort((a, b) => a.customer_name.localeCompare(b.customer_name));
+  } else if (currentSort === 'house') {
+    // Alphanumeric sorting for house numbers (A1, A2, B1, B2, etc.)
+    ordersToPrint.sort((a, b) => {
+      const houseA = (a.house_no || a.customer_house_number || '').toString().toUpperCase();
+      const houseB = (b.house_no || b.customer_house_number || '').toString().toUpperCase();
+      return houseA.localeCompare(houseB, undefined, { numeric: true, sensitivity: 'base' });
+    });
+  }
+
   // Generate order cards
-  app.adminOrdersCache.forEach(o => {
+  ordersToPrint.forEach(o => {
     const items = typeof o.items === 'string' ? JSON.parse(o.items) : o.items;
     const orderTotal = o.total_amount || 0;
     grandTotal += orderTotal;
