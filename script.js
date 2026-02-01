@@ -1779,6 +1779,88 @@ window.rollbackOrder = async function (id) {
 };
 
 /**
+ * Edit customer info (phone or house number) for an order.
+ * Also updates the customer's profile permanently so future orders have correct info.
+ * @param {string} orderId - Order ID
+ * @param {string} field - Field to edit ('customer_phone' or 'house_no')
+ * @param {string} currentValue - Current value
+ */
+window.editCustomerInfo = async function (orderId, field, currentValue) {
+  const fieldLabel = field === 'customer_phone' ? 'Phone Number' : 'House Number';
+  const newValue = prompt(`Edit ${fieldLabel}:\n\n(This will update the customer's profile permanently)`, currentValue);
+
+  if (newValue === null || newValue === currentValue) return; // Cancelled or no change
+
+  // Validate phone number (10 digits)
+  if (field === 'customer_phone') {
+    const cleanPhone = newValue.replace(/\D/g, '');
+    if (cleanPhone.length !== 10) {
+      alert('Please enter a valid 10-digit phone number');
+      return;
+    }
+  }
+
+  try {
+    // Get the order to find the customer's original phone (used as ID)
+    const order = app.adminOrdersCache.find(o => o.id === orderId);
+    if (!order) {
+      alert('Order not found');
+      return;
+    }
+
+    const customerPhone = order.customer_phone;
+
+    // 1. Update the current order
+    const updateData = {};
+    updateData[field] = newValue;
+
+    const { error: orderError } = await _supabase
+      .from('orders')
+      .update(updateData)
+      .eq('id', orderId);
+
+    if (orderError) throw orderError;
+
+    // 2. Update ALL orders from this customer (by original phone)
+    if (field === 'house_no') {
+      await _supabase
+        .from('orders')
+        .update({ house_no: newValue })
+        .eq('customer_phone', customerPhone);
+    }
+
+    // 3. Update the customer's profile in users table (permanent change)
+    const userUpdateData = {};
+    if (field === 'customer_phone') {
+      userUpdateData.phone = newValue;
+    } else if (field === 'house_no') {
+      userUpdateData.house = newValue;
+    }
+
+    // Try to update users table (may fail if table structure is different)
+    try {
+      await _supabase
+        .from('users')
+        .update(userUpdateData)
+        .eq('phone', customerPhone);
+    } catch (userErr) {
+      console.log('Could not update users table:', userErr);
+      // Continue anyway - order update succeeded
+    }
+
+    toast(`${fieldLabel} updated permanently! ✅`);
+
+    // Refresh current tab
+    const activeTab = document.querySelector('.cat-chip.active');
+    const currentTab = activeTab ? activeTab.id.replace('tab-', '') : 'pending';
+    loadAdminOrders(currentTab);
+  } catch (e) {
+    console.error('Error updating customer info:', e);
+    alert('Failed to update: ' + e.message);
+  }
+};
+
+/**
  * Rollback sent order to finalized.
  * @param {string} id - Order ID
  */
@@ -2008,7 +2090,14 @@ window.filterAdminOrders = function () {
         <div style="display:flex; justify-content:space-between; margin-bottom:12px; border-bottom:1px solid #f0f0f0; padding-bottom:8px;">
           <div>
             <div style="font-weight:700;">${o.customer_name}</div>
-            <div class="text-muted" style="font-size:12px;">${o.house_no}</div>
+            <div class="text-muted" style="font-size:12px; display:flex; align-items:center; gap:4px;">
+              🏠 ${o.house_no || 'N/A'}
+              <span onclick="editCustomerInfo('${o.id}', 'house_no', '${(o.house_no || '').replace(/'/g, "\\'")}')" style="cursor:pointer; color:#2196f3; font-size:11px;" title="Edit House No">✏️</span>
+            </div>
+            <div class="text-muted" style="font-size:12px; display:flex; align-items:center; gap:4px;">
+              📞 ${o.customer_phone}
+              <span onclick="editCustomerInfo('${o.id}', 'customer_phone', '${o.customer_phone}')" style="cursor:pointer; color:#2196f3; font-size:11px;" title="Edit Phone">✏️</span>
+            </div>
           </div>
           <div class="text-right">
             <div style="font-weight:700;">${o.id.slice(0, 6).toUpperCase()}</div>
