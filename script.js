@@ -1178,20 +1178,87 @@ window.placeOrder = async function () {
       note
     );
 
-    // Open WhatsApp
-    window.open(`https://wa.me/91${SELLER_WHATSAPP}?text=${whatsappMessage}`, '_blank');
-
-    if (isUpdate) {
-      alert('Items added to your existing pending order!\n\nCheck WhatsApp for the updated full list.');
-    } else {
-      alert('Order Placed Successfully!\n\nA WhatsApp message has been opened to send your order to the seller.');
-    }
-
-    // Clear cart and go to orders
+    // Clear cart immediately
     app.cart = [];
     saveCart();
     renderBottomNav();
-    navigateTo('orders');
+
+    // --- Show WhatsApp Confirmation Screen ---
+    const waUrl = `https://wa.me/91${SELLER_WHATSAPP}?text=${whatsappMessage}`;
+    const confirmTitle = isUpdate ? '✅ Order Updated!' : '✅ Order Placed!';
+    const confirmSub = isUpdate
+      ? 'Now send the WhatsApp message so the seller gets your updated order.'
+      : 'Now send the WhatsApp message so the seller gets your order.';
+
+    document.getElementById('content-area').innerHTML = `
+      <div style="
+        display:flex; flex-direction:column; align-items:center; justify-content:center;
+        min-height:calc(100vh - 120px); padding:24px; text-align:center;
+        background: linear-gradient(180deg, #f0fff4 0%, #ffffff 40%);
+      ">
+        <div style="
+          width:90px; height:90px; border-radius:50%;
+          background:linear-gradient(135deg,#25D366,#1da852);
+          display:flex; align-items:center; justify-content:center;
+          box-shadow:0 4px 18px rgba(37,211,102,0.35);
+          margin-bottom:20px;
+        ">
+          <span class="material-icons-round" style="font-size:48px; color:#fff;">check</span>
+        </div>
+
+        <h2 style="margin:0 0 8px; font-size:22px; color:#1a1a1a;">${confirmTitle}</h2>
+        <p style="margin:0 0 28px; color:#666; font-size:14px; max-width:280px; line-height:1.5;">${confirmSub}</p>
+
+        <a href="${waUrl}" target="_blank" id="wa-send-btn" style="
+          display:flex; align-items:center; justify-content:center; gap:10px;
+          width:100%; max-width:320px; padding:16px 24px;
+          background:linear-gradient(135deg,#25D366,#1da852);
+          color:#fff; font-size:18px; font-weight:700;
+          border-radius:14px; text-decoration:none;
+          box-shadow:0 4px 16px rgba(37,211,102,0.4);
+        "
+          onclick="window.waConfirmSent()"
+        >
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="white"><path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56-.98-.34-2.22.22-2.8 1.53-.35.78-1.44 1.8-3.79.7-2.33-1.1-3.76-3.6-3.76-3.6s-1.18-2.5.9-2.85c1.31-.36.74-1.52.4-2.5-.36-1.11-.56-2.3-.56-3.53 0-1.88 1.58-3.38 3.53-3.38.56 0 1.05.42 1.06.98.01.62.15 1.22.41 1.75.26.53.77.9 1.36.91.56.01 1.04-.44 1.06-1 .07-1.91 1.59-3.43 3.53-3.43 1.88 0 3.4 1.52 3.38 3.53-.01.56-.42 1.05-.98 1.06-.6.01-1.18.14-1.7.39-.51.25-.9.75-.91 1.33-.01.58.44 1.09 1.02 1.1 1.83.07 3.28 1.62 3.26 3.53-.01 1.88-1.53 3.4-3.41 3.38z"/></svg>
+          Send on WhatsApp
+        </a>
+
+        <div id="wa-warning" style="
+          margin-top:24px; padding:12px 16px; border-radius:10px;
+          background:#fff3cd; border:1px solid #ffc107;
+          color:#856404; font-size:13px; font-weight:600;
+          display:none; max-width:320px; width:100%;
+        ">
+          ⚠️ Your order won't reach the seller until you send the WhatsApp message!
+        </div>
+
+        <button id="wa-skip-btn" onclick="window.waConfirmSkip()" style="
+          margin-top:20px; background:none; border:none;
+          color:#aaa; font-size:12px; cursor:pointer; padding:6px;
+          text-decoration:underline; display:none;
+        ">Skip (not recommended)</button>
+      </div>
+    `;
+
+    // After 5 seconds show warning + skip button
+    window._waWarningTimer = setTimeout(() => {
+      const warning = document.getElementById('wa-warning');
+      const skip = document.getElementById('wa-skip-btn');
+      if (warning) warning.style.display = 'block';
+      if (skip) skip.style.display = 'inline-block';
+    }, 5000);
+
+    // Customer taps Send → open WhatsApp then go to orders
+    window.waConfirmSent = function () {
+      clearTimeout(window._waWarningTimer);
+      setTimeout(() => { navigateTo('orders'); }, 1500);
+    };
+
+    // Customer skips after 5 sec → go to orders anyway
+    window.waConfirmSkip = function () {
+      clearTimeout(window._waWarningTimer);
+      navigateTo('orders');
+    };
 
   } catch (error) {
     setLoading(false);
@@ -1498,14 +1565,24 @@ window.deleteAllOrders = async function (statusFilter) {
 window.rejectOrder = window.deleteOrder;
 
 /**
-Smart rounding: Keep decimals if < 0.50, round to whole number if >= 0.50
+ * Smart rounding: Keep decimals if < 0.50, round to whole number if >= 0.50
+ * Examples: 44.49 → "44.49", 44.50 → "45", 127.83 → "128", 22.088 → "22.09"
  */
 function smartRound(value) {
   const decimal = value - Math.floor(value);
+  
   if (decimal >= 0.50) {
-    return Math.ceil(value); // Round up to next whole number
+    // Round up to whole number
+    return Math.ceil(value);
   } else {
-    return parseFloat(value.toFixed(2)); // Keep 2 decimals
+    // Keep decimals (rounded to 2 places)
+    const rounded = Math.round(value * 100) / 100;
+    // If it's a whole number after rounding, return as integer
+    if (rounded % 1 === 0) {
+      return rounded;
+    }
+    // Otherwise return with 2 decimal places
+    return parseFloat(rounded.toFixed(2));
   }
 }
 
