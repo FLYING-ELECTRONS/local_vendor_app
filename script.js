@@ -1227,26 +1227,12 @@ window.placeOrder = async function () {
           margin-top:24px; padding:12px 16px; border-radius:10px;
           background:#fff3cd; border:1px solid #ffc107;
           color:#856404; font-size:13px; font-weight:600;
-          display:none; max-width:320px; width:100%;
+          max-width:320px; width:100%;
         ">
           ⚠️ Your order won't reach the seller until you send the WhatsApp message!
         </div>
-
-        <button id="wa-skip-btn" onclick="window.waConfirmSkip()" style="
-          margin-top:20px; background:none; border:none;
-          color:#aaa; font-size:12px; cursor:pointer; padding:6px;
-          text-decoration:underline; display:none;
-        ">Skip (not recommended)</button>
       </div>
     `;
-
-    // After 5 seconds show warning + skip button
-    window._waWarningTimer = setTimeout(() => {
-      const warning = document.getElementById('wa-warning');
-      const skip = document.getElementById('wa-skip-btn');
-      if (warning) warning.style.display = 'block';
-      if (skip) skip.style.display = 'inline-block';
-    }, 5000);
 
     // Customer taps Send → open WhatsApp then go to orders
     window.waConfirmSent = function () {
