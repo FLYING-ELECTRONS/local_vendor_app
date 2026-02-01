@@ -1057,7 +1057,7 @@ window.placeOrder = async function () {
     return;
   }
 
-  if (!confirm('Confirm Order? Prices will be finalized by seller.')) return;
+
 
   setLoading(true);
 
@@ -1570,7 +1570,7 @@ window.rejectOrder = window.deleteOrder;
  */
 function smartRound(value) {
   const decimal = value - Math.floor(value);
-  
+
   if (decimal >= 0.50) {
     // Round up to whole number
     return Math.ceil(value);
@@ -2208,10 +2208,10 @@ window.printOrders = function () {
   // Get current sort preference and apply it
   const sortSelect = document.getElementById('admin-sort');
   const currentSort = sortSelect ? sortSelect.value : 'newest';
-  
+
   // Create a sorted copy of orders for printing
   let ordersToPrint = [...app.adminOrdersCache];
-  
+
   if (currentSort === 'newest') {
     ordersToPrint.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   } else if (currentSort === 'oldest') {
@@ -3144,7 +3144,7 @@ window.showPriceSetter = async function () {
       <input type="number" id="pset-${p.id}" value="${current[p.id] || ''}" placeholder="Price" style="width:80px; padding:6px; border:1px solid #ddd; border-radius:6px;">
     </div>
   `).join('');
-  
+
   // Clear search box when opening
   const searchBox = document.getElementById('price-search');
   if (searchBox) searchBox.value = '';
@@ -3213,10 +3213,10 @@ window.resetAllPrices = async function () {
 window.filterPriceInputs = function () {
   const searchBox = document.getElementById('price-search');
   if (!searchBox) return;
-  
+
   const search = searchBox.value.toLowerCase().trim();
   const priceItems = document.querySelectorAll('.price-item');
-  
+
   priceItems.forEach(item => {
     const productName = item.getAttribute('data-name') || '';
     if (productName.includes(search)) {
