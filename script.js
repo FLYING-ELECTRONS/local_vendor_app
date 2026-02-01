@@ -1190,6 +1190,10 @@ window.placeOrder = async function () {
       ? 'Now send the WhatsApp message so the seller gets your updated order.'
       : 'Now send the WhatsApp message so the seller gets your order.';
 
+    // Hide bottom navigation so user cannot escape
+    const bottomNav = document.querySelector('.bottom-nav');
+    if (bottomNav) bottomNav.style.display = 'none';
+
     document.getElementById('content-area').innerHTML = `
       <div style="
         display:flex; flex-direction:column; align-items:center; justify-content:center;
@@ -1234,9 +1238,13 @@ window.placeOrder = async function () {
       </div>
     `;
 
+
     // Customer taps Send → open WhatsApp then go to orders
     window.waConfirmSent = function () {
       clearTimeout(window._waWarningTimer);
+      // Restore bottom navigation
+      const bottomNav = document.querySelector('.bottom-nav');
+      if (bottomNav) bottomNav.style.display = '';
       setTimeout(() => { navigateTo('orders'); }, 1500);
     };
 
