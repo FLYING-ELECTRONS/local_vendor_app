@@ -1145,8 +1145,8 @@ window.adjustGrams = function (prodId, delta) {
         // Enforce minimum weight as hard floor
         if (next < minWeight) {
             if (delta < 0) {
-                // If trying to go below minimum, remove from cart
-                removeFromCart(prodId);
+                // Show toast instead of removing from cart
+                toast(`Minimum order is ${formatWeightDisplay(minWeight)}`);
                 return;
             }
             next = minWeight;
