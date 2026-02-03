@@ -115,12 +115,41 @@ const MINIMUM_ORDER_WEIGHTS = {
 
 /**
  * Get minimum order weight for a product (in grams)
- * Returns the minimum weight, or 250 as default for unknown products
+ * Priority: 1) Database field (minimum_grams), 2) Fuzzy match from lookup, 3) Default 250g
+ * @param {string|object} productOrName - Product object or product name string
+ * @returns {number} Minimum weight in grams
  */
-function getMinimumWeight(productName) {
-    if (!productName) return 250;
-    const name = productName.toLowerCase().trim();
-    return MINIMUM_ORDER_WEIGHTS[name] || 250;
+function getMinimumWeight(productOrName) {
+    // Handle product object - check database field first
+    if (productOrName && typeof productOrName === 'object') {
+        // Check database field first (could be minimum_grams or minimum_weight_grams)
+        if (productOrName.minimum_grams && productOrName.minimum_grams > 0) {
+            return productOrName.minimum_grams;
+        }
+        if (productOrName.minimum_weight_grams && productOrName.minimum_weight_grams > 0) {
+            return productOrName.minimum_weight_grams;
+        }
+        // Fall back to name-based lookup
+        productOrName = productOrName.name;
+    }
+
+    if (!productOrName) return 250;
+    const name = productOrName.toLowerCase().trim();
+
+    // Try exact match first
+    if (MINIMUM_ORDER_WEIGHTS[name]) {
+        return MINIMUM_ORDER_WEIGHTS[name];
+    }
+
+    // Fuzzy match - check if product name contains any key from our lookup
+    // This handles names like "Bottle gourd/ dudhi / lauki" matching "bottle gourd"
+    for (const [key, minGrams] of Object.entries(MINIMUM_ORDER_WEIGHTS)) {
+        if (name.includes(key.toLowerCase())) {
+            return minGrams;
+        }
+    }
+
+    return 250; // Default
 }
 
 /**
@@ -343,8 +372,8 @@ function createProductCardHtml(product) {
     const cartItem = app.cart.find(i => i.id === product.id);
     const isPacketItem = product.minimum_quantity_unit && product.minimum_quantity_unit !== '250g';
 
-    // Get minimum weight for this product
-    const minWeight = getMinimumWeight(product.name);
+    // Get minimum weight for this product (reads from DB field or falls back to lookup)
+    const minWeight = getMinimumWeight(product);
 
     if (isPacketItem) {
         // Packet/piece items (like Kiwi, Sweet Corn) - keep original logic
@@ -417,7 +446,7 @@ function createCartItemHtml(item) {
     if (!product && !item) return '';
 
     const isPacketItem = unit && unit !== '250g';
-    const minWeight = getMinimumWeight(name);
+    const minWeight = getMinimumWeight(product || name); // Use product object if available for DB field
     const grams = item.customGrams ? item.customGrams : minWeight;
     const perItemTotal = (product && product.price) ? (product.price * item.quantity) : null;
 
@@ -992,7 +1021,7 @@ window.addToCart = function (productId) {
     if (!product) return;
 
     const isPacketItem = product.minimum_quantity_unit && product.minimum_quantity_unit !== '250g';
-    const minWeight = getMinimumWeight(product.name);
+    const minWeight = getMinimumWeight(product);
 
     const existing = app.cart.find(i => i.id === productId);
     if (existing) {
@@ -1066,7 +1095,7 @@ window.updateCart = function (productId, change) {
  */
 window.setCustomQuantity = function (prodId, grams) {
     const product = app.products.find(p => p.id === prodId);
-    const minWeight = product ? getMinimumWeight(product.name) : 250;
+    const minWeight = product ? getMinimumWeight(product) : 250;
     let gramsNum = parseInt(grams) || 0;
 
     // Enforce minimum weight as hard floor
@@ -1108,7 +1137,7 @@ window.adjustGrams = function (prodId, delta) {
         if (!input) return;
 
         const product = app.products.find(p => p.id === prodId);
-        const minWeight = product ? getMinimumWeight(product.name) : 250;
+        const minWeight = product ? getMinimumWeight(product) : 250;
 
         const current = parseInt(input.value) || minWeight;
         let next = current + delta;
