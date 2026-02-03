@@ -1134,31 +1134,38 @@ window.setCustomQuantity = function (prodId, grams) {
 window.adjustGrams = function (prodId, delta) {
     try {
         const input = document.getElementById(`grams-${prodId}`);
-        if (!input) return;
-
         const product = app.products.find(p => p.id === prodId);
         const minWeight = product ? getMinimumWeight(product) : 250;
+        const cartItem = app.cart.find(i => i.id === prodId);
 
-        const current = parseInt(input.value) || minWeight;
+        // Get current grams from input OR from cart item
+        let current;
+        if (input) {
+            current = parseInt(input.value) || minWeight;
+        } else if (cartItem) {
+            current = cartItem.customGrams || minWeight;
+        } else {
+            current = minWeight;
+        }
+
         let next = current + delta;
 
         // Enforce minimum weight as hard floor
         if (next < minWeight) {
-            if (delta < 0) {
-                // Show toast instead of removing from cart
-                toast(`Minimum order is ${formatWeightDisplay(minWeight)}`);
-                return;
-            }
-            next = minWeight;
+            // Show toast instead of removing from cart
+            toast(`Minimum order is ${formatWeightDisplay(minWeight)}`);
+            return;
         }
 
-        input.value = next;
+        // Update input if it exists
+        if (input) {
+            input.value = next;
+        }
 
         const quantity = Math.ceil(next / 250);
-        const item = app.cart.find(i => i.id === prodId);
 
-        if (!item && quantity > 0) {
-            const prod = app.products.find(p => p.id === prodId) || { name: 'Item', minimum_quantity_unit: '250g' };
+        if (!cartItem && quantity > 0) {
+            const prod = product || { name: 'Item', minimum_quantity_unit: '250g' };
             app.cart.push({
                 id: prodId,
                 name: prod.name,
@@ -1166,21 +1173,16 @@ window.adjustGrams = function (prodId, delta) {
                 minQtyUnit: prod.minimum_quantity_unit,
                 customGrams: next
             });
-        } else if (item) {
-            if (quantity <= 0) {
-                app.cart = app.cart.filter(i => i.id !== prodId);
-            } else {
-                item.quantity = quantity;
-                item.customGrams = next;
-            }
+        } else if (cartItem) {
+            cartItem.quantity = quantity;
+            cartItem.customGrams = next;
         }
 
         saveCart();
         // Render appropriate view
         if (document.getElementById('product-list')) {
             refreshCatalog();
-        } else {
-            // Assuming we are in cart if product list is not present
+        } else if (app.currentScreen === 'cart') {
             renderCustomerCartView().then(html => {
                 const contentArea = document.getElementById('content-area');
                 if (contentArea) contentArea.innerHTML = html;
