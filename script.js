@@ -2423,6 +2423,30 @@ window.printOrders = function () {
     const tabName = activeTab ? activeTab.textContent.trim() : 'Orders';
     const today = new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
+    // Apply same search/sort as displayed in filterAdminOrders
+    const searchInput = document.getElementById('admin-search');
+    const sortSelect = document.getElementById('admin-sort');
+    const search = searchInput ? searchInput.value.toLowerCase() : '';
+    const sort = sortSelect ? sortSelect.value : 'newest';
+
+    let ordersToPrint = app.adminOrdersCache.filter(o => {
+        const text = (o.customer_name + ' ' + o.house_no + ' ' + o.customer_phone).toLowerCase();
+        return text.includes(search);
+    });
+
+    if (sort === 'newest') ordersToPrint.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    else if (sort === 'oldest') ordersToPrint.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    else if (sort === 'name') ordersToPrint.sort((a, b) => a.customer_name.localeCompare(b.customer_name));
+    else if (sort === 'house') {
+        ordersToPrint.sort((a, b) => {
+            const houseA = (a.house_no || '').toString().toUpperCase();
+            const houseB = (b.house_no || '').toString().toUpperCase();
+            return houseA.localeCompare(houseB, undefined, { numeric: true, sensitivity: 'base' });
+        });
+    }
+
+    if (ordersToPrint.length === 0) { alert('No orders match your current filter!'); return; }
+
     let printHtml = `<!DOCTYPE html><html><head><title>Orders</title><style>
       * { box-sizing: border-box; margin: 0; padding: 0; }
       body { font-family: Arial, sans-serif; padding: 20px; font-size: 12px; }
@@ -2437,7 +2461,7 @@ window.printOrders = function () {
       <div class="print-header"><h1>🥬 Shree Gor Veggies</h1><div>${tabName} Orders - ${today}</div></div>`;
 
     let grandTotal = 0;
-    app.adminOrdersCache.forEach(o => {
+    ordersToPrint.forEach(o => {
         const items = typeof o.items === 'string' ? JSON.parse(o.items) : o.items;
         const orderTotal = o.total_amount || 0;
         grandTotal += orderTotal;
@@ -2471,7 +2495,7 @@ window.printOrders = function () {
 
     printHtml += `
       <div style="margin-top:20px; padding:15px; background:#f9f9f9; border-radius:8px;">
-        <strong>Grand Total: ₹${grandTotal}</strong> | Orders: ${app.adminOrdersCache.length}
+        <strong>Grand Total: ₹${grandTotal}</strong> | Orders: ${ordersToPrint.length}
       </div>
       <div class="no-print" style="margin-top:20px; text-align:center;">
         <button onclick="window.print()" style="padding:12px 24px; background:#4caf50; color:white; border:none; border-radius:8px; cursor:pointer;">🖨️ Print</button>
