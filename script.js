@@ -1595,7 +1595,8 @@ window.loadAdminOrders = async function (statusFilter) {
             <option value="newest">Newest</option>
             <option value="oldest">Oldest</option>
             <option value="name">Name</option>
-            <option value="house">House No</option>
+            <option value="house-asc">House A→Z</option>
+            <option value="house-desc">House Z→A</option>
           </select>
           <button class="btn btn-outline no-print" style="padding:8px 12px; font-size:13px;" onclick="printOrders()">🖨️ Print</button>
           <button class="btn btn-outline no-print" style="padding:8px 12px; font-size:13px; color: #f44336; border-color: #f44336;" onclick="deleteAllOrders('${statusFilter}')">🗑️ All</button>
@@ -1958,11 +1959,18 @@ window.filterAdminOrders = function () {
         if (sort === 'newest') filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
         else if (sort === 'oldest') filtered.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
         else if (sort === 'name') filtered.sort((a, b) => a.customer_name.localeCompare(b.customer_name));
-        else if (sort === 'house') {
+        else if (sort === 'house-asc') {
             filtered.sort((a, b) => {
                 const houseA = (a.house_no || '').toString().toUpperCase();
                 const houseB = (b.house_no || '').toString().toUpperCase();
                 return houseA.localeCompare(houseB, undefined, { numeric: true, sensitivity: 'base' });
+            });
+        }
+        else if (sort === 'house-desc') {
+            filtered.sort((a, b) => {
+                const houseA = (a.house_no || '').toString().toUpperCase();
+                const houseB = (b.house_no || '').toString().toUpperCase();
+                return houseB.localeCompare(houseA, undefined, { numeric: true, sensitivity: 'base' });
             });
         }
 
@@ -2281,10 +2289,16 @@ window.renderPurchaseList = async function () {
     }
 
     const itemsList = Object.values(needed);
+    // Store for printing
+    app.shoppingListCache = itemsList;
+
     container.innerHTML = `
     <div style="padding:16px;">
       <div style="background:white; border-radius:12px; padding:16px;">
-        <h3>Shopping List 🛒</h3>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <h3 style="margin:0;">Shopping List 🛒</h3>
+          ${itemsList.length > 0 ? `<button class="btn btn-outline" style="padding:8px 12px; font-size:13px;" onclick="printShoppingList()">🖨️ Print / Download</button>` : ''}
+        </div>
         ${itemsList.length === 0 ? '<p style="color:#666; text-align:center; padding:20px;">No pending orders.</p>' : `
         <table style="width:100%; border-collapse:collapse;">
           <thead><tr style="text-align:left; border-bottom:1px solid #eee;"><th style="padding:8px;">Item</th><th style="padding:8px;">Qty</th></tr></thead>
@@ -2300,6 +2314,70 @@ window.renderPurchaseList = async function () {
       </div>
     </div>
   `;
+};
+
+window.printShoppingList = function () {
+    if (!app.shoppingListCache || app.shoppingListCache.length === 0) {
+        alert('No items in shopping list!');
+        return;
+    }
+
+    const today = new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    const itemsList = app.shoppingListCache;
+
+    // Sort alphabetically by name for easier shopping
+    const sortedItems = [...itemsList].sort((a, b) => a.name.localeCompare(b.name));
+
+    let printHtml = `<!DOCTYPE html><html><head><title>Shopping List</title><style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body { font-family: Arial, sans-serif; padding: 20px; font-size: 14px; }
+      .print-header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #4caf50; padding-bottom: 15px; }
+      .print-header h1 { color: #2e7d32; margin-bottom: 5px; }
+      table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+      th { background: #4caf50; color: white; padding: 12px 15px; text-align: left; }
+      td { padding: 10px 15px; border-bottom: 1px solid #eee; }
+      tr:nth-child(even) { background: #f9f9f9; }
+      .qty { font-weight: 600; text-align: right; }
+      .checkbox { width: 30px; text-align: center; }
+      .footer { margin-top: 20px; padding: 15px; background: #e8f5e9; border-radius: 8px; text-align: center; }
+      @media print { 
+        .no-print { display: none !important; } 
+        body { padding: 10px; }
+      }
+    </style></head><body>
+      <div class="print-header">
+        <h1>🥬 Shree Gor Veggies</h1>
+        <div>Shopping List - ${today}</div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th class="checkbox">✓</th>
+            <th>Item</th>
+            <th style="text-align:right;">Quantity</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${sortedItems.map(i => `
+            <tr>
+              <td class="checkbox">☐</td>
+              <td>${i.name}</td>
+              <td class="qty">${i.isPacket ? i.totalQty + ' pkts' : (i.totalGrams / 1000).toFixed(2) + ' kg'}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+      <div class="footer">
+        <strong>Total Items: ${sortedItems.length}</strong>
+      </div>
+      <div class="no-print" style="margin-top:20px; text-align:center;">
+        <button onclick="window.print()" style="padding:12px 24px; background:#4caf50; color:white; border:none; border-radius:8px; cursor:pointer; font-size:16px;">🖨️ Print / Save as PDF</button>
+      </div>
+    </body></html>`;
+
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(printHtml);
+    printWindow.document.close();
 };
 
 window.renderProfitReport = async function () {
@@ -2437,11 +2515,18 @@ window.printOrders = function () {
     if (sort === 'newest') ordersToPrint.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
     else if (sort === 'oldest') ordersToPrint.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
     else if (sort === 'name') ordersToPrint.sort((a, b) => a.customer_name.localeCompare(b.customer_name));
-    else if (sort === 'house') {
+    else if (sort === 'house-asc') {
         ordersToPrint.sort((a, b) => {
             const houseA = (a.house_no || '').toString().toUpperCase();
             const houseB = (b.house_no || '').toString().toUpperCase();
             return houseA.localeCompare(houseB, undefined, { numeric: true, sensitivity: 'base' });
+        });
+    }
+    else if (sort === 'house-desc') {
+        ordersToPrint.sort((a, b) => {
+            const houseA = (a.house_no || '').toString().toUpperCase();
+            const houseB = (b.house_no || '').toString().toUpperCase();
+            return houseB.localeCompare(houseA, undefined, { numeric: true, sensitivity: 'base' });
         });
     }
 
