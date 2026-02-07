@@ -748,15 +748,13 @@ async function renderAdminDashboard() {
         <small onclick="alert('System Healthy')" style="cursor: pointer; color: #666; text-decoration: underline;">Run System Check</small>
       </div>
 
-      <div class="category-tabs">
-        <div class="cat-chip active" id="tab-pending" onclick="switchAdminTab('pending')">Pending</div>
-        <div class="cat-chip" id="tab-finalized" onclick="switchAdminTab('finalized')">Finalized</div>
-        <div class="cat-chip" id="tab-sent" onclick="switchAdminTab('sent')">Sent</div>
-        <div class="cat-chip" id="tab-products" onclick="switchAdminTab('products')">Products</div>
-        <div class="cat-chip" id="tab-stats" onclick="switchAdminTab('stats')">Stats</div>
-        <div class="cat-chip" id="tab-shopping" onclick="switchAdminTab('shopping')">Shopping</div>
-        <div class="cat-chip" id="tab-profit" onclick="switchAdminTab('profit')">💰 Profit</div>
-        <div class="cat-chip" id="tab-customers" onclick="switchAdminTab('customers')">👥 Customers</div>
+      <div class="category-tabs" style="overflow-x:auto; flex-wrap:nowrap; -webkit-overflow-scrolling:touch;">
+        <div class="cat-chip active" id="tab-pending" onclick="switchAdminTab('pending')" style="flex-shrink:0;">Pending</div>
+        <div class="cat-chip" id="tab-finalized" onclick="switchAdminTab('finalized')" style="flex-shrink:0;">Finalized</div>
+        <div class="cat-chip" id="tab-sent" onclick="switchAdminTab('sent')" style="flex-shrink:0;">Sent</div>
+        <div class="cat-chip" id="tab-products" onclick="switchAdminTab('products')" style="flex-shrink:0;">Products</div>
+        <div class="cat-chip" id="tab-shopping" onclick="switchAdminTab('shopping')" style="flex-shrink:0;">Shopping</div>
+        <div class="cat-chip" id="tab-profit" onclick="switchAdminTab('profit')" style="flex-shrink:0;">💰 Profit</div>
       </div>
       <div id="admin-orders-list"></div>
     </div>
@@ -2244,7 +2242,8 @@ window.loadAdminProducts = async function () {
               </div>
             </div>
             
-            <table style="width:100%; border-collapse:collapse;">
+            <div style="overflow-x:auto; -webkit-overflow-scrolling:touch;">
+            <table style="width:100%; border-collapse:collapse; min-width:400px;">
               <thead>
                 <tr style="text-align:left; border-bottom:2px solid #eee;">
                   <th style="padding:8px;">Name</th>
@@ -2275,6 +2274,7 @@ window.loadAdminProducts = async function () {
     }).join('')}
               </tbody>
             </table>
+            </div>
           </div>
         </div>
       `;
