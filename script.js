@@ -1773,7 +1773,7 @@ window.saveOrder = async function (orderId) {
     return { ...item, actualWeight: wtVal, pricePer250gAtOrder: priceVal, finalPrice: smartRound(finalPrice) };
   });
 
-  const finalTotal = updatedItems.reduce((acc, i) => acc + i.finalPrice, 0);
+  const finalTotal = Math.round(updatedItems.reduce((acc, i) => acc + i.finalPrice, 0) * 100) / 100;
 
   await _supabase.from('orders').update({
     items: JSON.stringify(updatedItems),
@@ -1990,10 +1990,14 @@ window.shareBill = async function (orderId) {
     const actualWeight = wtInput ? parseFloat(wtInput.value) || 0 : (i.actualWeight || 0);
     const pricePerUnit = priceInput ? parseFloat(priceInput.value) || 0 : (i.pricePer250gAtOrder || 0);
     const isPacket = i.minQtyUnit !== '250g';
-    let finalPrice = isPacket ? smartRound(pricePerUnit * actualWeight) : smartRound((pricePerUnit / 250) * actualWeight);
+    let finalPrice = isPacket ? (pricePerUnit * actualWeight) : ((pricePerUnit / 250) * actualWeight);
+    finalPrice = Math.round(finalPrice * 100) / 100; // Round to 2 decimal places
     calculatedTotal += finalPrice;
     return { ...i, actualWeight, pricePer250gAtOrder: pricePerUnit, finalPrice };
   });
+
+  // Round total to 2 decimal places to avoid floating point issues
+  calculatedTotal = Math.round(calculatedTotal * 100) / 100;
 
   await _supabase.from('orders').update({
     items: JSON.stringify(updatedItems),
@@ -2002,7 +2006,23 @@ window.shareBill = async function (orderId) {
     customer_phone: newPhone !== order.customer_phone ? newPhone : order.customer_phone
   }).eq('id', orderId);
 
-  const message = `*Fresh Market Bill* %0AOrder for: *${order.customer_name}* %0APhone: ${newPhone} %0AHouse: ${order.house_no || 'N/A'} %0A%0AItems: %0A${updatedItems.map(i => `${i.name} (${i.actualWeight}${i.minQtyUnit !== '250g' ? (i.minQtyUnit === 'pc' ? 'pc' : 'pkt') : 'g'}): ₹${i.finalPrice || 0}`).join('%0A')} %0A%0A*Total: ₹${calculatedTotal}*`;
+  // Compact item format
+  const itemsList = updatedItems.map(i => {
+    const wt = i.actualWeight + (i.minQtyUnit !== '250g' ? (i.minQtyUnit === 'pc' ? 'pc' : 'pkt') : 'g');
+    return `▪ ${i.name} (${wt}) - ₹${i.finalPrice.toFixed(2)}`;
+  }).join('%0A');
+
+  const message = `🥬 *Shree Gor Veggies*%0A` +
+    `━━━━━━━━━━━━━━━━%0A` +
+    `👤 ${order.customer_name}%0A` +
+    `🏠 ${order.house_no || 'N/A'}%0A` +
+    `━━━━━━━━━━━━━━━━%0A` +
+    `${itemsList}%0A` +
+    `━━━━━━━━━━━━━━━━%0A` +
+    `*💰 Total: ₹${calculatedTotal.toFixed(2)}*%0A` +
+    `━━━━━━━━━━━━━━━━%0A` +
+    `🙏 Thank you!`;
+
   window.open(`https://wa.me/91${newPhone}?text=${message}`, '_blank');
 
   const activeTab = document.querySelector('.cat-chip.active');
