@@ -2501,6 +2501,7 @@ window.renderProfitReport = async function () {
         </div>
         <div style="display:flex; gap:8px;">
           <button class="btn" style="background:#ff5252; color:white;" onclick="resetAllPrices()">🔄 Reset</button>
+          <button class="btn" style="background:#2196f3; color:white;" onclick="printSavedPrices()">📄 PDF</button>
           <button class="btn" style="background:white; color:green;" onclick="showPriceSetter()">Edit Prices</button>
         </div>
       </div>
@@ -2598,6 +2599,110 @@ window.filterPriceInputs = function () {
   document.querySelectorAll('.price-item').forEach(item => {
     item.style.display = item.getAttribute('data-name').includes(search) ? 'flex' : 'none';
   });
+};
+
+/**
+ * Print saved prices as PDF
+ * Reads prices from localStorage/Supabase and generates a printable price list
+ */
+window.printSavedPrices = async function () {
+  // Get saved prices
+  const savedPrices = JSON.parse(localStorage.getItem('fm_current_prices') || '{}');
+
+  if (Object.keys(savedPrices).length === 0) {
+    alert('No prices saved! Please set prices first using "Edit Prices".');
+    return;
+  }
+
+  // Fetch product names from Supabase
+  const { data: products } = await _supabase.from('products').select('id, name, minimum_quantity_unit').order('name');
+
+  if (!products) {
+    alert('Error loading products. Please try again.');
+    return;
+  }
+
+  // Build price list with names
+  const priceList = [];
+  products.forEach(p => {
+    if (savedPrices[p.id]) {
+      priceList.push({
+        name: p.name,
+        price: parseFloat(savedPrices[p.id]),
+        unit: p.minimum_quantity_unit || '250g'
+      });
+    }
+  });
+
+  if (priceList.length === 0) {
+    alert('No prices found! Please set prices using "Edit Prices".');
+    return;
+  }
+
+  const today = new Date().toLocaleDateString('en-IN');
+  const time = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+  const lastUpdated = localStorage.getItem('fm_prices_updated') || 'Unknown';
+
+  let printHtml = `<!DOCTYPE html><html><head><title>Price List - ${today}</title><style>
+      body { font-family: Arial, sans-serif; padding: 20px; font-size: 14px; max-width: 800px; margin: 0 auto; }
+      h1 { text-align: center; color: #4caf50; margin-bottom: 5px; }
+      .subtitle { text-align: center; color: #666; margin-bottom: 20px; }
+      .updated { text-align: center; color: #999; font-size: 12px; margin-bottom: 15px; }
+      table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+      th { background: linear-gradient(135deg, #4caf50, #2e7d32); color: white; padding: 12px 8px; text-align: left; }
+      td { padding: 10px 8px; border-bottom: 1px solid #eee; }
+      tr:nth-child(even) { background: #f9f9f9; }
+      tr:hover { background: #e8f5e9; }
+      .price { font-weight: 700; color: #2e7d32; text-align: right; font-size: 16px; }
+      .unit { color: #666; font-size: 12px; }
+      .footer { margin-top: 30px; text-align: center; color: #999; font-size: 11px; border-top: 1px solid #eee; padding-top: 15px; }
+      @media print { 
+        .no-print { display: none !important; } 
+        body { padding: 10px; }
+        tr:hover { background: inherit; }
+      }
+    </style></head><body>
+      <h1>🥬 Shree Gor Veggies</h1>
+      <div class="subtitle">Today's Price List</div>
+      <div class="updated">Last Updated: ${lastUpdated}</div>
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 50px;">#</th>
+            <th>Product Name</th>
+            <th style="width: 100px;">Unit</th>
+            <th style="width: 100px; text-align: right;">Rate (₹)</th>
+          </tr>
+        </thead>
+        <tbody>`;
+
+  priceList.forEach((item, index) => {
+    const unitDisplay = item.unit === '250g' ? 'per 250g' : `per ${item.unit}`;
+    printHtml += `
+          <tr>
+            <td>${index + 1}</td>
+            <td><strong>${item.name}</strong></td>
+            <td class="unit">${unitDisplay}</td>
+            <td class="price">₹${item.price}</td>
+          </tr>`;
+  });
+
+  printHtml += `
+        </tbody>
+      </table>
+      <div class="footer">
+        Total: ${priceList.length} items | Generated: ${today} at ${time}<br>
+        Shree Gor Veggies - Fresh from Farm to Home 🌱
+      </div>
+      <div class="no-print" style="margin-top: 30px; text-align: center;">
+        <button onclick="window.print()" style="padding: 14px 28px; background: linear-gradient(135deg, #4caf50, #2e7d32); color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; box-shadow: 0 4px 12px rgba(76,175,80,0.3);">🖨️ Print / Save as PDF</button>
+        <p style="margin-top: 10px; font-size: 12px; color: #666;">Tip: Choose "Save as PDF" in print options to download</p>
+      </div>
+    </body></html>`;
+
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(printHtml);
+  printWindow.document.close();
 };
 
 window.printOrders = function () {
