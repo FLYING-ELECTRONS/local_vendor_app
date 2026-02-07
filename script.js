@@ -1592,6 +1592,62 @@ window.loadAdminOrders = async function (statusFilter) {
     const savedSort = window._adminSortValue || 'newest';
     const savedSearch = window._adminSearchValue || '';
 
+    // Revenue summary for sent orders
+    let revenueSummaryHtml = '';
+    if (statusFilter === 'sent' && data.length > 0) {
+      const totalRevenue = data.reduce((sum, o) => sum + (o.total_amount || 0), 0);
+      const orderCount = data.length;
+
+      // Get payment status from localStorage
+      const paymentData = JSON.parse(localStorage.getItem('fm_payment_status') || '{}');
+      let paidTotal = 0, unpaidTotal = 0, cashTotal = 0, onlineTotal = 0;
+      let paidCount = 0, unpaidCount = 0;
+
+      data.forEach(o => {
+        const payment = paymentData[o.id];
+        if (payment && payment.received) {
+          paidTotal += o.total_amount || 0;
+          paidCount++;
+          if (payment.type === 'cash') cashTotal += o.total_amount || 0;
+          else onlineTotal += o.total_amount || 0;
+        } else {
+          unpaidTotal += o.total_amount || 0;
+          unpaidCount++;
+        }
+      });
+
+      revenueSummaryHtml = `
+        <div style="background: linear-gradient(135deg, #4caf50, #2e7d32); color: white; padding: 20px; border-radius: 12px; margin-bottom: 16px; box-shadow: 0 4px 15px rgba(76,175,80,0.3);">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+            <div>
+              <div style="font-size: 12px; opacity: 0.9; text-transform: uppercase; letter-spacing: 1px;">Today's Revenue</div>
+              <div style="font-size: 32px; font-weight: 700;">₹${totalRevenue.toLocaleString('en-IN')}</div>
+              <div style="font-size: 13px; opacity: 0.9; margin-top: 4px;">${orderCount} orders sent</div>
+            </div>
+            <div style="text-align: right;">
+              <div style="display: flex; gap: 16px; flex-wrap: wrap; justify-content: flex-end;">
+                <div style="background: rgba(255,255,255,0.2); padding: 10px 16px; border-radius: 8px;">
+                  <div style="font-size: 11px; opacity: 0.9;">✅ Paid</div>
+                  <div style="font-size: 18px; font-weight: 600;">₹${paidTotal.toLocaleString('en-IN')}</div>
+                  <div style="font-size: 11px; opacity: 0.8;">${paidCount} orders</div>
+                </div>
+                <div style="background: rgba(255,255,255,0.2); padding: 10px 16px; border-radius: 8px;">
+                  <div style="font-size: 11px; opacity: 0.9;">⏳ Pending</div>
+                  <div style="font-size: 18px; font-weight: 600;">₹${unpaidTotal.toLocaleString('en-IN')}</div>
+                  <div style="font-size: 11px; opacity: 0.8;">${unpaidCount} orders</div>
+                </div>
+              </div>
+              ${paidTotal > 0 ? `
+              <div style="margin-top: 12px; font-size: 12px; opacity: 0.9;">
+                💵 Cash: ₹${cashTotal.toLocaleString('en-IN')} | 📱 Online: ₹${onlineTotal.toLocaleString('en-IN')}
+              </div>
+              ` : ''}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
     const searchHtml = `
         <div style="padding:10px; display:flex; gap:10px; background:white; margin-bottom:12px; border-radius:8px; border:1px solid #eee; flex-wrap:wrap; align-items:center;">
           <input type="text" id="admin-search" placeholder="Search customer..." value="${savedSearch}" style="flex:1; min-width:120px; padding:8px; border:1px solid #ddd; border-radius:6px;" onkeyup="filterAdminOrders()">
@@ -1608,7 +1664,7 @@ window.loadAdminOrders = async function (statusFilter) {
         <div id="filtered-orders-list"></div>
         `;
 
-    container.innerHTML = modalHtml + searchHtml;
+    container.innerHTML = modalHtml + revenueSummaryHtml + searchHtml;
     filterAdminOrders();
   } catch (e) {
     console.error(e);
