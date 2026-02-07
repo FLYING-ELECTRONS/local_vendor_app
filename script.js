@@ -7,10 +7,10 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 
 let _supabase;
 if (window.supabase && window.supabase.createClient) {
-    _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    window.supabase = _supabase; // Expose client as window.supabase
+  _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  window.supabase = _supabase; // Expose client as window.supabase
 } else {
-    alert('CRITICAL ERROR: Supabase library not loaded. Check internet connection or ad-blockers.');
+  alert('CRITICAL ERROR: Supabase library not loaded. Check internet connection or ad-blockers.');
 }
 
 // =========================================
@@ -18,99 +18,99 @@ if (window.supabase && window.supabase.createClient) {
 // These are the minimum weights customers must order
 // =========================================
 const MINIMUM_ORDER_WEIGHTS = {
-    // Vegetables - 500 gm
-    'potato': 500,
-    'onion': 500,
-    'desi tomato': 500,
-    'tomato': 500,
-    'green peas': 500,
-    'suran': 500,
+  // Vegetables - 500 gm
+  'potato': 500,
+  'onion': 500,
+  'desi tomato': 500,
+  'tomato': 500,
+  'green peas': 500,
+  'suran': 500,
 
-    // Vegetables - 400 gm
-    'cabbage': 400,
-    'kacha kela': 400,
-    'raw banana': 400,
-    'ratalu': 400,
+  // Vegetables - 400 gm
+  'cabbage': 400,
+  'kacha kela': 400,
+  'raw banana': 400,
+  'ratalu': 400,
 
-    // Vegetables - 350 gm
-    'red carrot': 350,
-    'carrot': 350,
-    'methi': 350,
-    'cucumber': 350,
-    'beetroot': 350,
-    'cauliflower': 350,
-    'brinjal bhatta': 350,
-    'brinjal': 350,
-    'sweet potato': 350,
-    'capsicum': 350,
-    'capsicum (simla)': 350,
-    'simla mirch': 350,
-    'spinach': 350,
-    'spinach (palak)': 350,
-    'palak': 350,
-    'bottle gourd': 350,
-    'lauki': 350,
-    'muli': 350,
-    'radish': 350,
-    'bhindi': 350,
-    'okra': 350,
-    'lady finger': 350,
-    'bor': 350,
-    'indian jujube': 350,
-    'bor / indian jujube': 350,
+  // Vegetables - 350 gm
+  'red carrot': 350,
+  'carrot': 350,
+  'methi': 350,
+  'cucumber': 350,
+  'beetroot': 350,
+  'cauliflower': 350,
+  'brinjal bhatta': 350,
+  'brinjal': 350,
+  'sweet potato': 350,
+  'capsicum': 350,
+  'capsicum (simla)': 350,
+  'simla mirch': 350,
+  'spinach': 350,
+  'spinach (palak)': 350,
+  'palak': 350,
+  'bottle gourd': 350,
+  'lauki': 350,
+  'muli': 350,
+  'radish': 350,
+  'bhindi': 350,
+  'okra': 350,
+  'lady finger': 350,
+  'bor': 350,
+  'indian jujube': 350,
+  'bor / indian jujube': 350,
 
-    // Vegetables - 300 gm
-    'lili haldar': 300,
-    'turmeric': 300,
-    'guvar': 300,
-    'cluster beans': 300,
-    'tindora': 300,
-    'ivy gourd': 300,
-    'raw mango': 300,
+  // Vegetables - 300 gm
+  'lili haldar': 300,
+  'turmeric': 300,
+  'guvar': 300,
+  'cluster beans': 300,
+  'tindora': 300,
+  'ivy gourd': 300,
+  'raw mango': 300,
 
-    // Vegetables - 250 gm
-    'karela': 250,
-    'bitter gourd': 250,
-    'lili dungli': 250,
+  // Vegetables - 250 gm
+  'karela': 250,
+  'bitter gourd': 250,
+  'lili dungli': 250,
 
-    // Herbs & Aromatics - 100 gm
-    'chilly medium': 100,
-    'chilly spicy': 100,
-    'green chilly': 100,
-    'ginger': 100,
+  // Herbs & Aromatics - 100 gm
+  'chilly medium': 100,
+  'chilly spicy': 100,
+  'green chilly': 100,
+  'ginger': 100,
 
-    // Herbs & Aromatics - 150 gm
-    'coriander leaves': 150,
-    'coriander': 150,
-    'dhania': 150,
+  // Herbs & Aromatics - 150 gm
+  'coriander leaves': 150,
+  'coriander': 150,
+  'dhania': 150,
 
-    // Herbs & Aromatics - 200 gm
-    'lemon': 200,
-    'green garlic': 200,
-    'tuver': 200,
-    'pigeon peas': 200,
-    'tuver / pigeon peas': 200,
+  // Herbs & Aromatics - 200 gm
+  'lemon': 200,
+  'green garlic': 200,
+  'tuver': 200,
+  'pigeon peas': 200,
+  'tuver / pigeon peas': 200,
 
-    // Herbs & Aromatics - 350 gm
-    'mint': 350,
-    'pudina': 350,
-    'green chana': 350,
+  // Herbs & Aromatics - 350 gm
+  'mint': 350,
+  'pudina': 350,
+  'green chana': 350,
 
-    // Fruits - Large quantities
-    'pineapple': 800,
-    'papaya': 700,
-    'banana pakka': 500,
-    'banana': 500,
-    'grapes': 500,
-    'malta': 400,
-    'musk melon': 400,
-    'pomegranate': 400,
-    'chikoo': 400,
-    'sapota': 400,
-    'mosambi': 1000,
-    'sweet lime': 1000,
-    'watermelon': 1000,
-    'mango': 9500,  // 9.5 kg
+  // Fruits - Large quantities
+  'pineapple': 800,
+  'papaya': 700,
+  'banana pakka': 500,
+  'banana': 500,
+  'grapes': 500,
+  'malta': 400,
+  'musk melon': 400,
+  'pomegranate': 400,
+  'chikoo': 400,
+  'sapota': 400,
+  'mosambi': 1000,
+  'sweet lime': 1000,
+  'watermelon': 1000,
+  'mango': 9500,  // 9.5 kg
 };
 
 /**
@@ -120,47 +120,47 @@ const MINIMUM_ORDER_WEIGHTS = {
  * @returns {number} Minimum weight in grams
  */
 function getMinimumWeight(productOrName) {
-    // Handle product object - check database field first
-    if (productOrName && typeof productOrName === 'object') {
-        // Check database field first (could be minimum_grams or minimum_weight_grams)
-        if (productOrName.minimum_grams && productOrName.minimum_grams > 0) {
-            return productOrName.minimum_grams;
-        }
-        if (productOrName.minimum_weight_grams && productOrName.minimum_weight_grams > 0) {
-            return productOrName.minimum_weight_grams;
-        }
-        // Fall back to name-based lookup
-        productOrName = productOrName.name;
+  // Handle product object - check database field first
+  if (productOrName && typeof productOrName === 'object') {
+    // Check database field first (could be minimum_grams or minimum_weight_grams)
+    if (productOrName.minimum_grams && productOrName.minimum_grams > 0) {
+      return productOrName.minimum_grams;
     }
-
-    if (!productOrName) return 250;
-    const name = productOrName.toLowerCase().trim();
-
-    // Try exact match first
-    if (MINIMUM_ORDER_WEIGHTS[name]) {
-        return MINIMUM_ORDER_WEIGHTS[name];
+    if (productOrName.minimum_weight_grams && productOrName.minimum_weight_grams > 0) {
+      return productOrName.minimum_weight_grams;
     }
+    // Fall back to name-based lookup
+    productOrName = productOrName.name;
+  }
 
-    // Fuzzy match - check if product name contains any key from our lookup
-    // This handles names like "Bottle gourd/ dudhi / lauki" matching "bottle gourd"
-    for (const [key, minGrams] of Object.entries(MINIMUM_ORDER_WEIGHTS)) {
-        if (name.includes(key.toLowerCase())) {
-            return minGrams;
-        }
+  if (!productOrName) return 250;
+  const name = productOrName.toLowerCase().trim();
+
+  // Try exact match first
+  if (MINIMUM_ORDER_WEIGHTS[name]) {
+    return MINIMUM_ORDER_WEIGHTS[name];
+  }
+
+  // Fuzzy match - check if product name contains any key from our lookup
+  // This handles names like "Bottle gourd/ dudhi / lauki" matching "bottle gourd"
+  for (const [key, minGrams] of Object.entries(MINIMUM_ORDER_WEIGHTS)) {
+    if (name.includes(key.toLowerCase())) {
+      return minGrams;
     }
+  }
 
-    return 250; // Default
+  return 250; // Default
 }
 
 /**
  * Format weight display (e.g., 500 -> "500g", 1000 -> "1kg")
  */
 function formatWeightDisplay(grams) {
-    if (grams >= 1000) {
-        const kg = grams / 1000;
-        return kg % 1 === 0 ? `${kg}kg` : `${kg.toFixed(1)}kg`;
-    }
-    return `${grams}g`;
+  if (grams >= 1000) {
+    const kg = grams / 1000;
+    return kg % 1 === 0 ? `${kg}kg` : `${kg.toFixed(1)}kg`;
+  }
+  return `${grams}g`;
 }
 
 // =========================================
@@ -168,14 +168,14 @@ function formatWeightDisplay(grams) {
 // =========================================
 // Helper to safely parse JSON
 function safeParse(key, fallback) {
-    try {
-        const item = localStorage.getItem(key);
-        return item ? JSON.parse(item) : fallback;
-    } catch (e) {
-        console.warn(`Error parsing ${key}, resetting.`, e);
-        localStorage.removeItem(key);
-        return fallback;
-    }
+  try {
+    const item = localStorage.getItem(key);
+    return item ? JSON.parse(item) : fallback;
+  } catch (e) {
+    console.warn(`Error parsing ${key}, resetting.`, e);
+    localStorage.removeItem(key);
+    return fallback;
+  }
 }
 
 // Cache version - increment this when product units change
@@ -184,20 +184,20 @@ const currentVersion = localStorage.getItem('fm_cache_version');
 
 // Clear cart if cache version changed (fixes packet/gram display issues)
 if (currentVersion !== CACHE_VERSION) {
-    console.log('Cache version updated - clearing cart to refresh product units');
-    localStorage.removeItem('fm_cart');
-    localStorage.setItem('fm_cache_version', CACHE_VERSION);
+  console.log('Cache version updated - clearing cart to refresh product units');
+  localStorage.removeItem('fm_cart');
+  localStorage.setItem('fm_cache_version', CACHE_VERSION);
 }
 
 const app = {
-    user: safeParse('fm_user', null),
-    cart: safeParse('fm_cart', []),
-    products: [],
-    currentScreen: 'loading',
-    isAdmin: false,
-    adminOrdersCache: [],
-    pushSubscription: null,
-    swRegistration: null
+  user: safeParse('fm_user', null),
+  cart: safeParse('fm_cart', []),
+  products: [],
+  currentScreen: 'loading',
+  isAdmin: false,
+  adminOrdersCache: [],
+  pushSubscription: null,
+  swRegistration: null
 };
 
 // =========================================
@@ -208,118 +208,118 @@ const app = {
  * Register service worker for push notifications
  */
 async function registerServiceWorker() {
-    if ('serviceWorker' in navigator) {
-        try {
-            const registration = await navigator.serviceWorker.register('/service-worker.js');
-            console.log('Service Worker registered:', registration);
-            app.swRegistration = registration;
+  if ('serviceWorker' in navigator) {
+    try {
+      const registration = await navigator.serviceWorker.register('/service-worker.js');
+      console.log('Service Worker registered:', registration);
+      app.swRegistration = registration;
 
-            // Check if user already has a push subscription
-            const existingSubscription = await registration.pushManager.getSubscription();
-            if (existingSubscription) {
-                console.log('Existing push subscription found');
-                app.pushSubscription = existingSubscription;
-            }
+      // Check if user already has a push subscription
+      const existingSubscription = await registration.pushManager.getSubscription();
+      if (existingSubscription) {
+        console.log('Existing push subscription found');
+        app.pushSubscription = existingSubscription;
+      }
 
-            return registration;
-        } catch (error) {
-            console.error('Service Worker registration failed:', error);
-        }
+      return registration;
+    } catch (error) {
+      console.error('Service Worker registration failed:', error);
     }
+  }
 }
 
 /**
  * Request notification permission and subscribe
  */
 async function subscribeToPushNotifications() {
-    if (!app.swRegistration) {
-        console.error('Service worker not registered yet');
-        return false;
+  if (!app.swRegistration) {
+    console.error('Service worker not registered yet');
+    return false;
+  }
+
+  try {
+    const permission = await Notification.requestPermission();
+
+    if (permission !== 'granted') {
+      console.log('Notification permission denied');
+      return false;
     }
 
-    try {
-        const permission = await Notification.requestPermission();
+    // Subscribe to push notifications
+    const subscription = await app.swRegistration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(getVAPIDPublicKey())
+    });
 
-        if (permission !== 'granted') {
-            console.log('Notification permission denied');
-            return false;
-        }
+    app.pushSubscription = subscription;
+    console.log('Push subscription:', subscription);
 
-        // Subscribe to push notifications
-        const subscription = await app.swRegistration.pushManager.subscribe({
-            userVisibleOnly: true,
-            applicationServerKey: urlBase64ToUint8Array(getVAPIDPublicKey())
-        });
+    // Save subscription to Supabase
+    await savePushSubscription(subscription);
 
-        app.pushSubscription = subscription;
-        console.log('Push subscription:', subscription);
-
-        // Save subscription to Supabase
-        await savePushSubscription(subscription);
-
-        return true;
-    } catch (error) {
-        console.error('Error subscribing to push:', error);
-        return false;
-    }
+    return true;
+  } catch (error) {
+    console.error('Error subscribing to push:', error);
+    return false;
+  }
 }
 
 /**
  * Convert VAPID key to Uint8Array
  */
 function urlBase64ToUint8Array(base64String) {
-    const padding = '='.repeat((4 - base64String.length % 4) % 4);
-    const base64 = (base64String + padding)
-        .replace(/\-/g, '+')
-        .replace(/_/g, '/');
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding)
+    .replace(/\-/g, '+')
+    .replace(/_/g, '/');
 
-    const rawData = window.atob(base64);
-    const outputArray = new Uint8Array(rawData.length);
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
 
-    for (let i = 0; i < rawData.length; ++i) {
-        outputArray[i] = rawData.charCodeAt(i);
-    }
-    return outputArray;
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
 }
 
 /**
  * Get VAPID public key (replace with your own key when you generate one)
  */
 function getVAPIDPublicKey() {
-    // This is a placeholder - you'll need to generate your own VAPID keys
-    // For now, we'll store this in localStorage for testing
-    return localStorage.getItem('vapid_public_key') || '';
+  // This is a placeholder - you'll need to generate your own VAPID keys
+  // For now, we'll store this in localStorage for testing
+  return localStorage.getItem('vapid_public_key') || '';
 }
 
 /**
  * Save push subscription to Supabase
  */
 async function savePushSubscription(subscription) {
-    if (!app.user) return;
+  if (!app.user) return;
 
-    try {
-        const subscriptionJSON = subscription.toJSON();
+  try {
+    const subscriptionJSON = subscription.toJSON();
 
-        const { error } = await _supabase
-            .from('push_subscriptions')
-            .upsert({
-                user_id: app.user.id,
-                endpoint: subscriptionJSON.endpoint,
-                p256dh_key: subscriptionJSON.keys.p256dh,
-                auth_key: subscriptionJSON.keys.auth,
-                last_used: new Date().toISOString()
-            }, {
-                onConflict: 'endpoint'
-            });
+    const { error } = await _supabase
+      .from('push_subscriptions')
+      .upsert({
+        user_id: app.user.id,
+        endpoint: subscriptionJSON.endpoint,
+        p256dh_key: subscriptionJSON.keys.p256dh,
+        auth_key: subscriptionJSON.keys.auth,
+        last_used: new Date().toISOString()
+      }, {
+        onConflict: 'endpoint'
+      });
 
-        if (error) {
-            console.error('Error saving push subscription:', error);
-        } else {
-            console.log('Push subscription saved to database');
-        }
-    } catch (error) {
-        console.error('Error in savePushSubscription:', error);
+    if (error) {
+      console.error('Error saving push subscription:', error);
+    } else {
+      console.log('Push subscription saved to database');
     }
+  } catch (error) {
+    console.error('Error in savePushSubscription:', error);
+  }
 }
 
 /**
@@ -327,26 +327,26 @@ async function savePushSubscription(subscription) {
  * This ensures prices set on one device are available on all devices.
  */
 async function syncPricesFromSupabase() {
-    try {
-        const { data, error } = await _supabase
-            .from('app_settings')
-            .select('value')
-            .eq('key', 'current_prices')
-            .single();
+  try {
+    const { data, error } = await _supabase
+      .from('app_settings')
+      .select('value')
+      .eq('key', 'current_prices')
+      .single();
 
-        if (error) {
-            console.log('No prices in Supabase yet, using local prices');
-            return;
-        }
-
-        if (data && data.value) {
-            const prices = typeof data.value === 'string' ? JSON.parse(data.value) : data.value;
-            localStorage.setItem('fm_current_prices', JSON.stringify(prices));
-            console.log('Prices synced from Supabase:', Object.keys(prices).length, 'products');
-        }
-    } catch (e) {
-        console.error('Error syncing prices:', e);
+    if (error) {
+      console.log('No prices in Supabase yet, using local prices');
+      return;
     }
+
+    if (data && data.value) {
+      const prices = typeof data.value === 'string' ? JSON.parse(data.value) : data.value;
+      localStorage.setItem('fm_current_prices', JSON.stringify(prices));
+      console.log('Prices synced from Supabase:', Object.keys(prices).length, 'products');
+    }
+  } catch (e) {
+    console.error('Error syncing prices:', e);
+  }
 }
 
 // =========================================
@@ -363,48 +363,48 @@ async function syncPricesFromSupabase() {
  * Removes leading "1" or "1 " from units like "1 kg" to show "kg".
  */
 function formatUnit(unit) {
-    // console.log('Formatting unit:', unit);
-    if (!unit || unit === 'packet' || unit === '250g') return '';
-    return unit.replace(/^1\s?/, '');
+  // console.log('Formatting unit:', unit);
+  if (!unit || unit === 'packet' || unit === '250g') return '';
+  return unit.replace(/^1\s?/, '');
 }
 
 function createProductCardHtml(product) {
-    const cartItem = app.cart.find(i => i.id === product.id);
-    const isPacketItem = product.minimum_quantity_unit && product.minimum_quantity_unit !== '250g';
+  const cartItem = app.cart.find(i => i.id === product.id);
+  const isPacketItem = product.minimum_quantity_unit && product.minimum_quantity_unit !== '250g';
 
-    // Get minimum weight for this product (reads from DB field or falls back to lookup)
-    const minWeight = getMinimumWeight(product);
+  // Get minimum weight for this product (reads from DB field or falls back to lookup)
+  const minWeight = getMinimumWeight(product);
 
-    if (isPacketItem) {
-        // Packet/piece items (like Kiwi, Sweet Corn) - keep original logic
-        const qty = cartItem ? cartItem.quantity : 0;
-        const unitDisplay = product.minimum_quantity_unit || 'pkt';
+  if (isPacketItem) {
+    // Packet/piece items (like Kiwi, Sweet Corn) - keep original logic
+    const qty = cartItem ? cartItem.quantity : 0;
+    const unitDisplay = product.minimum_quantity_unit || 'pkt';
 
-        return `
+    return `
       <div class="product-card" id="product-card-${product.id}">
         <div class="product-image" style="background-image: url('${product.image}')"></div>
         <h3>${product.name}</h3>
         <div class="price">Price TBD / ${unitDisplay}</div>
         <div class="actions">
           ${qty === 0 ?
-                `<button class="btn btn-primary btn-sm btn-block" onclick="addToCart('${product.id}')">Add</button>` :
-                `<div class="qty-selector">
+        `<button class="btn btn-primary btn-sm btn-block" onclick="addToCart('${product.id}')">Add</button>` :
+        `<div class="qty-selector">
             <button type="button" class="qty-btn" onclick="updateCart('${product.id}', -1)">-</button>
             <span id="catalog-qty-${product.id}" class="qty-val">
               ${qty} ${formatUnit(product.minimum_quantity_unit)}
             </span>
             <button type="button" class="qty-btn" onclick="updateCart('${product.id}', 1)">+</button>
           </div>`
-            }
+      }
         </div>
       </div>
     `;
-    } else {
-        // Gram-based items - use minimum weight system
-        const currentGrams = cartItem ? (cartItem.customGrams || minWeight) : 0;
-        const minDisplay = formatWeightDisplay(minWeight);
+  } else {
+    // Gram-based items - use minimum weight system
+    const currentGrams = cartItem ? (cartItem.customGrams || minWeight) : 0;
+    const minDisplay = formatWeightDisplay(minWeight);
 
-        return `
+    return `
       <div class="product-card" id="product-card-${product.id}">
         <div class="product-image" style="background-image: url('${product.image}')"></div>
         <h3>${product.name}</h3>
@@ -412,8 +412,8 @@ function createProductCardHtml(product) {
         <div class="min-qty-label" style="font-size: 11px; color: #666; margin-top: -4px; margin-bottom: 4px;">Min: ${minDisplay}</div>
         <div class="actions">
           ${currentGrams === 0 ?
-                `<button class="btn btn-primary btn-sm btn-block" onclick="addToCart('${product.id}')">Add ${minDisplay}</button>` :
-                `<div style="display:flex; align-items:center; justify-content:center; gap:2px;">
+        `<button class="btn btn-primary btn-sm btn-block" onclick="addToCart('${product.id}')">Add ${minDisplay}</button>` :
+        `<div style="display:flex; align-items:center; justify-content:center; gap:2px;">
             <button type="button" class="qty-btn" onclick="adjustGrams('${product.id}', -50)" style="width:28px; height:28px; padding:0; display:flex; align-items:center; justify-content:center;">-</button>
             <input type="number"
               id="grams-${product.id}"
@@ -424,11 +424,11 @@ function createProductCardHtml(product) {
               style="width:60px; padding:4px; border:2px solid #4caf50; border-radius:6px; text-align:center; font-size:14px; font-weight:600; height:30px;">
             <button type="button" class="qty-btn" onclick="adjustGrams('${product.id}', 50)" style="width:28px; height:28px; padding:0; display:flex; align-items:center; justify-content:center;">+</button>
           </div>`
-            }
+      }
         </div>
       </div>
     `;
-    }
+  }
 }
 
 /**
@@ -437,21 +437,21 @@ function createProductCardHtml(product) {
  * @returns {string} HTML string for a cart item.
  */
 function createCartItemHtml(item) {
-    const product = app.products.find(p => p.id === item.id);
-    // Fallback if product not found (should be rare)
-    const unit = product ? product.minimum_quantity_unit : (item.minQtyUnit || '');
-    const name = product ? product.name : item.name;
-    const image = product ? product.image : '';
+  const product = app.products.find(p => p.id === item.id);
+  // Fallback if product not found (should be rare)
+  const unit = product ? product.minimum_quantity_unit : (item.minQtyUnit || '');
+  const name = product ? product.name : item.name;
+  const image = product ? product.image : '';
 
-    if (!product && !item) return '';
+  if (!product && !item) return '';
 
-    const isPacketItem = unit && unit !== '250g';
-    const minWeight = getMinimumWeight(product || name); // Use product object if available for DB field
-    const grams = item.customGrams ? item.customGrams : minWeight;
-    const perItemTotal = (product && product.price) ? (product.price * item.quantity) : null;
+  const isPacketItem = unit && unit !== '250g';
+  const minWeight = getMinimumWeight(product || name); // Use product object if available for DB field
+  const grams = item.customGrams ? item.customGrams : minWeight;
+  const perItemTotal = (product && product.price) ? (product.price * item.quantity) : null;
 
-    const controls = isPacketItem ?
-        `<div style="display:flex; align-items:center; gap:2px;">
+  const controls = isPacketItem ?
+    `<div style="display:flex; align-items:center; gap:2px;">
        <button type="button" class="qty-btn" onclick="updateCart('${item.id}', -1)" style="width:28px; height:28px; padding:0; display:flex; align-items:center; justify-content:center;">-</button>
        <div id="cart-qty-${item.id}" style="width:auto; min-width:30px; padding:0 4px; text-align:center; font-weight:600;">
          ${item.quantity} ${formatUnit(unit)}
@@ -459,8 +459,8 @@ function createCartItemHtml(item) {
        <button type="button" class="qty-btn" onclick="updateCart('${item.id}', 1)" style="width:28px; height:28px; padding:0; display:flex; align-items:center; justify-content:center;">+</button>
        <button type="button" onclick="removeFromCart('${item.id}')" style="background:#f44336; color:white; border:none; width:28px; height:28px; border-radius:6px; cursor:pointer; display:flex; align-items:center; justify-content:center; margin-left:4px;">✕</button>
      </div>`
-        :
-        `<div style="display:flex; align-items:center; gap:2px;">
+    :
+    `<div style="display:flex; align-items:center; gap:2px;">
        <button type="button" class="qty-btn" onclick="adjustGrams('${item.id}', -50)" style="width:28px; height:28px; padding:0; display:flex; align-items:center; justify-content:center;">-</button>
        <input type="number" 
           id="grams-${item.id}"
@@ -472,7 +472,7 @@ function createCartItemHtml(item) {
        <button type="button" onclick="removeFromCart('${item.id}')" style="background:#f44336; color:white; border:none; width:28px; height:28px; border-radius:6px; cursor:pointer; display:flex; align-items:center; justify-content:center; margin-left:4px;">✕</button>
      </div>`;
 
-    return `
+  return `
     <div id="cart-item-${item.id}" style="display:flex; gap:12px; align-items:center; background:white; padding:12px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
       <div style="width:84px; height:84px; background-image: url('${product.image}'); background-size:cover; background-position:center; border-radius:8px; flex-shrink:0;"></div>
       <div style="flex:1;">
@@ -495,8 +495,8 @@ function createCartItemHtml(item) {
  * @returns {string} HTML string for an order card.
  */
 function createOrderCardHtml(order) {
-    const items = typeof order.items === 'string' ? JSON.parse(order.items) : order.items;
-    return `
+  const items = typeof order.items === 'string' ? JSON.parse(order.items) : order.items;
+  return `
     <div class="order-card" onclick="viewOrderDetails('${order.id}')">
       <div class="order-header">
         <span class="order-date">${new Date(order.created_at).toLocaleDateString()}</span>
@@ -521,9 +521,9 @@ function createOrderCardHtml(order) {
  * @returns {string} HTML string for the auth screen.
  */
 async function renderAuthScreen() {
-    // Auth screen is rendered in HTML, not dynamically
-    // This function exists for consistency but returns empty
-    return '';
+  // Auth screen is rendered in HTML, not dynamically
+  // This function exists for consistency but returns empty
+  return '';
 }
 
 /**
@@ -531,21 +531,21 @@ async function renderAuthScreen() {
  * @returns {string} HTML string for the catalog screen.
  */
 async function renderCatalogView() {
-    const { data, error } = await _supabase
-        .from('products')
-        .select('*')
-        .eq('available', true)  // Only show products that are in stock
-        .order('name');
+  const { data, error } = await _supabase
+    .from('products')
+    .select('*')
+    .eq('available', true)  // Only show products that are in stock
+    .order('name');
 
-    if (error) {
-        console.error('Error fetching products:', error);
-        return '<p class="text-center text-danger">Error loading products</p>';
-    }
+  if (error) {
+    console.error('Error fetching products:', error);
+    return '<p class="text-center text-danger">Error loading products</p>';
+  }
 
-    app.products = data;
-    const productHtml = data.map(p => createProductCardHtml(p)).join('');
+  app.products = data;
+  const productHtml = data.map(p => createProductCardHtml(p)).join('');
 
-    return `
+  return `
     <div class="search-bar-container">
       <input type="text" id="search-input" class="search-input" placeholder="Search vegetables, fruits...">
     </div>
@@ -569,31 +569,31 @@ async function renderCatalogView() {
  * @returns {string} HTML string for the cart screen.
  */
 async function renderCustomerCartView() {
-    // Check if orders are closed
-    let ordersOpen = true;
-    try {
-        const { data, error } = await _supabase.from('app_settings').select('value').eq('key', 'order_window_open').single();
-        if (!error && data) {
-            ordersOpen = data.value === 'true';
-            localStorage.setItem('fm_orders_open', ordersOpen ? 'true' : 'false');
-        } else {
-            ordersOpen = localStorage.getItem('fm_orders_open') !== 'false';
-        }
-    } catch (e) {
-        ordersOpen = localStorage.getItem('fm_orders_open') !== 'false';
+  // Check if orders are closed
+  let ordersOpen = true;
+  try {
+    const { data, error } = await _supabase.from('app_settings').select('value').eq('key', 'order_window_open').single();
+    if (!error && data) {
+      ordersOpen = data.value === 'true';
+      localStorage.setItem('fm_orders_open', ordersOpen ? 'true' : 'false');
+    } else {
+      ordersOpen = localStorage.getItem('fm_orders_open') !== 'false';
     }
+  } catch (e) {
+    ordersOpen = localStorage.getItem('fm_orders_open') !== 'false';
+  }
 
-    if (app.cart.length === 0) {
-        return `
+  if (app.cart.length === 0) {
+    return `
       <div class="padded-container text-center" style="margin-top: 50px;">
         <span class="material-icons-round" style="font-size: 64px; color: #ccc;">shopping_cart_checkout</span>
         <p>Your cart is empty.</p>
         <button class="btn btn-primary" onclick="navigateTo('catalog')">Start Shopping</button>
       </div>
     `;
-    }
+  }
 
-    const closedBanner = !ordersOpen ? `
+  const closedBanner = !ordersOpen ? `
     <div style="background: linear-gradient(135deg, #f44336, #d32f2f); color: white; padding: 16px; border-radius: 12px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(244,67,54,0.3);">
       <div style="display: flex; align-items: center; gap: 12px;">
         <span class="material-icons-round" style="font-size: 32px;">store</span>
@@ -605,15 +605,15 @@ async function renderCustomerCartView() {
     </div>
   ` : '';
 
-    const itemsHtml = app.cart.map(item => createCartItemHtml(item)).join('');
+  const itemsHtml = app.cart.map(item => createCartItemHtml(item)).join('');
 
-    const grandTotalVal = app.cart.reduce((sum, it) => {
-        const product = app.products.find(p => p.id === it.id);
-        if (product && product.price) return sum + (product.price * it.quantity);
-        return sum;
-    }, 0);
+  const grandTotalVal = app.cart.reduce((sum, it) => {
+    const product = app.products.find(p => p.id === it.id);
+    if (product && product.price) return sum + (product.price * it.quantity);
+    return sum;
+  }, 0);
 
-    return `
+  return `
     ${closedBanner}
     <div style="display:flex; flex-direction:column; gap:12px; padding:12px;">
       <div style="display:flex; flex-direction:column; gap:12px;">
@@ -627,9 +627,9 @@ async function renderCustomerCartView() {
 
       <div>
         ${!ordersOpen ?
-            `<button class="btn btn-danger btn-block" disabled style="opacity: 0.6; cursor: not-allowed;">🚫 Orders Closed - Cannot Place Order</button>` :
-            `<button class="btn btn-primary btn-block" onclick="placeOrder()">Place Order (Pay Later)</button>`
-        }
+      `<button class="btn btn-danger btn-block" disabled style="opacity: 0.6; cursor: not-allowed;">🚫 Orders Closed - Cannot Place Order</button>` :
+      `<button class="btn btn-primary btn-block" onclick="placeOrder()">Place Order (Pay Later)</button>`
+    }
       </div>
     </div>
   `;
@@ -640,24 +640,24 @@ async function renderCustomerCartView() {
  * @returns {string} HTML string for orders screen.
  */
 async function renderOrdersScreen() {
-    const { data, error } = await _supabase
-        .from('orders')
-        .select('*')
-        .eq('customer_phone', app.user.phone)
-        .order('created_at', { ascending: false });
+  const { data, error } = await _supabase
+    .from('orders')
+    .select('*')
+    .eq('customer_phone', app.user.phone)
+    .order('created_at', { ascending: false });
 
-    if (error) {
-        return `<p class="text-center text-danger">Error fetching history</p>`;
-    }
+  if (error) {
+    return `<p class="text-center text-danger">Error fetching history</p>`;
+  }
 
-    if (data.length === 0) {
-        return `<p class="text-center text-muted" style="padding: 20px;">No past orders.</p>`;
-    }
+  if (data.length === 0) {
+    return `<p class="text-center text-muted" style="padding: 20px;">No past orders.</p>`;
+  }
 
-    // Store for printing
-    app.customerOrdersCache = data;
+  // Store for printing
+  app.customerOrdersCache = data;
 
-    return `
+  return `
     <div class="padded-container">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
         <h3 style="margin:0;">My Orders</h3>
@@ -673,7 +673,7 @@ async function renderOrdersScreen() {
  * @returns {string} HTML string for profile screen.
  */
 async function renderProfileScreen() {
-    return `
+  return `
     <div class="padded-container">
       <div class="info-card">
         <div class="input-group">
@@ -701,7 +701,7 @@ async function renderProfileScreen() {
  * @returns {string} HTML string for admin login screen.
  */
 async function renderAdminLoginScreen() {
-    return `
+  return `
     <div class="padded-container">
       <div class="input-group">
         <label>Admin Password</label>
@@ -717,9 +717,9 @@ async function renderAdminLoginScreen() {
  * @returns {string} HTML string for admin dashboard.
  */
 async function renderAdminDashboard() {
-    const isOpen = localStorage.getItem('fm_orders_open') !== 'false';
+  const isOpen = localStorage.getItem('fm_orders_open') !== 'false';
 
-    return `
+  return `
     <div class="padded-container">
       <!-- ADMIN HEADER & TOGGLE -->
       <div style="background: white; padding: 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
@@ -773,65 +773,65 @@ async function renderAdminDashboard() {
  * @param {object} data - Optional data to pass to the rendering function
  */
 async function renderScreen(screenId, data = {}) {
-    const contentArea = document.getElementById('content-area');
-    const title = document.getElementById('page-title');
-    const headerRight = document.querySelector('.header-right');
+  const contentArea = document.getElementById('content-area');
+  const title = document.getElementById('page-title');
+  const headerRight = document.querySelector('.header-right');
 
-    contentArea.innerHTML = '';
-    if (headerRight) headerRight.innerHTML = '';
-    setLoading(true);
+  contentArea.innerHTML = '';
+  if (headerRight) headerRight.innerHTML = '';
+  setLoading(true);
 
-    // Handle Admin Portal Routing
-    if (screenId === 'admin-portal') {
-        screenId = app.isAdmin ? 'admin-dashboard' : 'admin-login';
-    }
+  // Handle Admin Portal Routing
+  if (screenId === 'admin-portal') {
+    screenId = app.isAdmin ? 'admin-dashboard' : 'admin-login';
+  }
 
-    try {
-        let screenHtml = '';
+  try {
+    let screenHtml = '';
 
-        switch (screenId) {
-            case 'catalog':
-                title.innerText = 'Product Catalog';
-                screenHtml = await renderCatalogView();
-                break;
-            case 'cart':
-                title.innerText = 'Your Cart';
-                screenHtml = await renderCustomerCartView();
-                break;
-            case 'orders':
-                title.innerText = 'My Orders';
-                screenHtml = await renderOrdersScreen();
-                break;
-            case 'profile':
-                title.innerText = 'Profile';
-                screenHtml = await renderProfileScreen();
-                break;
-            case 'admin-login':
-                title.innerText = 'Seller Login';
-                screenHtml = await renderAdminLoginScreen();
-                break;
-            case 'admin-dashboard':
-                title.innerText = 'Admin Dashboard';
-                if (headerRight) {
-                    headerRight.innerHTML = `<span class="material-icons-round" onclick="navigateTo('catalog')" style="font-size: 24px;">close</span>`;
-                }
-                screenHtml = await renderAdminDashboard();
-                break;
-            default:
-                screenHtml = '<p class="text-center">Page not found</p>';
+    switch (screenId) {
+      case 'catalog':
+        title.innerText = 'Product Catalog';
+        screenHtml = await renderCatalogView();
+        break;
+      case 'cart':
+        title.innerText = 'Your Cart';
+        screenHtml = await renderCustomerCartView();
+        break;
+      case 'orders':
+        title.innerText = 'My Orders';
+        screenHtml = await renderOrdersScreen();
+        break;
+      case 'profile':
+        title.innerText = 'Profile';
+        screenHtml = await renderProfileScreen();
+        break;
+      case 'admin-login':
+        title.innerText = 'Seller Login';
+        screenHtml = await renderAdminLoginScreen();
+        break;
+      case 'admin-dashboard':
+        title.innerText = 'Admin Dashboard';
+        if (headerRight) {
+          headerRight.innerHTML = `<span class="material-icons-round" onclick="navigateTo('catalog')" style="font-size: 24px;">close</span>`;
         }
-
-        contentArea.innerHTML = screenHtml;
-
-        // Attach screen-specific event listeners
-        attachScreenSpecificEventListeners(screenId);
-
-    } catch (error) {
-        console.error("Error rendering screen:", error);
-        contentArea.innerHTML = '<p class="text-center" style="color:red;">Error loading content!</p><p>Please try again.</p>';
-    } finally {
-        setLoading(false);
+        screenHtml = await renderAdminDashboard();
+        break;
+      default:
+        screenHtml = '<p class="text-center">Page not found</p>';
     }
+
+    contentArea.innerHTML = screenHtml;
+
+    // Attach screen-specific event listeners
+    attachScreenSpecificEventListeners(screenId);
+
+  } catch (error) {
+    console.error("Error rendering screen:", error);
+    contentArea.innerHTML = '<p class="text-center" style="color:red;">Error loading content!</p><p>Please try again.</p>';
+  } finally {
+    setLoading(false);
+  }
 }
 
 // =========================================
@@ -843,23 +843,23 @@ async function renderScreen(screenId, data = {}) {
  * @param {string} screen - The screen identifier
  */
 function attachScreenSpecificEventListeners(screen) {
-    switch (screen) {
-        case 'catalog':
-            const searchInput = document.getElementById('search-input');
-            if (searchInput) {
-                searchInput.addEventListener('input', handleCatalogSearch);
-            }
-            break;
+  switch (screen) {
+    case 'catalog':
+      const searchInput = document.getElementById('search-input');
+      if (searchInput) {
+        searchInput.addEventListener('input', handleCatalogSearch);
+      }
+      break;
 
-        case 'admin-dashboard':
-            // Load pending orders by default
-            loadAdminOrders('pending');
-            break;
+    case 'admin-dashboard':
+      // Load pending orders by default
+      loadAdminOrders('pending');
+      break;
 
-        default:
-            // No specific listeners for this screen
-            break;
-    }
+    default:
+      // No specific listeners for this screen
+      break;
+  }
 }
 
 // =========================================
@@ -871,9 +871,9 @@ function attachScreenSpecificEventListeners(screen) {
  * @param {Event} e - Input event
  */
 function handleCatalogSearch(e) {
-    const term = e.target.value.toLowerCase();
-    const filtered = app.products.filter(p => p.name.toLowerCase().includes(term));
-    renderProductGrid(filtered);
+  const term = e.target.value.toLowerCase();
+  const filtered = app.products.filter(p => p.name.toLowerCase().includes(term));
+  renderProductGrid(filtered);
 }
 
 /**
@@ -881,15 +881,15 @@ function handleCatalogSearch(e) {
  * @param {Array} products - Array of product objects
  */
 function renderProductGrid(products) {
-    const grid = document.getElementById('product-list');
-    if (!grid) return;
+  const grid = document.getElementById('product-list');
+  if (!grid) return;
 
-    if (products.length === 0) {
-        grid.innerHTML = '<p class="text-center text-muted" style="grid-column: 1/-1;">No products found.</p>';
-        return;
-    }
+  if (products.length === 0) {
+    grid.innerHTML = '<p class="text-center text-muted" style="grid-column: 1/-1;">No products found.</p>';
+    return;
+  }
 
-    grid.innerHTML = products.map(p => createProductCardHtml(p)).join('');
+  grid.innerHTML = products.map(p => createProductCardHtml(p)).join('');
 }
 
 /**
@@ -898,23 +898,23 @@ function renderProductGrid(products) {
  * @param {HTMLElement} chipElement - The chip element that was clicked
  */
 window.filterCatalog = function (category, chipElement) {
-    document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
-    chipElement.classList.add('active');
+  document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
+  chipElement.classList.add('active');
 
-    if (category === 'all') {
-        renderProductGrid(app.products);
-    } else {
-        const filtered = app.products.filter(p => {
-            if (category === 'fruits') {
-                return p.category === 'fruits' || p.category === 'fruit';
-            }
-            if (category === 'vegetable') {
-                return p.category === 'vegetable' || p.category === 'vegetables';
-            }
-            return p.category === category;
-        });
-        renderProductGrid(filtered);
-    }
+  if (category === 'all') {
+    renderProductGrid(app.products);
+  } else {
+    const filtered = app.products.filter(p => {
+      if (category === 'fruits') {
+        return p.category === 'fruits' || p.category === 'fruit';
+      }
+      if (category === 'vegetable') {
+        return p.category === 'vegetable' || p.category === 'vegetables';
+      }
+      return p.category === category;
+    });
+    renderProductGrid(filtered);
+  }
 };
 
 // =========================================
@@ -926,70 +926,70 @@ window.filterCatalog = function (category, chipElement) {
  * @param {string} screenId - The screen to navigate to
  */
 function navigateTo(screenId) {
-    console.log(`Navigating to: ${screenId}`);
+  console.log(`Navigating to: ${screenId}`);
 
-    // Hide all main views
-    document.getElementById('auth-screen').classList.add('hidden');
-    document.getElementById('main-app').classList.add('hidden');
-    document.getElementById('loading-overlay').classList.add('hidden');
+  // Hide all main views
+  document.getElementById('auth-screen').classList.add('hidden');
+  document.getElementById('main-app').classList.add('hidden');
+  document.getElementById('loading-overlay').classList.add('hidden');
 
-    // Handle specific screens
-    if (screenId === 'auth-screen') {
-        document.getElementById('auth-screen').classList.remove('hidden');
-    } else {
-        document.getElementById('main-app').classList.remove('hidden');
+  // Handle specific screens
+  if (screenId === 'auth-screen') {
+    document.getElementById('auth-screen').classList.remove('hidden');
+  } else {
+    document.getElementById('main-app').classList.remove('hidden');
 
-        // Update Bottom Nav Active State
-        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+    // Update Bottom Nav Active State
+    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
 
-        const navMap = {
-            'catalog': 'Catalog',
-            'cart': 'Cart',
-            'orders': 'Orders',
-            'profile': 'Profile',
-            'admin-portal': 'Seller',
-            'admin-login': 'Seller',
-            'admin-dashboard': 'Seller'
-        };
+    const navMap = {
+      'catalog': 'Catalog',
+      'cart': 'Cart',
+      'orders': 'Orders',
+      'profile': 'Profile',
+      'admin-portal': 'Seller',
+      'admin-login': 'Seller',
+      'admin-dashboard': 'Seller'
+    };
 
-        const navItems = Array.from(document.querySelectorAll('.nav-item'));
-        const activeItem = navItems.find(item => item.innerText.includes(navMap[screenId]));
-        if (activeItem) activeItem.classList.add('active');
+    const navItems = Array.from(document.querySelectorAll('.nav-item'));
+    const activeItem = navItems.find(item => item.innerText.includes(navMap[screenId]));
+    if (activeItem) activeItem.classList.add('active');
 
-        // Render content using new architecture
-        renderScreen(screenId);
-    }
+    // Render content using new architecture
+    renderScreen(screenId);
+  }
 }
 
 /**
  * Initializes the application.
  */
 function init() {
-    renderBottomNav();
+  renderBottomNav();
 
-    if (!app.user) {
-        navigateTo('auth-screen');
-    } else {
-        navigateTo('catalog');
-    }
+  if (!app.user) {
+    navigateTo('auth-screen');
+  } else {
+    navigateTo('catalog');
+  }
 
-    setupEventListeners();
+  setupEventListeners();
 }
 
 /**
  * Renders the bottom navigation cart badge.
  */
 function renderBottomNav() {
-    const badge = document.getElementById('nav-cart-count');
-    if (badge) {
-        const count = app.cart.reduce((sum, i) => sum + i.quantity, 0);
-        if (count > 0) {
-            badge.innerText = count;
-            badge.classList.remove('hidden');
-        } else {
-            badge.classList.add('hidden');
-        }
+  const badge = document.getElementById('nav-cart-count');
+  if (badge) {
+    const count = app.cart.reduce((sum, i) => sum + i.quantity, 0);
+    if (count > 0) {
+      badge.innerText = count;
+      badge.classList.remove('hidden');
+    } else {
+      badge.classList.add('hidden');
     }
+  }
 }
 
 // =========================================
@@ -1001,61 +1001,61 @@ function renderBottomNav() {
  * @param {string} productId - The product ID
  */
 window.refreshCatalog = function () {
-    const searchInput = document.getElementById('search-input');
-    if (searchInput && searchInput.value.trim() !== '') {
-        const term = searchInput.value.toLowerCase().trim();
-        const filtered = app.products.filter(p => p.name.toLowerCase().includes(term));
-        renderProductGrid(filtered);
+  const searchInput = document.getElementById('search-input');
+  if (searchInput && searchInput.value.trim() !== '') {
+    const term = searchInput.value.toLowerCase().trim();
+    const filtered = app.products.filter(p => p.name.toLowerCase().includes(term));
+    renderProductGrid(filtered);
+  } else {
+    const activeChip = document.querySelector('.cat-chip.active');
+    if (activeChip) {
+      activeChip.click();
     } else {
-        const activeChip = document.querySelector('.cat-chip.active');
-        if (activeChip) {
-            activeChip.click();
-        } else {
-            renderProductGrid(app.products);
-        }
+      renderProductGrid(app.products);
     }
+  }
 };
 
 window.addToCart = function (productId) {
-    const product = app.products.find(p => p.id === productId);
-    if (!product) return;
+  const product = app.products.find(p => p.id === productId);
+  if (!product) return;
 
-    const isPacketItem = product.minimum_quantity_unit && product.minimum_quantity_unit !== '250g';
-    const minWeight = getMinimumWeight(product);
+  const isPacketItem = product.minimum_quantity_unit && product.minimum_quantity_unit !== '250g';
+  const minWeight = getMinimumWeight(product);
 
-    const existing = app.cart.find(i => i.id === productId);
-    if (existing) {
-        if (isPacketItem) {
-            existing.quantity++;
-        } else {
-            // For gram items, add minimum weight
-            existing.customGrams = (existing.customGrams || minWeight) + minWeight;
-            existing.quantity = Math.ceil(existing.customGrams / 250);
-        }
+  const existing = app.cart.find(i => i.id === productId);
+  if (existing) {
+    if (isPacketItem) {
+      existing.quantity++;
     } else {
-        if (isPacketItem) {
-            // Packet items start at 1
-            app.cart.push({
-                id: productId,
-                name: product.name,
-                quantity: 1,
-                minQtyUnit: product.minimum_quantity_unit
-            });
-        } else {
-            // Gram items start at minimum weight
-            app.cart.push({
-                id: productId,
-                name: product.name,
-                quantity: Math.ceil(minWeight / 250),
-                minQtyUnit: product.minimum_quantity_unit,
-                customGrams: minWeight
-            });
-        }
+      // For gram items, add minimum weight
+      existing.customGrams = (existing.customGrams || minWeight) + minWeight;
+      existing.quantity = Math.ceil(existing.customGrams / 250);
     }
-    saveCart();
-    refreshCatalog();
-    renderBottomNav();
-    toast(`Added ${isPacketItem ? '1 ' + (product.minimum_quantity_unit || 'pkt') : formatWeightDisplay(minWeight)} to cart`);
+  } else {
+    if (isPacketItem) {
+      // Packet items start at 1
+      app.cart.push({
+        id: productId,
+        name: product.name,
+        quantity: 1,
+        minQtyUnit: product.minimum_quantity_unit
+      });
+    } else {
+      // Gram items start at minimum weight
+      app.cart.push({
+        id: productId,
+        name: product.name,
+        quantity: Math.ceil(minWeight / 250),
+        minQtyUnit: product.minimum_quantity_unit,
+        customGrams: minWeight
+      });
+    }
+  }
+  saveCart();
+  refreshCatalog();
+  renderBottomNav();
+  toast(`Added ${isPacketItem ? '1 ' + (product.minimum_quantity_unit || 'pkt') : formatWeightDisplay(minWeight)} to cart`);
 };
 
 /**
@@ -1064,27 +1064,27 @@ window.addToCart = function (productId) {
  * @param {number} change - The quantity change (positive or negative)
  */
 window.updateCart = function (productId, change) {
-    const item = app.cart.find(i => i.id === productId);
-    if (!item) return;
+  const item = app.cart.find(i => i.id === productId);
+  if (!item) return;
 
-    item.quantity += change;
-    if (item.quantity <= 0) {
-        app.cart = app.cart.filter(i => i.id !== productId);
-    }
+  item.quantity += change;
+  if (item.quantity <= 0) {
+    app.cart = app.cart.filter(i => i.id !== productId);
+  }
 
-    saveCart();
+  saveCart();
 
-    // Update current view
-    if (app.products.length > 0 && document.getElementById('product-list')) {
-        refreshCatalog();
+  // Update current view
+  if (app.products.length > 0 && document.getElementById('product-list')) {
+    refreshCatalog();
+  }
+  if (document.getElementById('content-area')) {
+    const currentScreen = app.currentScreen;
+    if (currentScreen === 'cart') {
+      renderScreen('cart');
     }
-    if (document.getElementById('content-area')) {
-        const currentScreen = app.currentScreen;
-        if (currentScreen === 'cart') {
-            renderScreen('cart');
-        }
-    }
-    renderBottomNav();
+  }
+  renderBottomNav();
 };
 
 /**
@@ -1094,35 +1094,35 @@ window.updateCart = function (productId, change) {
  * @param {number} grams - Grams amount
  */
 window.setCustomQuantity = function (prodId, grams) {
-    const product = app.products.find(p => p.id === prodId);
-    const minWeight = product ? getMinimumWeight(product) : 250;
-    let gramsNum = parseInt(grams) || 0;
+  const product = app.products.find(p => p.id === prodId);
+  const minWeight = product ? getMinimumWeight(product) : 250;
+  let gramsNum = parseInt(grams) || 0;
 
-    // Enforce minimum weight as hard floor
-    if (gramsNum > 0 && gramsNum < minWeight) {
-        gramsNum = minWeight;
-        // Update the input field to show the corrected value
-        const input = document.getElementById(`grams-${prodId}`);
-        if (input) input.value = minWeight;
-        toast(`Minimum order is ${formatWeightDisplay(minWeight)}`);
-    }
+  // Enforce minimum weight as hard floor
+  if (gramsNum > 0 && gramsNum < minWeight) {
+    gramsNum = minWeight;
+    // Update the input field to show the corrected value
+    const input = document.getElementById(`grams-${prodId}`);
+    if (input) input.value = minWeight;
+    toast(`Minimum order is ${formatWeightDisplay(minWeight)}`);
+  }
 
-    if (gramsNum === 0) {
-        removeFromCart(prodId);
-        return;
-    }
+  if (gramsNum === 0) {
+    removeFromCart(prodId);
+    return;
+  }
 
-    const quantity = Math.ceil(gramsNum / 250);
-    const item = app.cart.find(i => i.id === prodId);
+  const quantity = Math.ceil(gramsNum / 250);
+  const item = app.cart.find(i => i.id === prodId);
 
-    if (item) {
-        item.quantity = quantity;
-        item.customGrams = gramsNum;
-    }
+  if (item) {
+    item.quantity = quantity;
+    item.customGrams = gramsNum;
+  }
 
-    saveCart();
-    refreshCatalog();
-    renderBottomNav();
+  saveCart();
+  refreshCatalog();
+  renderBottomNav();
 };
 
 /**
@@ -1132,66 +1132,66 @@ window.setCustomQuantity = function (prodId, grams) {
  * @param {number} delta - Grams to add/subtract
  */
 window.adjustGrams = function (prodId, delta) {
-    try {
-        const input = document.getElementById(`grams-${prodId}`);
-        const product = app.products.find(p => p.id === prodId);
-        const minWeight = product ? getMinimumWeight(product) : 250;
-        const cartItem = app.cart.find(i => i.id === prodId);
+  try {
+    const input = document.getElementById(`grams-${prodId}`);
+    const product = app.products.find(p => p.id === prodId);
+    const minWeight = product ? getMinimumWeight(product) : 250;
+    const cartItem = app.cart.find(i => i.id === prodId);
 
-        // Get current grams from input OR from cart item
-        let current;
-        if (input) {
-            current = parseInt(input.value) || minWeight;
-        } else if (cartItem) {
-            current = cartItem.customGrams || minWeight;
-        } else {
-            current = minWeight;
-        }
-
-        let next = current + delta;
-
-        // Enforce minimum weight as hard floor
-        if (next < minWeight) {
-            // Show toast instead of removing from cart
-            toast(`Minimum order is ${formatWeightDisplay(minWeight)}`);
-            return;
-        }
-
-        // Update input if it exists
-        if (input) {
-            input.value = next;
-        }
-
-        const quantity = Math.ceil(next / 250);
-
-        if (!cartItem && quantity > 0) {
-            const prod = product || { name: 'Item', minimum_quantity_unit: '250g' };
-            app.cart.push({
-                id: prodId,
-                name: prod.name,
-                quantity: quantity,
-                minQtyUnit: prod.minimum_quantity_unit,
-                customGrams: next
-            });
-        } else if (cartItem) {
-            cartItem.quantity = quantity;
-            cartItem.customGrams = next;
-        }
-
-        saveCart();
-        // Render appropriate view
-        if (document.getElementById('product-list')) {
-            refreshCatalog();
-        } else if (app.currentScreen === 'cart') {
-            renderCustomerCartView().then(html => {
-                const contentArea = document.getElementById('content-area');
-                if (contentArea) contentArea.innerHTML = html;
-            });
-        }
-        renderBottomNav();
-    } catch (e) {
-        console.error('adjustGrams error', e);
+    // Get current grams from input OR from cart item
+    let current;
+    if (input) {
+      current = parseInt(input.value) || minWeight;
+    } else if (cartItem) {
+      current = cartItem.customGrams || minWeight;
+    } else {
+      current = minWeight;
     }
+
+    let next = current + delta;
+
+    // Enforce minimum weight as hard floor
+    if (next < minWeight) {
+      // Show toast instead of removing from cart
+      toast(`Minimum order is ${formatWeightDisplay(minWeight)}`);
+      return;
+    }
+
+    // Update input if it exists
+    if (input) {
+      input.value = next;
+    }
+
+    const quantity = Math.ceil(next / 250);
+
+    if (!cartItem && quantity > 0) {
+      const prod = product || { name: 'Item', minimum_quantity_unit: '250g' };
+      app.cart.push({
+        id: prodId,
+        name: prod.name,
+        quantity: quantity,
+        minQtyUnit: prod.minimum_quantity_unit,
+        customGrams: next
+      });
+    } else if (cartItem) {
+      cartItem.quantity = quantity;
+      cartItem.customGrams = next;
+    }
+
+    saveCart();
+    // Render appropriate view
+    if (document.getElementById('product-list')) {
+      refreshCatalog();
+    } else if (app.currentScreen === 'cart') {
+      renderCustomerCartView().then(html => {
+        const contentArea = document.getElementById('content-area');
+        if (contentArea) contentArea.innerHTML = html;
+      });
+    }
+    renderBottomNav();
+  } catch (e) {
+    console.error('adjustGrams error', e);
+  }
 };
 
 /**
@@ -1200,41 +1200,41 @@ window.adjustGrams = function (prodId, delta) {
  * @param {number} delta - Amount to add/subtract (1 or -1)
  */
 window.updateCart = function (prodId, delta) {
-    const item = app.cart.find(i => i.id === prodId);
-    if (!item) return;
+  const item = app.cart.find(i => i.id === prodId);
+  if (!item) return;
 
-    const newQty = item.quantity + delta;
+  const newQty = item.quantity + delta;
 
-    if (newQty <= 0) {
-        // Remove item if quantity becomes 0 or less
-        app.cart = app.cart.filter(i => i.id !== prodId);
-        saveCart();
-        renderBottomNav();
-        // Need to re-render to remove the item - check which screen we're on
-        const cartQty = document.getElementById(`cart-qty-${prodId}`);
-        const catalogQty = document.getElementById(`catalog-qty-${prodId}`);
-        if (cartQty) {
-            renderScreen('cart');
-        } else if (catalogQty) {
-            refreshCatalog();
-        }
-    } else {
-        // Just update the quantity
-        item.quantity = newQty;
-        saveCart();
-        renderBottomNav();
-
-        // Update BOTH cart and catalog quantity displays (no full re-render!)
-        const cartQtyDisplay = document.getElementById(`cart-qty-${prodId}`);
-        if (cartQtyDisplay) {
-            cartQtyDisplay.textContent = newQty;
-        }
-
-        const catalogQtyDisplay = document.getElementById(`catalog-qty-${prodId}`);
-        if (catalogQtyDisplay) {
-            catalogQtyDisplay.textContent = newQty;
-        }
+  if (newQty <= 0) {
+    // Remove item if quantity becomes 0 or less
+    app.cart = app.cart.filter(i => i.id !== prodId);
+    saveCart();
+    renderBottomNav();
+    // Need to re-render to remove the item - check which screen we're on
+    const cartQty = document.getElementById(`cart-qty-${prodId}`);
+    const catalogQty = document.getElementById(`catalog-qty-${prodId}`);
+    if (cartQty) {
+      renderScreen('cart');
+    } else if (catalogQty) {
+      refreshCatalog();
     }
+  } else {
+    // Just update the quantity
+    item.quantity = newQty;
+    saveCart();
+    renderBottomNav();
+
+    // Update BOTH cart and catalog quantity displays (no full re-render!)
+    const cartQtyDisplay = document.getElementById(`cart-qty-${prodId}`);
+    if (cartQtyDisplay) {
+      cartQtyDisplay.textContent = newQty;
+    }
+
+    const catalogQtyDisplay = document.getElementById(`catalog-qty-${prodId}`);
+    if (catalogQtyDisplay) {
+      catalogQtyDisplay.textContent = newQty;
+    }
+  }
 };
 
 /**
@@ -1242,152 +1242,152 @@ window.updateCart = function (prodId, delta) {
  * @param {string} prodId - Product ID
  */
 window.removeFromCart = function (prodId) {
-    app.cart = app.cart.filter(i => i.id !== prodId);
-    saveCart();
-    refreshCatalog();
-    renderBottomNav();
+  app.cart = app.cart.filter(i => i.id !== prodId);
+  saveCart();
+  refreshCatalog();
+  renderBottomNav();
 
-    // If on cart screen, re-render
-    if (document.getElementById('content-area')) {
-        renderScreen('cart');
-    }
+  // If on cart screen, re-render
+  if (document.getElementById('content-area')) {
+    renderScreen('cart');
+  }
 };
 
 /**
  * Saves cart to localStorage.
  */
 function saveCart() {
-    localStorage.setItem('fm_cart', JSON.stringify(app.cart));
+  localStorage.setItem('fm_cart', JSON.stringify(app.cart));
 }
 
 /**
  * Place order (checkout).
  */
 window.placeOrder = async function () {
-    const SELLER_WHATSAPP = '6361983041';
+  const SELLER_WHATSAPP = '6361983041';
 
-    let ordersOpen = true;
-    try {
-        const { data, error } = await _supabase.from('app_settings').select('value').eq('key', 'order_window_open').single();
-        ordersOpen = (!error && data) ? data.value === 'true' : localStorage.getItem('fm_orders_open') !== 'false';
-    } catch (e) {
-        ordersOpen = localStorage.getItem('fm_orders_open') !== 'false';
-    }
+  let ordersOpen = true;
+  try {
+    const { data, error } = await _supabase.from('app_settings').select('value').eq('key', 'order_window_open').single();
+    ordersOpen = (!error && data) ? data.value === 'true' : localStorage.getItem('fm_orders_open') !== 'false';
+  } catch (e) {
+    ordersOpen = localStorage.getItem('fm_orders_open') !== 'false';
+  }
 
-    if (!ordersOpen) {
-        alert('🚫 Orders are currently closed.\n\nWe are not accepting new orders at this time. Please check back later!');
-        return;
-    }
+  if (!ordersOpen) {
+    alert('🚫 Orders are currently closed.\n\nWe are not accepting new orders at this time. Please check back later!');
+    return;
+  }
 
-    setLoading(true);
+  setLoading(true);
 
-    try {
-        const { data: existingOrders } = await _supabase
-            .from('orders')
-            .select('*')
-            .eq('customer_phone', app.user.phone)
-            .eq('status', 'pending');
+  try {
+    const { data: existingOrders } = await _supabase
+      .from('orders')
+      .select('*')
+      .eq('customer_phone', app.user.phone)
+      .eq('status', 'pending');
 
-        const existingOrder = existingOrders && existingOrders.length > 0 ? existingOrders[0] : null;
+    const existingOrder = existingOrders && existingOrders.length > 0 ? existingOrders[0] : null;
 
-        let finalItems = [];
-        let isUpdate = false;
+    let finalItems = [];
+    let isUpdate = false;
 
-        if (existingOrder) {
-            isUpdate = true;
-            const oldItems = typeof existingOrder.items === 'string' ? JSON.parse(existingOrder.items) : existingOrder.items;
-            finalItems = JSON.parse(JSON.stringify(oldItems));
+    if (existingOrder) {
+      isUpdate = true;
+      const oldItems = typeof existingOrder.items === 'string' ? JSON.parse(existingOrder.items) : existingOrder.items;
+      finalItems = JSON.parse(JSON.stringify(oldItems));
 
-            app.cart.forEach(newItem => {
-                const existingItemIndex = finalItems.findIndex(i => i.productId === newItem.id);
-                if (existingItemIndex > -1) {
-                    finalItems[existingItemIndex].orderedQuantity += newItem.quantity;
-                    if (newItem.customGrams) {
-                        const oldGrams = finalItems[existingItemIndex].customGrams || 0;
-                        finalItems[existingItemIndex].customGrams = oldGrams + newItem.customGrams;
-                    }
-                } else {
-                    finalItems.push({
-                        productId: newItem.id,
-                        name: newItem.name,
-                        orderedQuantity: newItem.quantity,
-                        minQtyUnit: newItem.minQtyUnit,
-                        customGrams: newItem.customGrams || null,
-                        pricePer250gAtOrder: 0,
-                        actualWeight: 0,
-                        finalPrice: 0
-                    });
-                }
-            });
-
-            const { error: updateError } = await _supabase
-                .from('orders')
-                .update({ items: JSON.stringify(finalItems) })
-                .eq('id', existingOrder.id);
-
-            if (updateError) throw updateError;
+      app.cart.forEach(newItem => {
+        const existingItemIndex = finalItems.findIndex(i => i.productId === newItem.id);
+        if (existingItemIndex > -1) {
+          finalItems[existingItemIndex].orderedQuantity += newItem.quantity;
+          if (newItem.customGrams) {
+            const oldGrams = finalItems[existingItemIndex].customGrams || 0;
+            finalItems[existingItemIndex].customGrams = oldGrams + newItem.customGrams;
+          }
         } else {
-            finalItems = app.cart.map(i => ({
-                productId: i.id,
-                name: i.name,
-                orderedQuantity: i.quantity,
-                minQtyUnit: i.minQtyUnit,
-                customGrams: i.customGrams || null,
-                pricePer250gAtOrder: 0,
-                actualWeight: 0,
-                finalPrice: 0
-            }));
-
-            const orderPayload = {
-                customer_name: app.user.name,
-                customer_phone: app.user.phone,
-                house_no: app.user.house,
-                items: JSON.stringify(finalItems),
-                status: 'pending',
-                total_amount: 0,
-                created_at: new Date().toISOString()
-            };
-
-            const { error: insertError } = await _supabase.from('orders').insert([orderPayload]);
-            if (insertError) throw insertError;
+          finalItems.push({
+            productId: newItem.id,
+            name: newItem.name,
+            orderedQuantity: newItem.quantity,
+            minQtyUnit: newItem.minQtyUnit,
+            customGrams: newItem.customGrams || null,
+            pricePer250gAtOrder: 0,
+            actualWeight: 0,
+            finalPrice: 0
+          });
         }
+      });
 
-        setLoading(false);
+      const { error: updateError } = await _supabase
+        .from('orders')
+        .update({ items: JSON.stringify(finalItems) })
+        .eq('id', existingOrder.id);
 
-        const orderItemsList = finalItems.map(i => {
-            const grams = i.customGrams || (i.orderedQuantity * 250);
-            const unit = i.minQtyUnit === 'packet' ? `${i.orderedQuantity} pkt` : `${grams}g`;
-            return `• ${i.name}: ${unit}`;
-        }).join('\n');
+      if (updateError) throw updateError;
+    } else {
+      finalItems = app.cart.map(i => ({
+        productId: i.id,
+        name: i.name,
+        orderedQuantity: i.quantity,
+        minQtyUnit: i.minQtyUnit,
+        customGrams: i.customGrams || null,
+        pricePer250gAtOrder: 0,
+        actualWeight: 0,
+        finalPrice: 0
+      }));
 
-        const timestamp = new Date().toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' });
-        const header = isUpdate ? `🛒 *UPDATED ORDER - Fresh Market*` : `🛒 *NEW ORDER - Fresh Market*`;
-        const note = isUpdate ? `\n\n_Note: Customer added items to previous pending order._` : ``;
+      const orderPayload = {
+        customer_name: app.user.name,
+        customer_phone: app.user.phone,
+        house_no: app.user.house,
+        items: JSON.stringify(finalItems),
+        status: 'pending',
+        total_amount: 0,
+        created_at: new Date().toISOString()
+      };
 
-        const whatsappMessage = encodeURIComponent(
-            `${header}\n\n` +
-            `👤 *Customer:* ${app.user.name}\n` +
-            `📞 *Phone:* ${app.user.phone}\n` +
-            `🏠 *House:* ${app.user.house}\n` +
-            `🕐 *Time:* ${timestamp}\n\n` +
-            `📦 *Total Items (Combined):*\n${orderItemsList}\n\n` +
-            `💰 *Price:* To be confirmed` + note
-        );
+      const { error: insertError } = await _supabase.from('orders').insert([orderPayload]);
+      if (insertError) throw insertError;
+    }
 
-        app.cart = [];
-        saveCart();
-        renderBottomNav();
+    setLoading(false);
 
-        const waUrl = `https://wa.me/91${SELLER_WHATSAPP}?text=${whatsappMessage}`;
-        const confirmTitle = isUpdate ? '✅ Order Updated!' : '✅ Order Placed!';
-        const confirmSub = isUpdate
-            ? 'Now send the WhatsApp message so the seller gets your updated order.'
-            : 'Now send the WhatsApp message so the seller gets your order.';
+    const orderItemsList = finalItems.map(i => {
+      const grams = i.customGrams || (i.orderedQuantity * 250);
+      const unit = i.minQtyUnit === 'packet' ? `${i.orderedQuantity} pkt` : `${grams}g`;
+      return `• ${i.name}: ${unit}`;
+    }).join('\n');
 
-        const bottomNav = document.querySelector('.bottom-nav');
-        if (bottomNav) bottomNav.style.display = 'none';
+    const timestamp = new Date().toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' });
+    const header = isUpdate ? `🛒 *UPDATED ORDER - Fresh Market*` : `🛒 *NEW ORDER - Fresh Market*`;
+    const note = isUpdate ? `\n\n_Note: Customer added items to previous pending order._` : ``;
 
-        document.getElementById('content-area').innerHTML = `
+    const whatsappMessage = encodeURIComponent(
+      `${header}\n\n` +
+      `👤 *Customer:* ${app.user.name}\n` +
+      `📞 *Phone:* ${app.user.phone}\n` +
+      `🏠 *House:* ${app.user.house}\n` +
+      `🕐 *Time:* ${timestamp}\n\n` +
+      `📦 *Total Items (Combined):*\n${orderItemsList}\n\n` +
+      `💰 *Price:* To be confirmed` + note
+    );
+
+    app.cart = [];
+    saveCart();
+    renderBottomNav();
+
+    const waUrl = `https://wa.me/91${SELLER_WHATSAPP}?text=${whatsappMessage}`;
+    const confirmTitle = isUpdate ? '✅ Order Updated!' : '✅ Order Placed!';
+    const confirmSub = isUpdate
+      ? 'Now send the WhatsApp message so the seller gets your updated order.'
+      : 'Now send the WhatsApp message so the seller gets your order.';
+
+    const bottomNav = document.querySelector('.bottom-nav');
+    if (bottomNav) bottomNav.style.display = 'none';
+
+    document.getElementById('content-area').innerHTML = `
       <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:calc(100vh - 120px); padding:24px; text-align:center; background: linear-gradient(180deg, #f0fff4 0%, #ffffff 40%);">
         <div style="width:90px; height:90px; border-radius:50%; background:linear-gradient(135deg,#25D366,#1da852); display:flex; align-items:center; justify-content:center; box-shadow:0 4px 18px rgba(37,211,102,0.35); margin-bottom:20px;">
           <span class="material-icons-round" style="font-size:48px; color:#fff;">check</span>
@@ -1404,138 +1404,138 @@ window.placeOrder = async function () {
       </div>
     `;
 
-        window.waConfirmSent = function () {
-            const bottomNav = document.querySelector('.bottom-nav');
-            if (bottomNav) bottomNav.style.display = '';
-            setTimeout(() => { navigateTo('orders'); }, 1500);
-        };
-    } catch (error) {
-        setLoading(false);
-        console.error(error);
-        alert('Order processing failed: ' + error.message);
-    }
+    window.waConfirmSent = function () {
+      const bottomNav = document.querySelector('.bottom-nav');
+      if (bottomNav) bottomNav.style.display = '';
+      setTimeout(() => { navigateTo('orders'); }, 1500);
+    };
+  } catch (error) {
+    setLoading(false);
+    console.error(error);
+    alert('Order processing failed: ' + error.message);
+  }
 };
 
 window.logout = function () {
-    localStorage.removeItem('fm_user');
-    app.user = null;
-    app.cart = [];
-    saveCart();
-    navigateTo('auth-screen');
+  localStorage.removeItem('fm_user');
+  app.user = null;
+  app.cart = [];
+  saveCart();
+  navigateTo('auth-screen');
 };
 
 window.updateProfile = function () {
-    const name = document.getElementById('p-name').value;
-    const house = document.getElementById('p-house').value;
-    app.user.name = name;
-    app.user.house = house;
-    localStorage.setItem('fm_user', JSON.stringify(app.user));
-    toast('Profile updated');
+  const name = document.getElementById('p-name').value;
+  const house = document.getElementById('p-house').value;
+  app.user.name = name;
+  app.user.house = house;
+  localStorage.setItem('fm_user', JSON.stringify(app.user));
+  toast('Profile updated');
 };
 
 window.viewOrderDetails = function (orderId) {
-    toast('Tap on order details coming soon');
+  toast('Tap on order details coming soon');
 };
 
 window.checkAdminLogin = async function () {
-    const pass = document.getElementById('admin-pass').value;
-    if (pass === 'devampro123') {
-        app.isAdmin = true;
-        await syncPricesFromSupabase();
-        navigateTo('admin-dashboard');
-    } else {
-        alert('Invalid Password');
-    }
+  const pass = document.getElementById('admin-pass').value;
+  if (pass === 'devampro123') {
+    app.isAdmin = true;
+    await syncPricesFromSupabase();
+    navigateTo('admin-dashboard');
+  } else {
+    alert('Invalid Password');
+  }
 };
 
 function setLoading(isLoading) {
-    const overlay = document.getElementById('loading-overlay');
-    if (overlay) {
-        if (isLoading) overlay.classList.remove('hidden');
-        else overlay.classList.add('hidden');
-    }
+  const overlay = document.getElementById('loading-overlay');
+  if (overlay) {
+    if (isLoading) overlay.classList.remove('hidden');
+    else overlay.classList.add('hidden');
+  }
 }
 
 function toast(msg) {
-    try {
-        const existing = document.getElementById('app-toast');
-        if (existing) existing.remove();
+  try {
+    const existing = document.getElementById('app-toast');
+    if (existing) existing.remove();
 
-        const t = document.createElement('div');
-        t.id = 'app-toast';
-        t.innerText = msg;
-        Object.assign(t.style, {
-            position: 'fixed', left: '50%', transform: 'translateX(-50%)', bottom: '80px',
-            background: 'rgba(0,0,0,0.85)', color: 'white', padding: '12px 18px', borderRadius: '999px',
-            zIndex: 9999, boxShadow: '0 4px 12px rgba(0,0,0,0.2)', fontSize: '14px', maxWidth: '90%',
-            textAlign: 'center', opacity: '0', transition: 'opacity 200ms ease'
-        });
+    const t = document.createElement('div');
+    t.id = 'app-toast';
+    t.innerText = msg;
+    Object.assign(t.style, {
+      position: 'fixed', left: '50%', transform: 'translateX(-50%)', bottom: '80px',
+      background: 'rgba(0,0,0,0.85)', color: 'white', padding: '12px 18px', borderRadius: '999px',
+      zIndex: 9999, boxShadow: '0 4px 12px rgba(0,0,0,0.2)', fontSize: '14px', maxWidth: '90%',
+      textAlign: 'center', opacity: '0', transition: 'opacity 200ms ease'
+    });
 
-        document.body.appendChild(t);
-        requestAnimationFrame(() => { t.style.opacity = '1'; });
-        setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 220); }, 1800);
-    } catch (e) { console.log(msg); }
+    document.body.appendChild(t);
+    requestAnimationFrame(() => { t.style.opacity = '1'; });
+    setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 220); }, 1800);
+  } catch (e) { console.log(msg); }
 }
 
 window.updatePhoneConfirm = function () {
-    const input = document.getElementById('auth-phone');
-    const ui = document.getElementById('phone-confirm-ui');
-    const display = document.getElementById('phone-display');
+  const input = document.getElementById('auth-phone');
+  const ui = document.getElementById('phone-confirm-ui');
+  const display = document.getElementById('phone-display');
 
-    let val = input.value.replace(/\D/g, '');
-    if (val.length > 10) val = val.slice(-10);
+  let val = input.value.replace(/\D/g, '');
+  if (val.length > 10) val = val.slice(-10);
 
-    if (val.length === 10) {
-        ui.style.display = 'block';
-        display.textContent = val.replace(/(\d{5})(\d{5})/, '$1 $2');
-    } else {
-        ui.style.display = 'none';
-        document.getElementById('phone-confirm-check').checked = false;
-    }
+  if (val.length === 10) {
+    ui.style.display = 'block';
+    display.textContent = val.replace(/(\d{5})(\d{5})/, '$1 $2');
+  } else {
+    ui.style.display = 'none';
+    document.getElementById('phone-confirm-check').checked = false;
+  }
 };
 
 window.handleLogin = function () {
-    try {
-        const name = document.getElementById('auth-name').value.trim();
-        let phone = document.getElementById('auth-phone').value.replace(/\D/g, '');
-        const house = document.getElementById('auth-house').value.trim();
+  try {
+    const name = document.getElementById('auth-name').value.trim();
+    let phone = document.getElementById('auth-phone').value.replace(/\D/g, '');
+    const house = document.getElementById('auth-house').value.trim();
 
-        if (!name) { alert('Please enter your name'); return; }
-        if (!house) { alert('Please enter your house number'); return; }
-        if (phone.length > 10) phone = phone.slice(-10);
-        if (phone.length !== 10) { alert('Please enter a valid 10-digit phone number'); return; }
+    if (!name) { alert('Please enter your name'); return; }
+    if (!house) { alert('Please enter your house number'); return; }
+    if (phone.length > 10) phone = phone.slice(-10);
+    if (phone.length !== 10) { alert('Please enter a valid 10-digit phone number'); return; }
 
-        const confirmCheck = document.getElementById('phone-confirm-check');
-        if (confirmCheck && !confirmCheck.checked) {
-            alert('Please check the box to confirm your phone number is correct.');
-            return;
-        }
-
-        app.user = { name, phone, house };
-        localStorage.setItem('fm_user', JSON.stringify(app.user));
-        setTimeout(() => { navigateTo('catalog'); }, 100);
-    } catch (err) {
-        alert('Login Error: ' + err.message);
+    const confirmCheck = document.getElementById('phone-confirm-check');
+    if (confirmCheck && !confirmCheck.checked) {
+      alert('Please check the box to confirm your phone number is correct.');
+      return;
     }
+
+    app.user = { name, phone, house };
+    localStorage.setItem('fm_user', JSON.stringify(app.user));
+    setTimeout(() => { navigateTo('catalog'); }, 100);
+  } catch (err) {
+    alert('Login Error: ' + err.message);
+  }
 };
 
 function setupEventListeners() {
-    document.addEventListener('click', function (e) {
-        const btn = e.target.closest && e.target.closest('.qty-btn');
-        if (!btn) return;
-        const prod = btn.dataset && btn.dataset.prod;
-        const action = btn.dataset && btn.dataset.action;
-        if (!prod || !action) return;
+  document.addEventListener('click', function (e) {
+    const btn = e.target.closest && e.target.closest('.qty-btn');
+    if (!btn) return;
+    const prod = btn.dataset && btn.dataset.prod;
+    const action = btn.dataset && btn.dataset.action;
+    if (!prod || !action) return;
 
-        if (action === 'dec') {
-            if (document.getElementById(`grams-${prod}`)) adjustGrams(prod, -50);
-            else updateCart(prod, -1);
-        } else if (action === 'inc') {
-            if (document.getElementById(`grams-${prod}`)) adjustGrams(prod, 50);
-            else updateCart(prod, 1);
-        }
-        e.preventDefault();
-    });
+    if (action === 'dec') {
+      if (document.getElementById(`grams-${prod}`)) adjustGrams(prod, -50);
+      else updateCart(prod, -1);
+    } else if (action === 'inc') {
+      if (document.getElementById(`grams-${prod}`)) adjustGrams(prod, 50);
+      else updateCart(prod, 1);
+    }
+    e.preventDefault();
+  });
 }
 
 // =========================================
@@ -1543,11 +1543,11 @@ function setupEventListeners() {
 // =========================================
 
 window.loadAdminOrders = async function (statusFilter) {
-    const container = document.getElementById('admin-orders-list');
-    if (!container) return;
-    container.innerHTML = '<div class="spinner"></div>';
+  const container = document.getElementById('admin-orders-list');
+  if (!container) return;
+  container.innerHTML = '<div class="spinner"></div>';
 
-    const modalHtml = `
+  const modalHtml = `
     <div id="add-to-order-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:2000; align-items:center; justify-content:center;">
       <div style="background:white; width:90%; max-width:400px; padding:20px; border-radius:12px;">
         <h4>Add Item to Order</h4>
@@ -1570,33 +1570,37 @@ window.loadAdminOrders = async function (statusFilter) {
       </div>
     </div>`;
 
-    await syncPricesFromSupabase();
-    const currentPrices = JSON.parse(localStorage.getItem('fm_current_prices') || '{}');
+  await syncPricesFromSupabase();
+  const currentPrices = JSON.parse(localStorage.getItem('fm_current_prices') || '{}');
 
-    try {
-        let query = _supabase.from('orders').select('*').order('created_at', { ascending: false });
-        if (statusFilter === 'pending') query = query.neq('status', 'finalized').neq('status', 'sent');
-        else query = query.eq('status', statusFilter);
+  try {
+    let query = _supabase.from('orders').select('*').order('created_at', { ascending: false });
+    if (statusFilter === 'pending') query = query.neq('status', 'finalized').neq('status', 'sent');
+    else query = query.eq('status', statusFilter);
 
-        const { data, error } = await query;
-        if (error) throw error;
+    const { data, error } = await query;
+    if (error) throw error;
 
-        app.adminOrdersCache = data;
+    app.adminOrdersCache = data;
 
-        if (data.length === 0) {
-            container.innerHTML = '<div class="text-center text-muted" style="padding:40px;">No orders found</div>';
-            return;
-        }
+    if (data.length === 0) {
+      container.innerHTML = '<div class="text-center text-muted" style="padding:40px;">No orders found</div>';
+      return;
+    }
 
-        const searchHtml = `
+    // Preserve current sort/search values if they exist
+    const savedSort = window._adminSortValue || 'newest';
+    const savedSearch = window._adminSearchValue || '';
+
+    const searchHtml = `
         <div style="padding:10px; display:flex; gap:10px; background:white; margin-bottom:12px; border-radius:8px; border:1px solid #eee; flex-wrap:wrap; align-items:center;">
-          <input type="text" id="admin-search" placeholder="Search customer..." style="flex:1; min-width:120px; padding:8px; border:1px solid #ddd; border-radius:6px;" onkeyup="filterAdminOrders()">
+          <input type="text" id="admin-search" placeholder="Search customer..." value="${savedSearch}" style="flex:1; min-width:120px; padding:8px; border:1px solid #ddd; border-radius:6px;" onkeyup="filterAdminOrders()">
           <select id="admin-sort" style="width:110px; padding:8px; border:1px solid #ddd; border-radius:6px;" onchange="filterAdminOrders()">
-            <option value="newest">Newest</option>
-            <option value="oldest">Oldest</option>
-            <option value="name">Name</option>
-            <option value="house-asc">House A→Z</option>
-            <option value="house-desc">House Z→A</option>
+            <option value="newest" ${savedSort === 'newest' ? 'selected' : ''}>Newest</option>
+            <option value="oldest" ${savedSort === 'oldest' ? 'selected' : ''}>Oldest</option>
+            <option value="name" ${savedSort === 'name' ? 'selected' : ''}>Name</option>
+            <option value="house-asc" ${savedSort === 'house-asc' ? 'selected' : ''}>House A→Z</option>
+            <option value="house-desc" ${savedSort === 'house-desc' ? 'selected' : ''}>House Z→A</option>
           </select>
           <button class="btn btn-outline no-print" style="padding:8px 12px; font-size:13px;" onclick="printOrders()">🖨️ Print</button>
           <button class="btn btn-outline no-print" style="padding:8px 12px; font-size:13px; color: #f44336; border-color: #f44336;" onclick="deleteAllOrders('${statusFilter}')">🗑️ All</button>
@@ -1604,388 +1608,400 @@ window.loadAdminOrders = async function (statusFilter) {
         <div id="filtered-orders-list"></div>
         `;
 
-        container.innerHTML = modalHtml + searchHtml;
-        filterAdminOrders();
-    } catch (e) {
-        console.error(e);
-        container.innerHTML = '<p class="text-danger">Error loading orders</p>';
-    }
+    container.innerHTML = modalHtml + searchHtml;
+    filterAdminOrders();
+  } catch (e) {
+    console.error(e);
+    container.innerHTML = '<p class="text-danger">Error loading orders</p>';
+  }
 };
 
 window.deleteOrder = async function (orderId) {
-    if (!confirm('Are you sure you want to DELETE this order permanently?')) return;
-    const { error } = await _supabase.from('orders').delete().eq('id', orderId);
-    if (error) {
-        alert('Error deleting order: ' + error.message);
-    } else {
-        const activeTab = document.querySelector('.cat-chip.active');
-        const currentTab = activeTab ? activeTab.id.replace('tab-', '') : 'pending';
-        loadAdminOrders(currentTab);
-        toast('Order deleted');
-    }
+  if (!confirm('Are you sure you want to DELETE this order permanently?')) return;
+  // Save current sort/search before reloading
+  const sortEl = document.getElementById('admin-sort');
+  const searchEl = document.getElementById('admin-search');
+  if (sortEl) window._adminSortValue = sortEl.value;
+  if (searchEl) window._adminSearchValue = searchEl.value;
+
+  const { error } = await _supabase.from('orders').delete().eq('id', orderId);
+  if (error) {
+    alert('Error deleting order: ' + error.message);
+  } else {
+    const activeTab = document.querySelector('.cat-chip.active');
+    const currentTab = activeTab ? activeTab.id.replace('tab-', '') : 'pending';
+    loadAdminOrders(currentTab);
+    toast('Order deleted');
+  }
 };
 
 window.deleteAllOrders = async function (statusFilter) {
-    if (!statusFilter) return;
-    if (!confirm(`WARNING: This will delete ALL visible ${statusFilter.toUpperCase()} orders.\n\nAre you sure?`)) return;
-    if (!confirm(`Final Confirmation: Delete ALL ${statusFilter.toUpperCase()} orders? This cannot be undone.`)) return;
+  if (!statusFilter) return;
+  if (!confirm(`WARNING: This will delete ALL visible ${statusFilter.toUpperCase()} orders.\n\nAre you sure?`)) return;
+  if (!confirm(`Final Confirmation: Delete ALL ${statusFilter.toUpperCase()} orders? This cannot be undone.`)) return;
 
-    setLoading(true);
-    let query = _supabase.from('orders').delete();
-    if (statusFilter === 'pending') {
-        query = query.neq('status', 'finalized').neq('status', 'sent');
-    } else {
-        query = query.eq('status', statusFilter);
-    }
-    const { error } = await query;
-    setLoading(false);
+  setLoading(true);
+  let query = _supabase.from('orders').delete();
+  if (statusFilter === 'pending') {
+    query = query.neq('status', 'finalized').neq('status', 'sent');
+  } else {
+    query = query.eq('status', statusFilter);
+  }
+  const { error } = await query;
+  setLoading(false);
 
-    if (error) {
-        alert('Failed to delete orders: ' + error.message);
-    } else {
-        alert(`All ${statusFilter} orders have been deleted.`);
-        loadAdminOrders(statusFilter);
-    }
+  if (error) {
+    alert('Failed to delete orders: ' + error.message);
+  } else {
+    alert(`All ${statusFilter} orders have been deleted.`);
+    loadAdminOrders(statusFilter);
+  }
 };
 
 window.rejectOrder = window.deleteOrder;
 
 function smartRound(value) {
-    const decimal = value - Math.floor(value);
-    if (decimal >= 0.50) {
-        return Math.ceil(value);
-    } else {
-        const rounded = Math.round(value * 100) / 100;
-        if (rounded % 1 === 0) return rounded;
-        return parseFloat(rounded.toFixed(2));
-    }
+  const decimal = value - Math.floor(value);
+  if (decimal >= 0.50) {
+    return Math.ceil(value);
+  } else {
+    const rounded = Math.round(value * 100) / 100;
+    if (rounded % 1 === 0) return rounded;
+    return parseFloat(rounded.toFixed(2));
+  }
 }
 
 window.calculateTotal = function (orderId) {
-    const rows = document.querySelectorAll(`[id^='wt-${orderId}-']`);
-    let grandTotal = 0;
+  const rows = document.querySelectorAll(`[id^='wt-${orderId}-']`);
+  let grandTotal = 0;
 
-    rows.forEach(row => {
-        const prefix = `wt-${orderId}-`;
-        const productId = row.id.slice(prefix.length);
-        const inputEl = document.getElementById(`wt-${orderId}-${productId}`);
-        const unit = inputEl.getAttribute('data-unit') || '250g';
-        const wtVal = parseFloat(inputEl.value) || 0;
-        const priceVal = parseFloat(document.getElementById(`price-${orderId}-${productId}`).value) || 0;
+  rows.forEach(row => {
+    const prefix = `wt-${orderId}-`;
+    const productId = row.id.slice(prefix.length);
+    const inputEl = document.getElementById(`wt-${orderId}-${productId}`);
+    const unit = inputEl.getAttribute('data-unit') || '250g';
+    const wtVal = parseFloat(inputEl.value) || 0;
+    const priceVal = parseFloat(document.getElementById(`price-${orderId}-${productId}`).value) || 0;
 
-        let subtotal = 0;
-        if (unit !== '250g') {
-            subtotal = wtVal * priceVal;
-        } else {
-            subtotal = (wtVal / 250) * priceVal;
-        }
-        grandTotal += subtotal;
+    let subtotal = 0;
+    if (unit !== '250g') {
+      subtotal = wtVal * priceVal;
+    } else {
+      subtotal = (wtVal / 250) * priceVal;
+    }
+    grandTotal += subtotal;
 
-        const subSpan = document.getElementById(`sub-${orderId}-${productId}`);
-        if (subSpan) subSpan.innerText = smartRound(subtotal);
-    });
+    const subSpan = document.getElementById(`sub-${orderId}-${productId}`);
+    if (subSpan) subSpan.innerText = smartRound(subtotal);
+  });
 
-    const totalSpan = document.getElementById(`total-${orderId}`);
-    if (totalSpan) totalSpan.innerText = smartRound(grandTotal);
+  const totalSpan = document.getElementById(`total-${orderId}`);
+  if (totalSpan) totalSpan.innerText = smartRound(grandTotal);
 };
 
 window.saveOrder = async function (orderId) {
-    if (!confirm('Finalize order and send bill?')) return;
+  if (!confirm('Finalize order and send bill?')) return;
 
-    const totalSpan = document.getElementById(`total-${orderId}`);
-    const grandTotal = parseFloat(totalSpan.innerText);
-    const { data: order } = await _supabase.from('orders').select('*').eq('id', orderId).single();
-    const items = typeof order.items === 'string' ? JSON.parse(order.items) : order.items;
+  const totalSpan = document.getElementById(`total-${orderId}`);
+  const grandTotal = parseFloat(totalSpan.innerText);
+  const { data: order } = await _supabase.from('orders').select('*').eq('id', orderId).single();
+  const items = typeof order.items === 'string' ? JSON.parse(order.items) : order.items;
 
-    const updatedItems = items.map(item => {
-        const wtVal = parseFloat(document.getElementById(`wt-${orderId}-${item.productId}`).value) || 0;
-        const priceVal = parseFloat(document.getElementById(`price-${orderId}-${item.productId}`).value) || 0;
-        let finalPrice = 0;
-        if (item.minQtyUnit !== '250g') {
-            finalPrice = wtVal * priceVal;
-        } else {
-            finalPrice = (wtVal / 250) * priceVal;
-        }
-        return { ...item, actualWeight: wtVal, pricePer250gAtOrder: priceVal, finalPrice: smartRound(finalPrice) };
-    });
+  const updatedItems = items.map(item => {
+    const wtVal = parseFloat(document.getElementById(`wt-${orderId}-${item.productId}`).value) || 0;
+    const priceVal = parseFloat(document.getElementById(`price-${orderId}-${item.productId}`).value) || 0;
+    let finalPrice = 0;
+    if (item.minQtyUnit !== '250g') {
+      finalPrice = wtVal * priceVal;
+    } else {
+      finalPrice = (wtVal / 250) * priceVal;
+    }
+    return { ...item, actualWeight: wtVal, pricePer250gAtOrder: priceVal, finalPrice: smartRound(finalPrice) };
+  });
 
-    const finalTotal = updatedItems.reduce((acc, i) => acc + i.finalPrice, 0);
+  const finalTotal = updatedItems.reduce((acc, i) => acc + i.finalPrice, 0);
 
-    await _supabase.from('orders').update({
-        items: JSON.stringify(updatedItems),
-        total_amount: finalTotal,
-        status: 'finalized'
-    }).eq('id', orderId);
+  await _supabase.from('orders').update({
+    items: JSON.stringify(updatedItems),
+    total_amount: finalTotal,
+    status: 'finalized'
+  }).eq('id', orderId);
 
-    toast('Order Finalized. Moved to "Finalized" tab.');
-    loadAdminOrders('pending');
+  toast('Order Finalized. Moved to "Finalized" tab.');
+  loadAdminOrders('pending');
 };
 
 window.deleteItemFromOrder = async function (orderId, productId) {
-    if (!confirm('Remove this item from the order?')) return;
-    const order = app.adminOrdersCache.find(o => o.id === orderId);
-    if (!order) return;
+  if (!confirm('Remove this item from the order?')) return;
+  // Save current sort/search before reloading
+  const sortEl = document.getElementById('admin-sort');
+  const searchEl = document.getElementById('admin-search');
+  if (sortEl) window._adminSortValue = sortEl.value;
+  if (searchEl) window._adminSearchValue = searchEl.value;
 
-    const items = typeof order.items === 'string' ? JSON.parse(order.items) : order.items;
-    const newItems = items.filter(i => i.productId !== productId);
+  const order = app.adminOrdersCache.find(o => o.id === orderId);
+  if (!order) return;
 
-    if (newItems.length === 0) {
-        if (confirm('This is the last item. Delete the entire order?')) {
-            await _supabase.from('orders').delete().eq('id', orderId);
-        } else {
-            await _supabase.from('orders').update({ items: JSON.stringify([]) }).eq('id', orderId);
-        }
+  const items = typeof order.items === 'string' ? JSON.parse(order.items) : order.items;
+  const newItems = items.filter(i => i.productId !== productId);
+
+  if (newItems.length === 0) {
+    if (confirm('This is the last item. Delete the entire order?')) {
+      await _supabase.from('orders').delete().eq('id', orderId);
     } else {
-        await _supabase.from('orders').update({ items: JSON.stringify(newItems) }).eq('id', orderId);
+      await _supabase.from('orders').update({ items: JSON.stringify([]) }).eq('id', orderId);
     }
+  } else {
+    await _supabase.from('orders').update({ items: JSON.stringify(newItems) }).eq('id', orderId);
+  }
 
-    const activeTab = document.querySelector('.cat-chip.active');
-    const currentTab = activeTab ? activeTab.id.replace('tab-', '') : 'pending';
-    loadAdminOrders(currentTab);
+  const activeTab = document.querySelector('.cat-chip.active');
+  const currentTab = activeTab ? activeTab.id.replace('tab-', '') : 'pending';
+  loadAdminOrders(currentTab);
 };
 
 window.showAddItemModal = async function (orderId) {
-    document.getElementById('ato-order-id').value = orderId;
-    const modal = document.getElementById('add-to-order-modal');
-    const select = document.getElementById('ato-product');
+  document.getElementById('ato-order-id').value = orderId;
+  const modal = document.getElementById('add-to-order-modal');
+  const select = document.getElementById('ato-product');
 
-    select.innerHTML = '<option>Loading...</option>';
-    modal.style.display = 'flex';
+  select.innerHTML = '<option>Loading...</option>';
+  modal.style.display = 'flex';
 
-    const { data: products } = await _supabase.from('products').select('*').order('name');
-    select.innerHTML = products.map(p =>
-        `<option value="${p.id}" data-unit="${p.minimum_quantity_unit}" data-name="${p.name}">${p.name} (${p.minimum_quantity_unit || '250g'})</option>`
-    ).join('');
+  const { data: products } = await _supabase.from('products').select('*').order('name');
+  select.innerHTML = products.map(p =>
+    `<option value="${p.id}" data-unit="${p.minimum_quantity_unit}" data-name="${p.name}">${p.name} (${p.minimum_quantity_unit || '250g'})</option>`
+  ).join('');
 
-    select.onchange = updateAtoUnit;
-    updateAtoUnit();
+  select.onchange = updateAtoUnit;
+  updateAtoUnit();
 };
 
 window.updateAtoUnit = function () {
-    const sel = document.getElementById('ato-product');
-    if (sel.options.length === 0) return;
-    const opt = sel.options[sel.selectedIndex];
-    const unit = opt.getAttribute('data-unit') || '250g';
-    document.getElementById('ato-unit-label').innerText = unit === 'packet' ? 'Pkts' : 'x 250g';
+  const sel = document.getElementById('ato-product');
+  if (sel.options.length === 0) return;
+  const opt = sel.options[sel.selectedIndex];
+  const unit = opt.getAttribute('data-unit') || '250g';
+  document.getElementById('ato-unit-label').innerText = unit === 'packet' ? 'Pkts' : 'x 250g';
 };
 
 window.confirmAddItem = async function () {
-    const orderId = document.getElementById('ato-order-id').value;
-    const select = document.getElementById('ato-product');
-    const opt = select.options[select.selectedIndex];
-    const productId = select.value;
-    const name = opt.getAttribute('data-name');
-    const unit = opt.getAttribute('data-unit') || '250g';
-    const qty = parseFloat(document.getElementById('ato-qty').value);
+  const orderId = document.getElementById('ato-order-id').value;
+  const select = document.getElementById('ato-product');
+  const opt = select.options[select.selectedIndex];
+  const productId = select.value;
+  const name = opt.getAttribute('data-name');
+  const unit = opt.getAttribute('data-unit') || '250g';
+  const qty = parseFloat(document.getElementById('ato-qty').value);
 
-    if (qty <= 0) return;
+  if (qty <= 0) return;
 
-    const order = app.adminOrdersCache.find(o => o.id === orderId);
-    let items = typeof order.items === 'string' ? JSON.parse(order.items) : order.items;
+  const order = app.adminOrdersCache.find(o => o.id === orderId);
+  let items = typeof order.items === 'string' ? JSON.parse(order.items) : order.items;
 
-    const existing = items.find(i => i.productId === productId);
-    if (existing) {
-        existing.orderedQuantity += qty;
-        if (unit === '250g') {
-            existing.customGrams = (existing.customGrams || (existing.orderedQuantity * 250)) + (qty * 250);
-        }
-    } else {
-        items.push({
-            productId, name, orderedQuantity: qty, minQtyUnit: unit,
-            customGrams: unit === '250g' ? qty * 250 : null,
-            pricePer250gAtOrder: 0, actualWeight: 0, finalPrice: 0
-        });
+  const existing = items.find(i => i.productId === productId);
+  if (existing) {
+    existing.orderedQuantity += qty;
+    if (unit === '250g') {
+      existing.customGrams = (existing.customGrams || (existing.orderedQuantity * 250)) + (qty * 250);
     }
+  } else {
+    items.push({
+      productId, name, orderedQuantity: qty, minQtyUnit: unit,
+      customGrams: unit === '250g' ? qty * 250 : null,
+      pricePer250gAtOrder: 0, actualWeight: 0, finalPrice: 0
+    });
+  }
 
-    await _supabase.from('orders').update({ items: JSON.stringify(items) }).eq('id', orderId);
-    document.getElementById('add-to-order-modal').style.display = 'none';
-    loadAdminOrders('pending');
+  await _supabase.from('orders').update({ items: JSON.stringify(items) }).eq('id', orderId);
+  document.getElementById('add-to-order-modal').style.display = 'none';
+  loadAdminOrders('pending');
 };
 
 window.rollbackOrder = async function (id) {
-    if (!confirm('Move back to pending?')) return;
-    await _supabase.from('orders').update({ status: 'pending' }).eq('id', id);
-    loadAdminOrders('finalized');
+  if (!confirm('Move back to pending?')) return;
+  await _supabase.from('orders').update({ status: 'pending' }).eq('id', id);
+  loadAdminOrders('finalized');
 };
 
 window.rollbackSentOrder = async function (id) {
-    if (!confirm('Move back to Finalized?')) return;
-    await _supabase.from('orders').update({ status: 'finalized' }).eq('id', id);
-    loadAdminOrders('sent');
+  if (!confirm('Move back to Finalized?')) return;
+  await _supabase.from('orders').update({ status: 'finalized' }).eq('id', id);
+  loadAdminOrders('sent');
 };
 
 window.editCustomerInfo = async function (orderId, field, currentValue) {
-    const fieldLabel = field === 'customer_phone' ? 'Phone Number' : 'House Number';
-    const newValue = prompt(`Edit ${fieldLabel}:`, currentValue);
-    if (newValue === null || newValue === currentValue) return;
+  const fieldLabel = field === 'customer_phone' ? 'Phone Number' : 'House Number';
+  const newValue = prompt(`Edit ${fieldLabel}:`, currentValue);
+  if (newValue === null || newValue === currentValue) return;
 
-    if (field === 'customer_phone') {
-        const cleanPhone = newValue.replace(/\D/g, '');
-        if (cleanPhone.length !== 10) {
-            alert('Please enter a valid 10-digit phone number');
-            return;
-        }
+  if (field === 'customer_phone') {
+    const cleanPhone = newValue.replace(/\D/g, '');
+    if (cleanPhone.length !== 10) {
+      alert('Please enter a valid 10-digit phone number');
+      return;
+    }
+  }
+
+  try {
+    const order = app.adminOrdersCache.find(o => o.id === orderId);
+    if (!order) return;
+
+    const updateData = {};
+    updateData[field] = newValue;
+    await _supabase.from('orders').update(updateData).eq('id', orderId);
+
+    if (field === 'house_no') {
+      await _supabase.from('orders').update({ house_no: newValue }).eq('customer_phone', order.customer_phone);
     }
 
-    try {
-        const order = app.adminOrdersCache.find(o => o.id === orderId);
-        if (!order) return;
-
-        const updateData = {};
-        updateData[field] = newValue;
-        await _supabase.from('orders').update(updateData).eq('id', orderId);
-
-        if (field === 'house_no') {
-            await _supabase.from('orders').update({ house_no: newValue }).eq('customer_phone', order.customer_phone);
-        }
-
-        toast(`${fieldLabel} updated! ✅`);
-        const activeTab = document.querySelector('.cat-chip.active');
-        const currentTab = activeTab ? activeTab.id.replace('tab-', '') : 'pending';
-        loadAdminOrders(currentTab);
-    } catch (e) {
-        alert('Failed to update: ' + e.message);
-    }
+    toast(`${fieldLabel} updated! ✅`);
+    const activeTab = document.querySelector('.cat-chip.active');
+    const currentTab = activeTab ? activeTab.id.replace('tab-', '') : 'pending';
+    loadAdminOrders(currentTab);
+  } catch (e) {
+    alert('Failed to update: ' + e.message);
+  }
 };
 
 function getPaymentStatus(orderId) {
-    const paymentData = JSON.parse(localStorage.getItem('fm_payment_status') || '{}');
-    return paymentData[orderId] || { received: false, type: 'cash' };
+  const paymentData = JSON.parse(localStorage.getItem('fm_payment_status') || '{}');
+  return paymentData[orderId] || { received: false, type: 'cash' };
 }
 
 window.updatePaymentStatus = function (orderId) {
-    const paidCheckbox = document.getElementById(`paid-${orderId}`);
-    const typeSelect = document.getElementById(`payment-type-${orderId}`);
-    if (!paidCheckbox || !typeSelect) return;
+  const paidCheckbox = document.getElementById(`paid-${orderId}`);
+  const typeSelect = document.getElementById(`payment-type-${orderId}`);
+  if (!paidCheckbox || !typeSelect) return;
 
-    const paymentReceived = paidCheckbox.checked;
-    const paymentType = typeSelect.value;
-    typeSelect.disabled = !paymentReceived;
+  const paymentReceived = paidCheckbox.checked;
+  const paymentType = typeSelect.value;
+  typeSelect.disabled = !paymentReceived;
 
-    const paymentData = JSON.parse(localStorage.getItem('fm_payment_status') || '{}');
-    if (paymentReceived) {
-        paymentData[orderId] = { received: true, type: paymentType };
-    } else {
-        delete paymentData[orderId];
-    }
-    localStorage.setItem('fm_payment_status', JSON.stringify(paymentData));
+  const paymentData = JSON.parse(localStorage.getItem('fm_payment_status') || '{}');
+  if (paymentReceived) {
+    paymentData[orderId] = { received: true, type: paymentType };
+  } else {
+    delete paymentData[orderId];
+  }
+  localStorage.setItem('fm_payment_status', JSON.stringify(paymentData));
 };
 
 window.shareBill = async function (orderId) {
-    const order = app.adminOrdersCache.find(o => o.id === orderId);
-    if (!order) return;
-    let items = typeof order.items === 'string' ? JSON.parse(order.items) : order.items;
+  const order = app.adminOrdersCache.find(o => o.id === orderId);
+  if (!order) return;
+  let items = typeof order.items === 'string' ? JSON.parse(order.items) : order.items;
 
-    const newPhone = prompt(`Confirm WhatsApp Number for ${order.customer_name}:`, order.customer_phone);
-    if (!newPhone) return;
+  const newPhone = prompt(`Confirm WhatsApp Number for ${order.customer_name}:`, order.customer_phone);
+  if (!newPhone) return;
 
-    let calculatedTotal = 0;
-    const updatedItems = items.map(i => {
-        const wtInput = document.getElementById(`wt-${orderId}-${i.productId}`);
-        const priceInput = document.getElementById(`price-${orderId}-${i.productId}`);
-        const actualWeight = wtInput ? parseFloat(wtInput.value) || 0 : (i.actualWeight || 0);
-        const pricePerUnit = priceInput ? parseFloat(priceInput.value) || 0 : (i.pricePer250gAtOrder || 0);
-        const isPacket = i.minQtyUnit !== '250g';
-        let finalPrice = isPacket ? smartRound(pricePerUnit * actualWeight) : smartRound((pricePerUnit / 250) * actualWeight);
-        calculatedTotal += finalPrice;
-        return { ...i, actualWeight, pricePer250gAtOrder: pricePerUnit, finalPrice };
-    });
+  let calculatedTotal = 0;
+  const updatedItems = items.map(i => {
+    const wtInput = document.getElementById(`wt-${orderId}-${i.productId}`);
+    const priceInput = document.getElementById(`price-${orderId}-${i.productId}`);
+    const actualWeight = wtInput ? parseFloat(wtInput.value) || 0 : (i.actualWeight || 0);
+    const pricePerUnit = priceInput ? parseFloat(priceInput.value) || 0 : (i.pricePer250gAtOrder || 0);
+    const isPacket = i.minQtyUnit !== '250g';
+    let finalPrice = isPacket ? smartRound(pricePerUnit * actualWeight) : smartRound((pricePerUnit / 250) * actualWeight);
+    calculatedTotal += finalPrice;
+    return { ...i, actualWeight, pricePer250gAtOrder: pricePerUnit, finalPrice };
+  });
 
-    await _supabase.from('orders').update({
-        items: JSON.stringify(updatedItems),
-        total_amount: calculatedTotal,
-        status: 'sent',
-        customer_phone: newPhone !== order.customer_phone ? newPhone : order.customer_phone
-    }).eq('id', orderId);
+  await _supabase.from('orders').update({
+    items: JSON.stringify(updatedItems),
+    total_amount: calculatedTotal,
+    status: 'sent',
+    customer_phone: newPhone !== order.customer_phone ? newPhone : order.customer_phone
+  }).eq('id', orderId);
 
-    const message = `*Fresh Market Bill* %0AOrder for: *${order.customer_name}* %0APhone: ${newPhone} %0AHouse: ${order.house_no || 'N/A'} %0A%0AItems: %0A${updatedItems.map(i => `${i.name} (${i.actualWeight}${i.minQtyUnit !== '250g' ? (i.minQtyUnit === 'pc' ? 'pc' : 'pkt') : 'g'}): ₹${i.finalPrice || 0}`).join('%0A')} %0A%0A*Total: ₹${calculatedTotal}*`;
-    window.open(`https://wa.me/91${newPhone}?text=${message}`, '_blank');
+  const message = `*Fresh Market Bill* %0AOrder for: *${order.customer_name}* %0APhone: ${newPhone} %0AHouse: ${order.house_no || 'N/A'} %0A%0AItems: %0A${updatedItems.map(i => `${i.name} (${i.actualWeight}${i.minQtyUnit !== '250g' ? (i.minQtyUnit === 'pc' ? 'pc' : 'pkt') : 'g'}): ₹${i.finalPrice || 0}`).join('%0A')} %0A%0A*Total: ₹${calculatedTotal}*`;
+  window.open(`https://wa.me/91${newPhone}?text=${message}`, '_blank');
 
-    const activeTab = document.querySelector('.cat-chip.active');
-    const currentTab = activeTab ? activeTab.id.replace('tab-', '') : 'finalized';
-    loadAdminOrders(currentTab);
+  const activeTab = document.querySelector('.cat-chip.active');
+  const currentTab = activeTab ? activeTab.id.replace('tab-', '') : 'finalized';
+  loadAdminOrders(currentTab);
 };
 
 window.switchAdminTab = function (tab) {
-    document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
-    const tabEl = document.getElementById('tab-' + tab);
-    if (tabEl) tabEl.classList.add('active');
+  document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
+  const tabEl = document.getElementById('tab-' + tab);
+  if (tabEl) tabEl.classList.add('active');
 
-    const list = document.getElementById('admin-orders-list');
-    if (list) list.innerHTML = '<div class="spinner"></div>';
+  const list = document.getElementById('admin-orders-list');
+  if (list) list.innerHTML = '<div class="spinner"></div>';
 
-    switch (tab) {
-        case 'pending':
-        case 'finalized':
-        case 'sent':
-            loadAdminOrders(tab);
-            break;
-        case 'products':
-            loadAdminProducts();
-            break;
-        case 'stats':
-            if (window.renderAnalytics) window.renderAnalytics();
-            else list.innerHTML = '<p class="text-center">Analytics Module Loading...</p>';
-            break;
-        case 'shopping':
-            renderPurchaseList();
-            break;
-        case 'profit':
-            renderProfitReport();
-            break;
-        case 'customers':
-            if (window.renderCustomerHistory) window.renderCustomerHistory();
-            else list.innerHTML = '<p class="text-center">History Module Loading...</p>';
-            break;
-    }
+  switch (tab) {
+    case 'pending':
+    case 'finalized':
+    case 'sent':
+      loadAdminOrders(tab);
+      break;
+    case 'products':
+      loadAdminProducts();
+      break;
+    case 'stats':
+      if (window.renderAnalytics) window.renderAnalytics();
+      else list.innerHTML = '<p class="text-center">Analytics Module Loading...</p>';
+      break;
+    case 'shopping':
+      renderPurchaseList();
+      break;
+    case 'profit':
+      renderProfitReport();
+      break;
+    case 'customers':
+      if (window.renderCustomerHistory) window.renderCustomerHistory();
+      else list.innerHTML = '<p class="text-center">History Module Loading...</p>';
+      break;
+  }
 };
 
 window.filterAdminOrders = function () {
-    try {
-        const searchInput = document.getElementById('admin-search');
-        if (!searchInput) return;
-        const search = searchInput.value.toLowerCase();
-        const sort = document.getElementById('admin-sort').value;
-        const listContainer = document.getElementById('filtered-orders-list');
+  try {
+    const searchInput = document.getElementById('admin-search');
+    if (!searchInput) return;
+    const search = searchInput.value.toLowerCase();
+    const sort = document.getElementById('admin-sort').value;
+    const listContainer = document.getElementById('filtered-orders-list');
 
-        if (!app.adminOrdersCache) return;
-        const currentPrices = JSON.parse(localStorage.getItem('fm_current_prices') || '{}');
+    if (!app.adminOrdersCache) return;
+    const currentPrices = JSON.parse(localStorage.getItem('fm_current_prices') || '{}');
 
-        let filtered = app.adminOrdersCache.filter(o => {
-            const text = (o.customer_name + ' ' + o.house_no + ' ' + o.customer_phone).toLowerCase();
-            return text.includes(search);
-        });
+    let filtered = app.adminOrdersCache.filter(o => {
+      const text = (o.customer_name + ' ' + o.house_no + ' ' + o.customer_phone).toLowerCase();
+      return text.includes(search);
+    });
 
-        if (sort === 'newest') filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-        else if (sort === 'oldest') filtered.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-        else if (sort === 'name') filtered.sort((a, b) => a.customer_name.localeCompare(b.customer_name));
-        else if (sort === 'house-asc') {
-            filtered.sort((a, b) => {
-                const houseA = (a.house_no || '').toString().toUpperCase();
-                const houseB = (b.house_no || '').toString().toUpperCase();
-                return houseA.localeCompare(houseB, undefined, { numeric: true, sensitivity: 'base' });
-            });
-        }
-        else if (sort === 'house-desc') {
-            filtered.sort((a, b) => {
-                const houseA = (a.house_no || '').toString().toUpperCase();
-                const houseB = (b.house_no || '').toString().toUpperCase();
-                return houseB.localeCompare(houseA, undefined, { numeric: true, sensitivity: 'base' });
-            });
-        }
+    if (sort === 'newest') filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    else if (sort === 'oldest') filtered.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    else if (sort === 'name') filtered.sort((a, b) => a.customer_name.localeCompare(b.customer_name));
+    else if (sort === 'house-asc') {
+      filtered.sort((a, b) => {
+        const houseA = (a.house_no || '').toString().toUpperCase();
+        const houseB = (b.house_no || '').toString().toUpperCase();
+        return houseA.localeCompare(houseB, undefined, { numeric: true, sensitivity: 'base' });
+      });
+    }
+    else if (sort === 'house-desc') {
+      filtered.sort((a, b) => {
+        const houseA = (a.house_no || '').toString().toUpperCase();
+        const houseB = (b.house_no || '').toString().toUpperCase();
+        return houseB.localeCompare(houseA, undefined, { numeric: true, sensitivity: 'base' });
+      });
+    }
 
-        if (filtered.length === 0) {
-            listContainer.innerHTML = '<div class="text-center text-muted" style="padding:40px;">No matching orders</div>';
-            return;
-        }
+    if (filtered.length === 0) {
+      listContainer.innerHTML = '<div class="text-center text-muted" style="padding:40px;">No matching orders</div>';
+      return;
+    }
 
-        listContainer.innerHTML = filtered.map(o => {
-            const items = typeof o.items === 'string' ? JSON.parse(o.items) : o.items;
-            const paymentStatus = getPaymentStatus(o.id);
-            o.payment_received = paymentStatus.received;
-            o.payment_type = paymentStatus.type;
+    listContainer.innerHTML = filtered.map(o => {
+      const items = typeof o.items === 'string' ? JSON.parse(o.items) : o.items;
+      const paymentStatus = getPaymentStatus(o.id);
+      o.payment_received = paymentStatus.received;
+      o.payment_type = paymentStatus.type;
 
-            return `
+      return `
             <div class="order-card">
               <div style="display:flex; justify-content:space-between; margin-bottom:12px; border-bottom:1px solid #f0f0f0; padding-bottom:8px;">
                 <div>
@@ -2002,12 +2018,12 @@ window.filterAdminOrders = function () {
 
               <div style="background:#f9f9f9; padding:10px; border-radius:8px;">
                 ${items.map(i => {
-                const isPacket = i.minQtyUnit !== '250g';
-                const unitLabel = isPacket ? (i.minQtyUnit || 'pkt') : 'g';
-                const prefillPrice = i.pricePer250gAtOrder || currentPrices[i.productId] || '';
-                const actualWeight = i.actualWeight || (isPacket ? i.orderedQuantity : (i.customGrams || (i.orderedQuantity * 250)));
+        const isPacket = i.minQtyUnit !== '250g';
+        const unitLabel = isPacket ? (i.minQtyUnit || 'pkt') : 'g';
+        const prefillPrice = i.pricePer250gAtOrder || currentPrices[i.productId] || '';
+        const actualWeight = i.actualWeight || (isPacket ? i.orderedQuantity : (i.customGrams || (i.orderedQuantity * 250)));
 
-                return `
+        return `
                   <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
                     ${o.status !== 'finalized' && o.status !== 'sent' ? `<div onclick="deleteItemFromOrder('${o.id}', '${i.productId}')" style="color:#d32f2f; cursor:pointer;">✕</div>` : ''}
                     <div style="flex:2;">
@@ -2025,7 +2041,7 @@ window.filterAdminOrders = function () {
                     </div>
                   </div>
                 `;
-            }).join('')}
+      }).join('')}
                 ${o.status !== 'finalized' && o.status !== 'sent' ? `<div style="text-align:center; margin-top:12px;"><button class="btn btn-outline" style="font-size:12px;" onclick="showAddItemModal('${o.id}')">+ Add Item</button></div>` : ''}
               </div>
 
@@ -2049,58 +2065,58 @@ window.filterAdminOrders = function () {
                 </div>
                 <div style="display:flex; gap:8px;">
                   ${o.status === 'finalized' ?
-                    `<button class="btn btn-outline" style="color:#25D366; border-color:#25D366;" onclick="shareBill('${o.id}')">Share Bill 📱</button>
+          `<button class="btn btn-outline" style="color:#25D366; border-color:#25D366;" onclick="shareBill('${o.id}')">Share Bill 📱</button>
                      <button class="btn btn-outline" onclick="rollbackOrder('${o.id}')">↩️</button>` :
-                    o.status === 'sent' ?
-                        `<button class="btn btn-outline" style="color:red; border-color:red;" onclick="rejectOrder('${o.id}')">✕</button>
+          o.status === 'sent' ?
+            `<button class="btn btn-outline" style="color:red; border-color:red;" onclick="rejectOrder('${o.id}')">✕</button>
                      <button class="btn btn-outline" style="color:#ff9800; border-color:#ff9800;" onclick="rollbackSentOrder('${o.id}')">↩️ Finalized</button>` :
-                        `<button class="btn btn-outline" style="color:red; border-color:red;" onclick="rejectOrder('${o.id}')">✕</button>
+            `<button class="btn btn-outline" style="color:red; border-color:red;" onclick="rejectOrder('${o.id}')">✕</button>
                      <button class="btn btn-primary" onclick="saveOrder('${o.id}')">Finalize & Save</button>`
-                }
+        }
                 </div>
               </div>
             </div>
           `;
-        }).join('');
+    }).join('');
 
-        filtered.forEach(o => calculateTotal(o.id));
-    } catch (e) {
-        console.error('Render Error:', e);
-    }
+    filtered.forEach(o => calculateTotal(o.id));
+  } catch (e) {
+    console.error('Render Error:', e);
+  }
 };
 
 window.toggleOrderWindow = async function () {
-    const toggle = document.getElementById('orders-toggle');
-    if (!toggle) return;
-    const isOpen = toggle.checked;
+  const toggle = document.getElementById('orders-toggle');
+  if (!toggle) return;
+  const isOpen = toggle.checked;
 
-    try {
-        await _supabase.from('app_settings').upsert({
-            key: 'order_window_open',
-            value: isOpen ? 'true' : 'false',
-            updated_at: new Date().toISOString()
-        }, { onConflict: 'key' });
+  try {
+    await _supabase.from('app_settings').upsert({
+      key: 'order_window_open',
+      value: isOpen ? 'true' : 'false',
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'key' });
 
-        localStorage.setItem('fm_orders_open', isOpen ? 'true' : 'false');
-        const knob = document.getElementById('toggle-knob');
-        if (knob) knob.style.left = isOpen ? '26px' : '2px';
-    } catch (e) {
-        console.error(e);
-        alert('Failed to switch. Check internet.');
-        toggle.checked = !isOpen;
-    }
+    localStorage.setItem('fm_orders_open', isOpen ? 'true' : 'false');
+    const knob = document.getElementById('toggle-knob');
+    if (knob) knob.style.left = isOpen ? '26px' : '2px';
+  } catch (e) {
+    console.error(e);
+    alert('Failed to switch. Check internet.');
+    toggle.checked = !isOpen;
+  }
 };
 
 window.loadAdminProducts = async function () {
-    const container = document.getElementById('admin-orders-list');
-    if (!container) return;
-    container.innerHTML = '<div class="spinner"></div>';
+  const container = document.getElementById('admin-orders-list');
+  if (!container) return;
+  container.innerHTML = '<div class="spinner"></div>';
 
-    try {
-        const { data: products, error } = await _supabase.from('products').select('*').order('name');
-        if (error) throw error;
+  try {
+    const { data: products, error } = await _supabase.from('products').select('*').order('name');
+    if (error) throw error;
 
-        container.innerHTML = `
+    container.innerHTML = `
         <div style="padding:16px;">
           <div style="background:white; border-radius:12px; padding:16px;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
@@ -2149,9 +2165,9 @@ window.loadAdminProducts = async function () {
               </thead>
               <tbody id="admin-product-list-body">
                 ${products.map(p => {
-            const unit = p.minimum_quantity_unit || '250g';
-            const isAvailable = p.available !== false;
-            return `
+      const unit = p.minimum_quantity_unit || '250g';
+      const isAvailable = p.available !== false;
+      return `
                   <tr class="product-row" data-name="${p.name.toLowerCase()}" style="border-bottom:1px solid #f9f9f9;">
                     <td style="padding:10px;">${p.name}</td>
                     <td style="padding:10px;">${unit}</td>
@@ -2166,133 +2182,133 @@ window.loadAdminProducts = async function () {
                     </td>
                   </tr>
                 `;
-        }).join('')}
+    }).join('')}
               </tbody>
             </table>
           </div>
         </div>
       `;
-    } catch (e) {
-        container.innerHTML = '<p class="text-danger" style="padding:20px;">Error loading products</p>';
-    }
+  } catch (e) {
+    container.innerHTML = '<p class="text-danger" style="padding:20px;">Error loading products</p>';
+  }
 };
 
 window.filterAdminProducts = function () {
-    const filter = document.getElementById('admin-product-search').value.toLowerCase();
-    document.querySelectorAll('.product-row').forEach(row => {
-        row.style.display = row.getAttribute('data-name').includes(filter) ? '' : 'none';
-    });
+  const filter = document.getElementById('admin-product-search').value.toLowerCase();
+  document.querySelectorAll('.product-row').forEach(row => {
+    row.style.display = row.getAttribute('data-name').includes(filter) ? '' : 'none';
+  });
 };
 
 window.toggleCustomUnitInput = function () {
-    const select = document.getElementById('product-unit');
-    document.getElementById('product-unit-custom').style.display = select.value === 'custom' ? 'block' : 'none';
+  const select = document.getElementById('product-unit');
+  document.getElementById('product-unit-custom').style.display = select.value === 'custom' ? 'block' : 'none';
 };
 
 window.showAddProductModal = function () {
-    document.getElementById('modal-title').innerText = 'Add New Product';
-    document.getElementById('edit-product-id').value = '';
-    document.getElementById('product-name').value = '';
-    document.getElementById('product-category').value = 'vegetable';
-    document.getElementById('product-unit').value = '250g';
-    document.getElementById('product-unit-custom').value = '';
-    toggleCustomUnitInput();
-    document.getElementById('product-available').checked = true;
-    document.getElementById('product-modal').classList.remove('hidden');
+  document.getElementById('modal-title').innerText = 'Add New Product';
+  document.getElementById('edit-product-id').value = '';
+  document.getElementById('product-name').value = '';
+  document.getElementById('product-category').value = 'vegetable';
+  document.getElementById('product-unit').value = '250g';
+  document.getElementById('product-unit-custom').value = '';
+  toggleCustomUnitInput();
+  document.getElementById('product-available').checked = true;
+  document.getElementById('product-modal').classList.remove('hidden');
 };
 
 window.hideProductModal = function () {
-    document.getElementById('product-modal').classList.add('hidden');
+  document.getElementById('product-modal').classList.add('hidden');
 };
 
 window.editProduct = function (product) {
-    document.getElementById('modal-title').innerText = 'Edit Product';
-    document.getElementById('edit-product-id').value = product.id;
-    document.getElementById('product-name').value = product.name;
-    document.getElementById('product-category').value = product.category || 'other';
+  document.getElementById('modal-title').innerText = 'Edit Product';
+  document.getElementById('edit-product-id').value = product.id;
+  document.getElementById('product-name').value = product.name;
+  document.getElementById('product-category').value = product.category || 'other';
 
-    const unit = product.minimum_quantity_unit || '250g';
-    const unitSelect = document.getElementById('product-unit');
-    if (unit === '250g' || unit === 'packet') {
-        unitSelect.value = unit;
-    } else {
-        unitSelect.value = 'custom';
-        document.getElementById('product-unit-custom').value = unit;
-    }
-    toggleCustomUnitInput();
-    document.getElementById('product-available').checked = product.available !== false;
-    document.getElementById('product-modal').classList.remove('hidden');
+  const unit = product.minimum_quantity_unit || '250g';
+  const unitSelect = document.getElementById('product-unit');
+  if (unit === '250g' || unit === 'packet') {
+    unitSelect.value = unit;
+  } else {
+    unitSelect.value = 'custom';
+    document.getElementById('product-unit-custom').value = unit;
+  }
+  toggleCustomUnitInput();
+  document.getElementById('product-available').checked = product.available !== false;
+  document.getElementById('product-modal').classList.remove('hidden');
 };
 
 window.saveProduct = async function () {
-    const id = document.getElementById('edit-product-id').value;
-    const name = document.getElementById('product-name').value.trim();
-    let unit = document.getElementById('product-unit').value;
-    if (unit === 'custom') {
-        unit = document.getElementById('product-unit-custom').value.trim();
-        if (!unit) { alert('Please enter a custom unit'); return; }
-    }
-    const available = document.getElementById('product-available').checked;
-    const category = document.getElementById('product-category').value;
+  const id = document.getElementById('edit-product-id').value;
+  const name = document.getElementById('product-name').value.trim();
+  let unit = document.getElementById('product-unit').value;
+  if (unit === 'custom') {
+    unit = document.getElementById('product-unit-custom').value.trim();
+    if (!unit) { alert('Please enter a custom unit'); return; }
+  }
+  const available = document.getElementById('product-available').checked;
+  const category = document.getElementById('product-category').value;
 
-    if (!name) { alert('Please enter product name'); return; }
+  if (!name) { alert('Please enter product name'); return; }
 
-    try {
-        const productData = { name, category, minimum_quantity_unit: unit, available };
-        if (id) {
-            await _supabase.from('products').update(productData).eq('id', id);
-            alert('Product updated!');
-        } else {
-            await _supabase.from('products').insert([productData]);
-            alert('Product added!');
-        }
-        hideProductModal();
-        loadAdminProducts();
-    } catch (e) {
-        alert('Error: ' + e.message);
+  try {
+    const productData = { name, category, minimum_quantity_unit: unit, available };
+    if (id) {
+      await _supabase.from('products').update(productData).eq('id', id);
+      alert('Product updated!');
+    } else {
+      await _supabase.from('products').insert([productData]);
+      alert('Product added!');
     }
+    hideProductModal();
+    loadAdminProducts();
+  } catch (e) {
+    alert('Error: ' + e.message);
+  }
 };
 
 window.deleteProduct = async function (id, name) {
-    if (!confirm(`Delete "${name}"?`)) return;
-    await _supabase.from('products').delete().eq('id', id);
-    alert('Deleted!');
-    loadAdminProducts();
+  if (!confirm(`Delete "${name}"?`)) return;
+  await _supabase.from('products').delete().eq('id', id);
+  alert('Deleted!');
+  loadAdminProducts();
 };
 
 window.toggleProductStock = async function (id, newStatus) {
-    await _supabase.from('products').update({ available: newStatus }).eq('id', id);
-    toast(newStatus ? 'In Stock' : 'Out of Stock');
-    loadAdminProducts();
+  await _supabase.from('products').update({ available: newStatus }).eq('id', id);
+  toast(newStatus ? 'In Stock' : 'Out of Stock');
+  loadAdminProducts();
 };
 
 window.renderPurchaseList = async function () {
-    const container = document.getElementById('admin-orders-list');
-    if (!container) return;
-    container.innerHTML = '<div class="spinner"></div>';
+  const container = document.getElementById('admin-orders-list');
+  if (!container) return;
+  container.innerHTML = '<div class="spinner"></div>';
 
-    const { data: orders } = await _supabase.from('orders').select('items').eq('status', 'pending');
-    const needed = {};
+  const { data: orders } = await _supabase.from('orders').select('items').eq('status', 'pending');
+  const needed = {};
 
-    if (orders && orders.length > 0) {
-        orders.forEach(o => {
-            const items = typeof o.items === 'string' ? JSON.parse(o.items) : o.items;
-            items.forEach(i => {
-                const isPacketItem = i.minQtyUnit !== '250g';
-                if (!needed[i.productId]) {
-                    needed[i.productId] = { name: i.name, unit: i.minQtyUnit, isPacket: isPacketItem, totalQty: 0, totalGrams: 0 };
-                }
-                if (isPacketItem) needed[i.productId].totalQty += i.orderedQuantity;
-                else needed[i.productId].totalGrams += (i.customGrams || (i.orderedQuantity * 250));
-            });
-        });
-    }
+  if (orders && orders.length > 0) {
+    orders.forEach(o => {
+      const items = typeof o.items === 'string' ? JSON.parse(o.items) : o.items;
+      items.forEach(i => {
+        const isPacketItem = i.minQtyUnit !== '250g';
+        if (!needed[i.productId]) {
+          needed[i.productId] = { name: i.name, unit: i.minQtyUnit, isPacket: isPacketItem, totalQty: 0, totalGrams: 0 };
+        }
+        if (isPacketItem) needed[i.productId].totalQty += i.orderedQuantity;
+        else needed[i.productId].totalGrams += (i.customGrams || (i.orderedQuantity * 250));
+      });
+    });
+  }
 
-    const itemsList = Object.values(needed);
-    // Store for printing
-    app.shoppingListCache = itemsList;
+  const itemsList = Object.values(needed);
+  // Store for printing
+  app.shoppingListCache = itemsList;
 
-    container.innerHTML = `
+  container.innerHTML = `
     <div style="padding:16px;">
       <div style="background:white; border-radius:12px; padding:16px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
@@ -2317,18 +2333,18 @@ window.renderPurchaseList = async function () {
 };
 
 window.printShoppingList = function () {
-    if (!app.shoppingListCache || app.shoppingListCache.length === 0) {
-        alert('No items in shopping list!');
-        return;
-    }
+  if (!app.shoppingListCache || app.shoppingListCache.length === 0) {
+    alert('No items in shopping list!');
+    return;
+  }
 
-    const today = new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-    const itemsList = app.shoppingListCache;
+  const today = new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  const itemsList = app.shoppingListCache;
 
-    // Sort alphabetically by name for easier shopping
-    const sortedItems = [...itemsList].sort((a, b) => a.name.localeCompare(b.name));
+  // Sort alphabetically by name for easier shopping
+  const sortedItems = [...itemsList].sort((a, b) => a.name.localeCompare(b.name));
 
-    let printHtml = `<!DOCTYPE html><html><head><title>Shopping List</title><style>
+  let printHtml = `<!DOCTYPE html><html><head><title>Shopping List</title><style>
       * { box-sizing: border-box; margin: 0; padding: 0; }
       body { font-family: Arial, sans-serif; padding: 20px; font-size: 14px; }
       .print-header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #4caf50; padding-bottom: 15px; }
@@ -2375,18 +2391,18 @@ window.printShoppingList = function () {
       </div>
     </body></html>`;
 
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(printHtml);
-    printWindow.document.close();
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(printHtml);
+  printWindow.document.close();
 };
 
 window.renderProfitReport = async function () {
-    const container = document.getElementById('admin-orders-list');
-    if (!container) return;
+  const container = document.getElementById('admin-orders-list');
+  if (!container) return;
 
-    const lastUpdated = localStorage.getItem('fm_prices_updated') || 'Never';
+  const lastUpdated = localStorage.getItem('fm_prices_updated') || 'Never';
 
-    container.innerHTML = `
+  container.innerHTML = `
     <div style="padding:16px;">
       <div style="background:linear-gradient(135deg,#4caf50,#2e7d32); padding:16px; border-radius:12px; color:white; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center;">
         <div>
@@ -2411,20 +2427,20 @@ window.renderProfitReport = async function () {
     </div>
   `;
 
-    const { data: orders } = await _supabase.from('orders').select('*').eq('status', 'finalized');
-    let totalRev = 0;
-    const productStats = {};
+  const { data: orders } = await _supabase.from('orders').select('*').eq('status', 'finalized');
+  let totalRev = 0;
+  const productStats = {};
 
-    orders.forEach(o => {
-        totalRev += (o.total_amount || 0);
-        const items = typeof o.items === 'string' ? JSON.parse(o.items) : o.items;
-        items.forEach(i => {
-            if (!productStats[i.productId]) productStats[i.productId] = { name: i.name, revenue: 0 };
-            productStats[i.productId].revenue += i.finalPrice || 0;
-        });
+  orders.forEach(o => {
+    totalRev += (o.total_amount || 0);
+    const items = typeof o.items === 'string' ? JSON.parse(o.items) : o.items;
+    items.forEach(i => {
+      if (!productStats[i.productId]) productStats[i.productId] = { name: i.name, revenue: 0 };
+      productStats[i.productId].revenue += i.finalPrice || 0;
     });
+  });
 
-    document.getElementById('profit-data').innerHTML = `
+  document.getElementById('profit-data').innerHTML = `
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px;">
       <div style="background:white; padding:12px; border-radius:8px; text-align:center;">
         <div style="color:#666; font-size:12px;">Total Revenue</div>
@@ -2448,12 +2464,12 @@ window.renderProfitReport = async function () {
 };
 
 window.showPriceSetter = async function () {
-    document.getElementById('price-setter-modal').classList.remove('hidden');
-    const container = document.getElementById('price-inputs');
-    const { data: products } = await _supabase.from('products').select('*').order('name');
-    const current = JSON.parse(localStorage.getItem('fm_current_prices') || '{}');
+  document.getElementById('price-setter-modal').classList.remove('hidden');
+  const container = document.getElementById('price-inputs');
+  const { data: products } = await _supabase.from('products').select('*').order('name');
+  const current = JSON.parse(localStorage.getItem('fm_current_prices') || '{}');
 
-    container.innerHTML = products.map(p => `
+  container.innerHTML = products.map(p => `
     <div class="price-item" data-name="${p.name.toLowerCase()}" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
       <label style="font-size:14px; flex:1;">${p.name}</label>
       <input type="number" id="pset-${p.id}" value="${current[p.id] || ''}" placeholder="Price" style="width:80px; padding:6px; border:1px solid #ddd; border-radius:6px;">
@@ -2462,77 +2478,77 @@ window.showPriceSetter = async function () {
 };
 
 window.saveCurrentPrices = async function () {
-    const inputs = document.querySelectorAll('[id^=pset-]');
-    const prices = {};
-    inputs.forEach(inp => {
-        const id = inp.id.slice(5);
-        if (inp.value) prices[id] = inp.value;
-    });
+  const inputs = document.querySelectorAll('[id^=pset-]');
+  const prices = {};
+  inputs.forEach(inp => {
+    const id = inp.id.slice(5);
+    if (inp.value) prices[id] = inp.value;
+  });
 
-    localStorage.setItem('fm_current_prices', JSON.stringify(prices));
-    localStorage.setItem('fm_prices_updated', new Date().toLocaleString());
+  localStorage.setItem('fm_current_prices', JSON.stringify(prices));
+  localStorage.setItem('fm_prices_updated', new Date().toLocaleString());
 
-    await _supabase.from('app_settings').upsert({ key: 'current_prices', value: JSON.stringify(prices) }, { onConflict: 'key' });
-    document.getElementById('price-setter-modal').classList.add('hidden');
-    renderProfitReport();
-    alert('Prices Saved!');
+  await _supabase.from('app_settings').upsert({ key: 'current_prices', value: JSON.stringify(prices) }, { onConflict: 'key' });
+  document.getElementById('price-setter-modal').classList.add('hidden');
+  renderProfitReport();
+  alert('Prices Saved!');
 };
 
 window.resetAllPrices = async function () {
-    if (!confirm('Reset ALL prices to ₹0?')) return;
-    localStorage.removeItem('fm_current_prices');
-    localStorage.setItem('fm_prices_updated', 'Reset on ' + new Date().toLocaleString());
-    await _supabase.from('app_settings').upsert({ key: 'current_prices', value: JSON.stringify({}) }, { onConflict: 'key' });
-    renderProfitReport();
-    alert('All prices reset!');
+  if (!confirm('Reset ALL prices to ₹0?')) return;
+  localStorage.removeItem('fm_current_prices');
+  localStorage.setItem('fm_prices_updated', 'Reset on ' + new Date().toLocaleString());
+  await _supabase.from('app_settings').upsert({ key: 'current_prices', value: JSON.stringify({}) }, { onConflict: 'key' });
+  renderProfitReport();
+  alert('All prices reset!');
 };
 
 window.filterPriceInputs = function () {
-    const search = document.getElementById('price-search').value.toLowerCase();
-    document.querySelectorAll('.price-item').forEach(item => {
-        item.style.display = item.getAttribute('data-name').includes(search) ? 'flex' : 'none';
-    });
+  const search = document.getElementById('price-search').value.toLowerCase();
+  document.querySelectorAll('.price-item').forEach(item => {
+    item.style.display = item.getAttribute('data-name').includes(search) ? 'flex' : 'none';
+  });
 };
 
 window.printOrders = function () {
-    if (!app.adminOrdersCache || app.adminOrdersCache.length === 0) { alert('No orders to print!'); return; }
+  if (!app.adminOrdersCache || app.adminOrdersCache.length === 0) { alert('No orders to print!'); return; }
 
-    const activeTab = document.querySelector('.cat-chip.active');
-    const tabName = activeTab ? activeTab.textContent.trim() : 'Orders';
-    const today = new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  const activeTab = document.querySelector('.cat-chip.active');
+  const tabName = activeTab ? activeTab.textContent.trim() : 'Orders';
+  const today = new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
-    // Apply same search/sort as displayed in filterAdminOrders
-    const searchInput = document.getElementById('admin-search');
-    const sortSelect = document.getElementById('admin-sort');
-    const search = searchInput ? searchInput.value.toLowerCase() : '';
-    const sort = sortSelect ? sortSelect.value : 'newest';
+  // Apply same search/sort as displayed in filterAdminOrders
+  const searchInput = document.getElementById('admin-search');
+  const sortSelect = document.getElementById('admin-sort');
+  const search = searchInput ? searchInput.value.toLowerCase() : '';
+  const sort = sortSelect ? sortSelect.value : 'newest';
 
-    let ordersToPrint = app.adminOrdersCache.filter(o => {
-        const text = (o.customer_name + ' ' + o.house_no + ' ' + o.customer_phone).toLowerCase();
-        return text.includes(search);
+  let ordersToPrint = app.adminOrdersCache.filter(o => {
+    const text = (o.customer_name + ' ' + o.house_no + ' ' + o.customer_phone).toLowerCase();
+    return text.includes(search);
+  });
+
+  if (sort === 'newest') ordersToPrint.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  else if (sort === 'oldest') ordersToPrint.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+  else if (sort === 'name') ordersToPrint.sort((a, b) => a.customer_name.localeCompare(b.customer_name));
+  else if (sort === 'house-asc') {
+    ordersToPrint.sort((a, b) => {
+      const houseA = (a.house_no || '').toString().toUpperCase();
+      const houseB = (b.house_no || '').toString().toUpperCase();
+      return houseA.localeCompare(houseB, undefined, { numeric: true, sensitivity: 'base' });
     });
+  }
+  else if (sort === 'house-desc') {
+    ordersToPrint.sort((a, b) => {
+      const houseA = (a.house_no || '').toString().toUpperCase();
+      const houseB = (b.house_no || '').toString().toUpperCase();
+      return houseB.localeCompare(houseA, undefined, { numeric: true, sensitivity: 'base' });
+    });
+  }
 
-    if (sort === 'newest') ordersToPrint.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-    else if (sort === 'oldest') ordersToPrint.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-    else if (sort === 'name') ordersToPrint.sort((a, b) => a.customer_name.localeCompare(b.customer_name));
-    else if (sort === 'house-asc') {
-        ordersToPrint.sort((a, b) => {
-            const houseA = (a.house_no || '').toString().toUpperCase();
-            const houseB = (b.house_no || '').toString().toUpperCase();
-            return houseA.localeCompare(houseB, undefined, { numeric: true, sensitivity: 'base' });
-        });
-    }
-    else if (sort === 'house-desc') {
-        ordersToPrint.sort((a, b) => {
-            const houseA = (a.house_no || '').toString().toUpperCase();
-            const houseB = (b.house_no || '').toString().toUpperCase();
-            return houseB.localeCompare(houseA, undefined, { numeric: true, sensitivity: 'base' });
-        });
-    }
+  if (ordersToPrint.length === 0) { alert('No orders match your current filter!'); return; }
 
-    if (ordersToPrint.length === 0) { alert('No orders match your current filter!'); return; }
-
-    let printHtml = `<!DOCTYPE html><html><head><title>Orders</title><style>
+  let printHtml = `<!DOCTYPE html><html><head><title>Orders</title><style>
       * { box-sizing: border-box; margin: 0; padding: 0; }
       body { font-family: Arial, sans-serif; padding: 20px; font-size: 12px; }
       .print-header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 15px; }
@@ -2545,14 +2561,14 @@ window.printOrders = function () {
     </style></head><body>
       <div class="print-header"><h1>🥬 Shree Gor Veggies</h1><div>${tabName} Orders - ${today}</div></div>`;
 
-    let grandTotal = 0;
-    ordersToPrint.forEach(o => {
-        const items = typeof o.items === 'string' ? JSON.parse(o.items) : o.items;
-        const orderTotal = o.total_amount || 0;
-        grandTotal += orderTotal;
-        const paymentStatus = getPaymentStatus(o.id);
+  let grandTotal = 0;
+  ordersToPrint.forEach(o => {
+    const items = typeof o.items === 'string' ? JSON.parse(o.items) : o.items;
+    const orderTotal = o.total_amount || 0;
+    grandTotal += orderTotal;
+    const paymentStatus = getPaymentStatus(o.id);
 
-        printHtml += `
+    printHtml += `
         <div class="order-card" style="border-left: 4px solid ${paymentStatus.received ? '#4caf50' : '#ff9800'};">
           <div class="order-header">
             <div><strong>${o.customer_name}</strong><br>📞 ${o.customer_phone} | 🏠 ${o.house_no || 'N/A'}</div>
@@ -2562,23 +2578,23 @@ window.printOrders = function () {
             <thead><tr><th>Item</th><th>Ordered</th><th>Actual</th><th>Rate</th><th style="text-align:right;">Amount</th></tr></thead>
             <tbody>
               ${items.map(i => {
-            const isPacket = i.minQtyUnit !== '250g';
-            const unitLabel = isPacket ? (i.minQtyUnit || 'pkt') : 'g';
-            return `<tr>
+      const isPacket = i.minQtyUnit !== '250g';
+      const unitLabel = isPacket ? (i.minQtyUnit || 'pkt') : 'g';
+      return `<tr>
                   <td>${i.name}</td>
                   <td>${isPacket ? i.orderedQuantity + ' ' + unitLabel : (i.customGrams || (i.orderedQuantity * 250)) + 'g'}</td>
                   <td>${i.actualWeight ? (isPacket ? i.actualWeight + ' ' + unitLabel : i.actualWeight + 'g') : '-'}</td>
                   <td>${i.pricePer250gAtOrder ? '₹' + i.pricePer250gAtOrder : '-'}</td>
                   <td style="text-align:right;">${i.finalPrice ? '₹' + i.finalPrice : '-'}</td>
                 </tr>`;
-        }).join('')}
+    }).join('')}
               <tr class="total-row"><td colspan="4">Total</td><td style="text-align:right;">₹${orderTotal}</td></tr>
             </tbody>
           </table>
         </div>`;
-    });
+  });
 
-    printHtml += `
+  printHtml += `
       <div style="margin-top:20px; padding:15px; background:#f9f9f9; border-radius:8px;">
         <strong>Grand Total: ₹${grandTotal}</strong> | Orders: ${ordersToPrint.length}
       </div>
@@ -2587,17 +2603,17 @@ window.printOrders = function () {
       </div>
     </body></html>`;
 
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(printHtml);
-    printWindow.document.close();
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(printHtml);
+  printWindow.document.close();
 };
 
 window.printMyOrders = function () {
-    if (!app.customerOrdersCache || app.customerOrdersCache.length === 0) { alert('No orders to print!'); return; }
-    const today = new Date().toLocaleDateString('en-IN');
-    let grandTotal = 0;
+  if (!app.customerOrdersCache || app.customerOrdersCache.length === 0) { alert('No orders to print!'); return; }
+  const today = new Date().toLocaleDateString('en-IN');
+  let grandTotal = 0;
 
-    let printHtml = `<!DOCTYPE html><html><head><title>My Orders</title><style>
+  let printHtml = `<!DOCTYPE html><html><head><title>My Orders</title><style>
       body { font-family: Arial, sans-serif; padding: 20px; font-size: 12px; }
       .order-card { border: 1px solid #ccc; border-radius: 8px; padding: 12px; margin-bottom: 15px; }
       @media print { .no-print { display: none !important; } }
@@ -2607,43 +2623,43 @@ window.printMyOrders = function () {
         <div>${app.user.name} - ${today}</div>
       </div>`;
 
-    app.customerOrdersCache.forEach(o => {
-        const items = typeof o.items === 'string' ? JSON.parse(o.items) : o.items;
-        const orderTotal = o.total_amount || 0;
-        grandTotal += orderTotal;
+  app.customerOrdersCache.forEach(o => {
+    const items = typeof o.items === 'string' ? JSON.parse(o.items) : o.items;
+    const orderTotal = o.total_amount || 0;
+    grandTotal += orderTotal;
 
-        printHtml += `
+    printHtml += `
         <div class="order-card">
           <div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding-bottom:8px; margin-bottom:10px;">
             <strong>#${o.id.slice(0, 6).toUpperCase()}</strong>
             <span>${new Date(o.created_at).toLocaleString()}</span>
           </div>
           ${items.map(i => {
-            const isPacket = i.minQtyUnit !== '250g';
-            return `<div style="display:flex; justify-content:space-between; padding:4px 0;">
+      const isPacket = i.minQtyUnit !== '250g';
+      return `<div style="display:flex; justify-content:space-between; padding:4px 0;">
               <span>${i.name} (${isPacket ? i.orderedQuantity + ' pkt' : (i.customGrams || (i.orderedQuantity * 250)) + 'g'})</span>
               <span>${i.finalPrice ? '₹' + i.finalPrice : 'TBD'}</span>
             </div>`;
-        }).join('')}
+    }).join('')}
           <div style="text-align:right; font-weight:bold; margin-top:8px; border-top:1px solid #eee; padding-top:8px;">Total: ₹${orderTotal || 'TBD'}</div>
         </div>`;
-    });
+  });
 
-    printHtml += `
+  printHtml += `
       <div style="margin-top:20px; padding:15px; background:#f9f9f9; border-radius:8px;"><strong>All Orders Total: ₹${grandTotal}</strong></div>
       <div class="no-print" style="margin-top:20px; text-align:center;">
         <button onclick="window.print()" style="padding:12px 24px; background:#4caf50; color:white; border:none; border-radius:8px;">🖨️ Print</button>
       </div>
     </body></html>`;
 
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(printHtml);
-    printWindow.document.close();
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(printHtml);
+  printWindow.document.close();
 };
 
 // Start App
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
+  document.addEventListener('DOMContentLoaded', init);
 } else {
-    init();
+  init();
 }
