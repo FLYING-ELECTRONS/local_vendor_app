@@ -1731,6 +1731,37 @@ window.saveOrder = async function (orderId) {
   loadAdminOrders('pending');
 };
 
+// Helper function to save all admin input field values before refresh
+window.saveAdminInputValues = function () {
+  const inputs = {};
+  // Save all weight inputs
+  document.querySelectorAll('[id^="wt-"]').forEach(el => {
+    inputs[el.id] = el.value;
+  });
+  // Save all price inputs
+  document.querySelectorAll('[id^="price-"]').forEach(el => {
+    inputs[el.id] = el.value;
+  });
+  window._adminInputValues = inputs;
+};
+
+// Helper function to restore admin input field values after refresh
+window.restoreAdminInputValues = function () {
+  if (!window._adminInputValues) return;
+  setTimeout(() => {
+    for (const [id, value] of Object.entries(window._adminInputValues)) {
+      const el = document.getElementById(id);
+      if (el && value) {
+        el.value = value;
+      }
+    }
+    // Recalculate totals after restoring
+    if (app.adminOrdersCache) {
+      app.adminOrdersCache.forEach(o => calculateTotal(o.id));
+    }
+  }, 100);
+};
+
 window.deleteItemFromOrder = async function (orderId, productId) {
   if (!confirm('Remove this item from the order?')) return;
   // Save current sort/search before reloading
@@ -1738,6 +1769,9 @@ window.deleteItemFromOrder = async function (orderId, productId) {
   const searchEl = document.getElementById('admin-search');
   if (sortEl) window._adminSortValue = sortEl.value;
   if (searchEl) window._adminSearchValue = searchEl.value;
+
+  // Save all input values before reloading
+  saveAdminInputValues();
 
   const order = app.adminOrdersCache.find(o => o.id === orderId);
   if (!order) return;
@@ -1757,7 +1791,7 @@ window.deleteItemFromOrder = async function (orderId, productId) {
 
   const activeTab = document.querySelector('.cat-chip.active');
   const currentTab = activeTab ? activeTab.id.replace('tab-', '') : 'pending';
-  loadAdminOrders(currentTab);
+  loadAdminOrders(currentTab).then(() => restoreAdminInputValues());
 };
 
 window.showAddItemModal = async function (orderId) {
