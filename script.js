@@ -2242,14 +2242,13 @@ window.loadAdminProducts = async function () {
               </div>
             </div>
             
-            <div style="overflow-x:auto; -webkit-overflow-scrolling:touch;">
-            <table style="width:100%; border-collapse:collapse; min-width:400px;">
+            <table style="width:100%; border-collapse:collapse; font-size:13px;">
               <thead>
                 <tr style="text-align:left; border-bottom:2px solid #eee;">
-                  <th style="padding:8px;">Name</th>
-                  <th style="padding:8px;">Unit</th>
-                  <th style="padding:8px;">Status</th>
-                  <th style="padding:8px;">Actions</th>
+                  <th style="padding:6px 4px;">Name</th>
+                  <th style="padding:6px 4px; width:50px;">Unit</th>
+                  <th style="padding:6px 4px; width:60px;">Status</th>
+                  <th style="padding:6px 4px; width:60px;"></th>
                 </tr>
               </thead>
               <tbody id="admin-product-list-body">
@@ -2257,24 +2256,23 @@ window.loadAdminProducts = async function () {
       const unit = p.minimum_quantity_unit || '250g';
       const isAvailable = p.available !== false;
       return `
-                  <tr class="product-row" data-name="${p.name.toLowerCase()}" style="border-bottom:1px solid #f9f9f9;">
-                    <td style="padding:10px;">${p.name}</td>
-                    <td style="padding:10px;">${unit}</td>
-                    <td style="padding:10px;">
-                      <button class="btn btn-outline" style="padding:4px 12px; font-size:12px; ${isAvailable ? 'background:#e8f5e9; color:#4caf50;' : 'background:#ffebee; color:#f44336;'}" onclick="toggleProductStock('${p.id}', ${!isAvailable})">
-                        ${isAvailable ? '✓ In Stock' : '✗ Out'}
-                      </button>
+                  <tr class="product-row" data-name="${p.name.toLowerCase()}" style="border-bottom:1px solid #f5f5f5;">
+                    <td style="padding:8px 4px; font-size:13px;">${p.name}</td>
+                    <td style="padding:8px 4px; font-size:12px; color:#666;">${unit}</td>
+                    <td style="padding:8px 4px;">
+                      <span style="padding:2px 6px; border-radius:4px; font-size:11px; ${isAvailable ? 'background:#e8f5e9; color:#4caf50;' : 'background:#ffebee; color:#f44336;'}" onclick="toggleProductStock('${p.id}', ${!isAvailable})">
+                        ${isAvailable ? '✓' : '✗'}
+                      </span>
                     </td>
-                    <td style="padding:10px;">
-                      <button class="btn btn-outline" style="padding:4px 8px; font-size:12px;" onclick='editProduct(${JSON.stringify(p)})'>Edit</button>
-                      <button class="btn btn-outline" style="padding:4px 8px; font-size:12px; color:red;" onclick="deleteProduct('${p.id}', '${p.name}')">Delete</button>
+                    <td style="padding:8px 4px;">
+                      <span style="cursor:pointer; margin-right:8px;" onclick='editProduct(${JSON.stringify(p)})'>✏️</span>
+                      <span style="cursor:pointer; color:red;" onclick="deleteProduct('${p.id}', '${p.name}')">🗑️</span>
                     </td>
                   </tr>
                 `;
     }).join('')}
               </tbody>
             </table>
-            </div>
           </div>
         </div>
       `;
