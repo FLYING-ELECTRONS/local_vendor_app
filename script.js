@@ -1695,12 +1695,16 @@ window.loadAdminOrders = async function (statusFilter) {
     const searchHtml = `
         <div style="padding:10px; display:flex; gap:10px; background:white; margin-bottom:12px; border-radius:8px; border:1px solid #eee; flex-wrap:wrap; align-items:center;">
           <input type="text" id="admin-search" placeholder="Search customer..." value="${savedSearch}" style="flex:1; min-width:120px; padding:8px; border:1px solid #ddd; border-radius:6px;" onkeyup="filterAdminOrders()">
-          <select id="admin-sort" style="width:110px; padding:8px; border:1px solid #ddd; border-radius:6px;" onchange="filterAdminOrders()">
+          <select id="admin-sort" style="width:130px; padding:8px; border:1px solid #ddd; border-radius:6px;" onchange="filterAdminOrders()">
             <option value="newest" ${savedSort === 'newest' ? 'selected' : ''}>Newest</option>
             <option value="oldest" ${savedSort === 'oldest' ? 'selected' : ''}>Oldest</option>
             <option value="name" ${savedSort === 'name' ? 'selected' : ''}>Name</option>
             <option value="house-asc" ${savedSort === 'house-asc' ? 'selected' : ''}>House A→Z</option>
             <option value="house-desc" ${savedSort === 'house-desc' ? 'selected' : ''}>House Z→A</option>
+            ${statusFilter === 'sent' ? `
+            <option value="paid-first" ${savedSort === 'paid-first' ? 'selected' : ''}>✅ Paid First</option>
+            <option value="unpaid-first" ${savedSort === 'unpaid-first' ? 'selected' : ''}>⏳ Unpaid First</option>
+            ` : ''}
           </select>
           <button class="btn btn-outline no-print" style="padding:8px 12px; font-size:13px;" onclick="printOrders()">🖨️ Print</button>
           <button class="btn btn-outline no-print" style="padding:8px 12px; font-size:13px; color: #f44336; border-color: #f44336;" onclick="deleteAllOrders('${statusFilter}')">🗑️ All</button>
@@ -2145,6 +2149,22 @@ window.filterAdminOrders = function () {
         const houseA = (a.house_no || '').toString().toUpperCase();
         const houseB = (b.house_no || '').toString().toUpperCase();
         return houseB.localeCompare(houseA, undefined, { numeric: true, sensitivity: 'base' });
+      });
+    }
+    else if (sort === 'paid-first') {
+      const paymentData = JSON.parse(localStorage.getItem('fm_payment_status') || '{}');
+      filtered.sort((a, b) => {
+        const aPaid = paymentData[a.id]?.received ? 1 : 0;
+        const bPaid = paymentData[b.id]?.received ? 1 : 0;
+        return bPaid - aPaid; // Paid orders first
+      });
+    }
+    else if (sort === 'unpaid-first') {
+      const paymentData = JSON.parse(localStorage.getItem('fm_payment_status') || '{}');
+      filtered.sort((a, b) => {
+        const aPaid = paymentData[a.id]?.received ? 1 : 0;
+        const bPaid = paymentData[b.id]?.received ? 1 : 0;
+        return aPaid - bPaid; // Unpaid orders first
       });
     }
 
