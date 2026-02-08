@@ -1422,19 +1422,29 @@ window.placeOrder = async function () {
 
     document.getElementById('content-area').innerHTML = `
       <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:calc(100vh - 120px); padding:24px; text-align:center; background: linear-gradient(180deg, #f0fff4 0%, #ffffff 40%);">
+        
+        <!-- RED WARNING AT TOP -->
+        <div style="margin-bottom:24px; padding:16px 20px; max-width:340px; width:100%; text-align:center;">
+          <p style="margin:0 0 12px; color:#d32f2f; font-size:17px; font-weight:800; line-height:1.6;">
+            🚨 Your order won't reach the seller until you click "Send on WhatsApp" button!
+          </p>
+          <p style="margin:0; color:#d32f2f; font-size:16px; font-weight:700; line-height:1.6;">
+            🚨 જ્યાં સુધી તમે "Send on WhatsApp" બટન પર ક્લિક ન કરો ત્યાં સુધી તમારો ઓર્ડર વિક્રેતા સુધી નહીં પહોંચે!
+          </p>
+        </div>
+
+        <!-- SUCCESS ICON & MESSAGE -->
         <div style="width:90px; height:90px; border-radius:50%; background:linear-gradient(135deg,#25D366,#1da852); display:flex; align-items:center; justify-content:center; box-shadow:0 4px 18px rgba(37,211,102,0.35); margin-bottom:20px;">
           <span class="material-icons-round" style="font-size:48px; color:#fff;">check</span>
         </div>
         <h2 style="margin:0 0 8px; font-size:22px; color:#1a1a1a;">${confirmTitle}</h2>
         <p style="margin:0 0 28px; color:#666; font-size:14px; max-width:280px; line-height:1.5;">${confirmSub}</p>
+        
+        <!-- GREEN WHATSAPP BUTTON -->
         <a href="${waUrl}" target="_blank" onclick="window.waConfirmSent()" style="display:flex; align-items:center; justify-content:center; gap:10px; width:100%; max-width:320px; padding:16px 24px; background:linear-gradient(135deg,#25D366,#1da852); color:#fff; font-size:18px; font-weight:700; border-radius:14px; text-decoration:none; box-shadow:0 4px 16px rgba(37,211,102,0.4);">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.5 2 2 6.5 2 12c0 1.8.5 3.5 1.4 5L2 22l5.2-1.4c1.4.8 3.1 1.4 4.8 1.4 5.5 0 10-4.5 10-10S17.5 2 12 2z"/></svg>
           Send on WhatsApp
         </a>
-        <div style="margin-top:24px; padding:22px 24px; border-radius:14px; background:linear-gradient(135deg,#ff4444,#cc0000); border:none; color:#fff; font-size:18px; font-weight:800; max-width:340px; width:100%; line-height:1.8; text-align:center; box-shadow:0 4px 20px rgba(255,0,0,0.4);">
-          🚨 <span style="text-decoration:underline;">Your order won't reach the seller until you click "Send on WhatsApp" button!</span><br><br>
-          🚨 <span style="text-decoration:underline;">જ્યાં સુધી તમે "Send on WhatsApp" બટન પર ક્લિક ન કરો ત્યાં સુધી તમારો ઓર્ડર વિક્રેતા સુધી નહીં પહોંચે!</span>
-        </div>
       </div>
     `;
 
