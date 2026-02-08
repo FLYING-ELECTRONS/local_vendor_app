@@ -2067,8 +2067,8 @@ window.shareBill = async function (orderId) {
     `━━━━━━━━━━━━━━━━%0A` +
     `*💰 Total: ₹${calculatedTotal.toFixed(2)}*%0A` +
     `━━━━━━━━━━━━━━━━%0A` +
-    `💳 *PAYMENT OPTIONS:*%0A` +
-    `1️⃣ Pay to: *8875024558*%0A` +
+    `💳 *PAYMENT OPTIONS:*%0A%0A` +
+    `1️⃣ Pay to: *8875024558*%0A%0A` +
     `2️⃣ Scan QR: https://gkxiujmyfsdyxnwhgyzc.supabase.co/storage/v1/object/public/images/payment-qr.jpeg%0A` +
     `━━━━━━━━━━━━━━━━%0A` +
     `🙏 Thank you!`;
