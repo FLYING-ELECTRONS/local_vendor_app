@@ -1385,21 +1385,6 @@ window.placeOrder = async function () {
       if (insertError) throw insertError;
     }
 
-    // 📧 Send email notification to seller (chiraggor77@gmail.com)
-    try {
-      await sendEmailNotification({
-        customer_name: app.user.name,
-        customer_phone: app.user.phone,
-        house_no: app.user.house,
-        items: finalItems,
-        timestamp: new Date().toISOString(),
-        is_update: isUpdate
-      });
-      console.log('Email notification sent to chiraggor77@gmail.com');
-    } catch (notifyError) {
-      console.error('Email notification failed (order still saved):', notifyError);
-    }
-
     setLoading(false);
 
     const orderItemsList = finalItems.map(i => {
@@ -1446,8 +1431,9 @@ window.placeOrder = async function () {
           <svg width="26" height="26" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.5 2 2 6.5 2 12c0 1.8.5 3.5 1.4 5L2 22l5.2-1.4c1.4.8 3.1 1.4 4.8 1.4 5.5 0 10-4.5 10-10S17.5 2 12 2z"/></svg>
           Send on WhatsApp
         </a>
-        <div style="margin-top:24px; padding:12px 16px; border-radius:10px; background:#fff3cd; border:1px solid #ffc107; color:#856404; font-size:13px; font-weight:600; max-width:320px; width:100%;">
-          ⚠️ Your order won't reach the seller until you send the WhatsApp message!
+        <div style="margin-top:24px; padding:18px 20px; border-radius:12px; background:#fff3cd; border:3px solid #ffc107; color:#856404; font-size:16px; font-weight:700; max-width:320px; width:100%; line-height:1.7; text-align:center;">
+          ⚠️ <strong>Your order won't reach the seller until you click "Send on WhatsApp" button!</strong><br><br>
+          ⚠️ <strong>જ્યાં સુધી તમે "Send on WhatsApp" બટન પર ક્લિક ન કરો ત્યાં સુધી તમારો ઓર્ડર વિક્રેતા સુધી નહીં પહોંચે!</strong>
         </div>
       </div>
     `;
@@ -2070,6 +2056,10 @@ window.shareBill = async function (orderId) {
     `${itemsList}%0A` +
     `━━━━━━━━━━━━━━━━%0A` +
     `*💰 Total: ₹${calculatedTotal.toFixed(2)}*%0A` +
+    `━━━━━━━━━━━━━━━━%0A` +
+    `💳 *PAYMENT OPTIONS:*%0A` +
+    `1️⃣ Pay to: *8875024558*%0A` +
+    `2️⃣ Scan QR: https://gkxiujmyfsdyxnwhgyzc.supabase.co/storage/v1/object/public/images/WhatsApp%20Image%202026-02-08%20at%2014.31.47.jpeg%0A` +
     `━━━━━━━━━━━━━━━━%0A` +
     `🙏 Thank you!`;
 
