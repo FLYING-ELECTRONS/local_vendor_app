@@ -1425,7 +1425,7 @@ window.placeOrder = async function () {
         
         <!-- RED WARNING AT TOP -->
         <div style="margin-bottom:24px; padding:16px 20px; max-width:340px; width:100%; text-align:center;">
-          <p style="margin:0 0 16px; color:#d32f2f; font-size:20px; font-weight:800; line-height:1.5;">
+          <p style="margin:0 0 16px; color:#d32f2f; font-size:22px; font-weight:800; line-height:1.5;">
             🚨 Your order won't reach the seller until you click "Send on WhatsApp" button!
           </p>
           <p style="margin:0; color:#d32f2f; font-size:20px; font-weight:700; line-height:1.5;">
@@ -2069,7 +2069,7 @@ window.shareBill = async function (orderId) {
     `━━━━━━━━━━━━━━━━%0A` +
     `💳 *PAYMENT OPTIONS:*%0A` +
     `1️⃣ Pay to: *8875024558*%0A` +
-    `2️⃣ Scan QR: https://gkxiujmyfsdyxnwhgyzc.supabase.co/storage/v1/object/public/images/WhatsApp%20Image%202026-02-08%20at%2014.31.47.jpeg%0A` +
+    `2️⃣ Scan QR: https://gkxiujmyfsdyxnwhgyzc.supabase.co/storage/v1/object/public/images/payment-qr.jpeg%0A` +
     `━━━━━━━━━━━━━━━━%0A` +
     `🙏 Thank you!`;
 
@@ -2926,7 +2926,3 @@ if (document.readyState === 'loading') {
 } else {
   init();
 }
-
-
-
-
