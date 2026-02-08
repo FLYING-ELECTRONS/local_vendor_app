@@ -1431,9 +1431,9 @@ window.placeOrder = async function () {
           <svg width="26" height="26" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.5 2 2 6.5 2 12c0 1.8.5 3.5 1.4 5L2 22l5.2-1.4c1.4.8 3.1 1.4 4.8 1.4 5.5 0 10-4.5 10-10S17.5 2 12 2z"/></svg>
           Send on WhatsApp
         </a>
-        <div style="margin-top:24px; padding:18px 20px; border-radius:12px; background:#fff3cd; border:3px solid #ffc107; color:#856404; font-size:16px; font-weight:700; max-width:320px; width:100%; line-height:1.7; text-align:center;">
-          ⚠️ <strong>Your order won't reach the seller until you click "Send on WhatsApp" button!</strong><br><br>
-          ⚠️ <strong>જ્યાં સુધી તમે "Send on WhatsApp" બટન પર ક્લિક ન કરો ત્યાં સુધી તમારો ઓર્ડર વિક્રેતા સુધી નહીં પહોંચે!</strong>
+        <div style="margin-top:24px; padding:22px 24px; border-radius:14px; background:linear-gradient(135deg,#ff4444,#cc0000); border:none; color:#fff; font-size:18px; font-weight:800; max-width:340px; width:100%; line-height:1.8; text-align:center; box-shadow:0 4px 20px rgba(255,0,0,0.4);">
+          🚨 <span style="text-decoration:underline;">Your order won't reach the seller until you click "Send on WhatsApp" button!</span><br><br>
+          🚨 <span style="text-decoration:underline;">જ્યાં સુધી તમે "Send on WhatsApp" બટન પર ક્લિક ન કરો ત્યાં સુધી તમારો ઓર્ડર વિક્રેતા સુધી નહીં પહોંચે!</span>
         </div>
       </div>
     `;
