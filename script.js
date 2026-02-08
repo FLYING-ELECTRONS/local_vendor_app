@@ -322,6 +322,41 @@ async function savePushSubscription(subscription) {
   }
 }
 
+// =========================================
+// EMAIL ORDER NOTIFICATIONS
+// =========================================
+
+/**
+ * Send email notification to seller when order is placed
+ * Uses Supabase Edge Function with Resend API
+ * Recipient: chiraggor77@gmail.com
+ */
+async function sendEmailNotification(orderData) {
+  const EDGE_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/email-notify`;
+
+  try {
+    const response = await fetch(EDGE_FUNCTION_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${SUPABASE_KEY}`
+      },
+      body: JSON.stringify(orderData)
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || 'Email notification failed');
+    }
+
+    return result;
+  } catch (error) {
+    console.error('sendEmailNotification error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
 /**
  * Sync prices from Supabase to localStorage.
  * This ensures prices set on one device are available on all devices.
@@ -1348,6 +1383,21 @@ window.placeOrder = async function () {
 
       const { error: insertError } = await _supabase.from('orders').insert([orderPayload]);
       if (insertError) throw insertError;
+    }
+
+    // 📧 Send email notification to seller (chiraggor77@gmail.com)
+    try {
+      await sendEmailNotification({
+        customer_name: app.user.name,
+        customer_phone: app.user.phone,
+        house_no: app.user.house,
+        items: finalItems,
+        timestamp: new Date().toISOString(),
+        is_update: isUpdate
+      });
+      console.log('Email notification sent to chiraggor77@gmail.com');
+    } catch (notifyError) {
+      console.error('Email notification failed (order still saved):', notifyError);
     }
 
     setLoading(false);
