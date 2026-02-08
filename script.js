@@ -1425,10 +1425,10 @@ window.placeOrder = async function () {
         
         <!-- RED WARNING AT TOP -->
         <div style="margin-bottom:24px; padding:16px 20px; max-width:340px; width:100%; text-align:center;">
-          <p style="margin:0 0 16px; color:#d32f2f; font-size:25px; font-weight:800; line-height:1.5;">
+          <p style="margin:0 0 16px; color:#d32f2f; font-size:27px; font-weight:800; line-height:1.5;">
             🚨 Your order won't reach the seller until you click "Send on WhatsApp" button!
           </p>
-          <p style="margin:0; color:#d32f2f; font-size:25px; font-weight:700; line-height:1.5;">
+          <p style="margin:0; color:#d32f2f; font-size:27px; font-weight:700; line-height:1.5;">
             🚨 જ્યાં સુધી તમે "Send on WhatsApp" બટન પર ક્લિક ન કરો ત્યાં સુધી તમારો ઓર્ડર વિક્રેતા સુધી નહીં પહોંચે!
           </p>
         </div>
@@ -2926,4 +2926,5 @@ if (document.readyState === 'loading') {
 } else {
   init();
 }
+
 
