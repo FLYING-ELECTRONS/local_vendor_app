@@ -2952,32 +2952,49 @@ window.printMyOrders = function () {
 // --- CUSTOMER MANAGEMENT & QUICK ORDER FUNCTIONS ---
 
 /**
- * Render customer history based on unique orders.
+ * Render customer history based on Master List + Past Orders.
  */
 window.renderCustomerHistory = async function () {
   const container = document.getElementById('admin-orders-list');
   if (!container) return;
   container.innerHTML = '<div class="spinner"></div>';
   try {
-    const { data: orders, error } = await _supabase.from('orders').select('customer_name, customer_phone, house_no').order('created_at', { ascending: false });
-    if (error) throw error;
-    const customers = {};
-    orders.forEach(o => {
-      if (!customers[o.customer_phone]) {
-        customers[o.customer_phone] = { name: o.customer_name, phone: o.customer_phone, house: o.house_no };
-      }
+    // 1. Fetch Master List
+    const { data: settings } = await _supabase.from('app_settings').select('value').eq('key', 'master_customers').single();
+    const masterList = settings && settings.value ? JSON.parse(settings.value) : [];
+
+    // 2. Fetch unique customers from orders
+    const { data: orders } = await _supabase.from('orders').select('customer_name, customer_phone, house_no').order('created_at', { ascending: false });
+    
+    const customersMap = {};
+    // Add master list first
+    masterList.forEach(c => {
+      customersMap[c.phone] = { name: c.name, phone: c.phone, house: c.house, type: 'master' };
     });
-    const customerList = Object.values(customers);
+    // Merge order history (if not duplicate)
+    if (orders) {
+      orders.forEach(o => {
+        if (!customersMap[o.customer_phone]) {
+          customersMap[o.customer_phone] = { name: o.customer_name, phone: o.customer_phone, house: o.house_no, type: 'order' };
+        }
+      });
+    }
+
+    const customerList = Object.values(customersMap);
+
     container.innerHTML = `
       <div style="padding:16px;">
-        <div style="background:white; border-radius:12px; padding:16px;">
-          <h3>Saved Customers (${customerList.length})</h3>
+        <div style="background:white; border-radius:12px; padding:16px; box-shadow:0 4px 15px rgba(0,0,0,0.05);">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <h3 style="margin:0;">Master Customers (${customerList.length})</h3>
+            <button class="btn btn-outline" style="font-size:12px;" onclick="showBulkImportModal()">Bulk Import</button>
+          </div>
           <input type="text" id="cust-search" placeholder="Search name or phone..." style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; margin-bottom:16px;" onkeyup="filterCustomers()">
-          <div id="cust-list" style="display:flex; flex-direction:column; gap:12px;">
+          <div id="cust-list" style="display:flex; flex-direction:column; gap:12px; max-height:500px; overflow-y:auto;">
             ${customerList.map(c => `
-              <div class="customer-card" style="padding:12px; border:1px solid #eee; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
+              <div class="customer-card" style="padding:12px; border:1px solid ${c.type==='master'?'#e8f5e9':'#eee'}; background:${c.type==='master'?'#f9fff9':'white'}; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
                 <div>
-                  <div style="font-weight:600;">${c.name}</div>
+                  <div style="font-weight:600;">${c.name} ${c.type==='master'?'<span style="font-size:10px; color:#2e7d32; background:#e8f5e9; padding:2px 6px; border-radius:10px; margin-left:4px;">SAVED</span>':''}</div>
                   <div style="font-size:12px; color:#666;">📞 ${c.phone} | 🏠 ${c.house || 'N/A'}</div>
                 </div>
                 <button class="btn btn-outline" style="font-size:12px; padding:6px 10px;" onclick="startOrderForCustomer('${c.name.replace(/'/g, "\\'")}', '${c.phone}', '${(c.house || '').replace(/'/g, "\\'")}')">New Order</button>
@@ -2994,23 +3011,68 @@ window.renderCustomerHistory = async function () {
   } catch (e) { container.innerHTML = '<p class="text-danger">Error loading customers</p>'; }
 };
 
-/**
- * Show customer selector for creating a new order.
- */
+window.showBulkImportModal = function () {
+  const container = document.getElementById('admin-orders-list');
+  container.innerHTML = `
+    <div style="padding:16px;">
+      <div style="background:white; border-radius:12px; padding:20px; box-shadow:0 4px 15px rgba(0,0,0,0.1);">
+        <h3>Bulk Import Customers</h3>
+        <p style="font-size:12px; color:#666;">Paste your list here. Format: <b>Name, Phone, HouseNo</b> (one per line)</p>
+        <textarea id="import-data" style="width:100%; height:200px; padding:12px; border:1px solid #ddd; border-radius:8px; margin-bottom:16px;" placeholder="Amit Shah, 9876543210, A-101\nRahul Gupta, 8877665544, B-205"></textarea>
+        <div style="display:flex; gap:12px;">
+          <button class="btn btn-primary btn-block" onclick="processBulkImport()">Import & Save Forever</button>
+          <button class="btn btn-outline" onclick="renderCustomerHistory()">Cancel</button>
+        </div>
+      </div>
+    </div>
+  `;
+};
+
+window.processBulkImport = async function () {
+  const raw = document.getElementById('import-data').value.trim();
+  if(!raw) return;
+  const lines = raw.split('\n');
+  const newList = [];
+  lines.forEach(l => {
+    const parts = l.split(/[,|;]/).map(p => p.trim());
+    if (parts.length >= 2) {
+      newList.push({ name: parts[0], phone: parts[1].replace(/\D/g, ''), house: parts[2] || '' });
+    }
+  });
+  if(newList.length === 0) { alert('Invalid format. Use: Name, Phone, HouseNo'); return; }
+  setLoading(true);
+  try {
+    await _supabase.from('app_settings').upsert({ key: 'master_customers', value: JSON.stringify(newList) }, { onConflict: 'key' });
+    toast(`Successfully imported ${newList.length} customers!`);
+    renderCustomerHistory();
+  } catch (e) { alert('Failed: ' + e.message); }
+  finally { setLoading(false); }
+};
+
 window.showCustomerSelectorForNewOrder = async function () {
   const container = document.getElementById('admin-orders-list');
   if (!container) return;
   container.innerHTML = '<div class="spinner"></div>';
   try {
-    const { data: orders, error } = await _supabase.from('orders').select('customer_name, customer_phone, house_no').order('created_at', { ascending: false });
-    if (error) throw error;
-    const customers = {};
-    orders.forEach(o => {
-      if (!customers[o.customer_phone]) {
-        customers[o.customer_phone] = { name: o.customer_name, phone: o.customer_phone, house: o.house_no };
-      }
+    const { data: settings } = await _supabase.from('app_settings').select('value').eq('key', 'master_customers').single();
+    const masterList = settings && settings.value ? JSON.parse(settings.value) : [];
+
+    const { data: orders } = await _supabase.from('orders').select('customer_name, customer_phone, house_no').order('created_at', { ascending: false });
+    
+    const customersMap = {};
+    masterList.forEach(c => {
+      customersMap[c.phone] = { name: c.name, phone: c.phone, house: c.house, type: 'master' };
     });
-    const customerList = Object.values(customers);
+    if (orders) {
+      orders.forEach(o => {
+        if (!customersMap[o.customer_phone]) {
+          customersMap[o.customer_phone] = { name: o.customer_name, phone: o.customer_phone, house: o.house_no, type: 'order' };
+        }
+      });
+    }
+
+    const customerList = Object.values(customersMap);
+
     container.innerHTML = `
       <div style="padding:16px;">
         <div style="background:white; border-radius:12px; padding:20px; box-shadow:0 4px 15px rgba(0,0,0,0.05);">
@@ -3034,9 +3096,9 @@ window.showCustomerSelectorForNewOrder = async function () {
           <input type="text" id="cust-select-search" placeholder="Search saved customers..." style="width:100%; padding:12px; border:1px solid #ddd; border-radius:8px; margin-bottom:16px;" onkeyup="filterSelectCustomers()">
           <div id="cust-select-list" style="display:flex; flex-direction:column; gap:10px; max-height:400px; overflow-y:auto;">
             ${customerList.map(c => `
-              <div class="cust-select-card" style="padding:14px; border:1px solid #eee; border-radius:10px; cursor:pointer;" onclick="startOrderForCustomer('${c.name.replace(/'/g, "\\'")}', '${c.phone}', '${(c.house || '').replace(/'/g, "\\'")}')">
+              <div class="cust-select-card" style="padding:14px; border:1px solid ${c.type==='master'?'#e8f5e9':'#eee'}; background:${c.type==='master'?'#f9fff9':'white'}; border-radius:10px; cursor:pointer;" onclick="startOrderForCustomer('${c.name.replace(/'/g, "\\'")}', '${c.phone}', '${(c.house || '').replace(/'/g, "\\'")}')">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
-                  <div><div style="font-weight:600;">${c.name}</div><div style="font-size:12px; color:#666;">📞 ${c.phone} | 🏠 ${c.house || 'N/A'}</div></div>
+                  <div><div style="font-weight:600;">${c.name} ${c.type==='master'?'<span style="font-size:10px; color:#2e7d32; background:#e8f5e9; padding:2px 6px; border-radius:10px; margin-left:4px;">SAVED</span>':''}</div><div style="font-size:12px; color:#666;">📞 ${c.phone} | 🏠 ${c.house || 'N/A'}</div></div>
                   <span class="material-icons-round" style="color:var(--primary);">chevron_right</span>
                 </div>
               </div>
