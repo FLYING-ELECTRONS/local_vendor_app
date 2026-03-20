@@ -2949,6 +2949,133 @@ window.printMyOrders = function () {
   printWindow.document.close();
 };
 
+// --- CUSTOMER MANAGEMENT & QUICK ORDER FUNCTIONS ---
+
+/**
+ * Render customer history based on unique orders.
+ */
+window.renderCustomerHistory = async function () {
+  const container = document.getElementById('admin-orders-list');
+  if (!container) return;
+  container.innerHTML = '<div class="spinner"></div>';
+  try {
+    const { data: orders, error } = await _supabase.from('orders').select('customer_name, customer_phone, house_no').order('created_at', { ascending: false });
+    if (error) throw error;
+    const customers = {};
+    orders.forEach(o => {
+      if (!customers[o.customer_phone]) {
+        customers[o.customer_phone] = { name: o.customer_name, phone: o.customer_phone, house: o.house_no };
+      }
+    });
+    const customerList = Object.values(customers);
+    container.innerHTML = `
+      <div style="padding:16px;">
+        <div style="background:white; border-radius:12px; padding:16px;">
+          <h3>Saved Customers (${customerList.length})</h3>
+          <input type="text" id="cust-search" placeholder="Search name or phone..." style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; margin-bottom:16px;" onkeyup="filterCustomers()">
+          <div id="cust-list" style="display:flex; flex-direction:column; gap:12px;">
+            ${customerList.map(c => `
+              <div class="customer-card" style="padding:12px; border:1px solid #eee; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                  <div style="font-weight:600;">${c.name}</div>
+                  <div style="font-size:12px; color:#666;">📞 ${c.phone} | 🏠 ${c.house || 'N/A'}</div>
+                </div>
+                <button class="btn btn-outline" style="font-size:12px; padding:6px 10px;" onclick="startOrderForCustomer('${c.name.replace(/'/g, "\\'")}', '${c.phone}', '${(c.house || '').replace(/'/g, "\\'")}')">New Order</button>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+    `;
+    window.filterCustomers = () => {
+      const q = document.getElementById('cust-search').value.toLowerCase();
+      document.querySelectorAll('.customer-card').forEach(el => el.style.display = el.innerText.toLowerCase().includes(q) ? '' : 'none');
+    };
+  } catch (e) { container.innerHTML = '<p class="text-danger">Error loading customers</p>'; }
+};
+
+/**
+ * Show customer selector for creating a new order.
+ */
+window.showCustomerSelectorForNewOrder = async function () {
+  const container = document.getElementById('admin-orders-list');
+  if (!container) return;
+  container.innerHTML = '<div class="spinner"></div>';
+  try {
+    const { data: orders, error } = await _supabase.from('orders').select('customer_name, customer_phone, house_no').order('created_at', { ascending: false });
+    if (error) throw error;
+    const customers = {};
+    orders.forEach(o => {
+      if (!customers[o.customer_phone]) {
+        customers[o.customer_phone] = { name: o.customer_name, phone: o.customer_phone, house: o.house_no };
+      }
+    });
+    const customerList = Object.values(customers);
+    container.innerHTML = `
+      <div style="padding:16px;">
+        <div style="background:white; border-radius:12px; padding:20px; box-shadow:0 4px 15px rgba(0,0,0,0.05);">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <h3 style="margin:0;">Select Customer</h3>
+            <button class="btn btn-outline" onclick="switchAdminTab('pending')">Cancel</button>
+          </div>
+          <div style="margin-bottom:24px; padding:16px; background:var(--primary-light); border-radius:12px; border:1px dashed var(--primary);">
+            <h4 style="margin:0 0 12px 0;">New Customer</h4>
+            <div style="display:grid; gap:10px;">
+              <input type="text" id="new-cust-name" placeholder="Full Name" style="padding:10px; border:1px solid #ddd; border-radius:8px;">
+              <input type="tel" id="new-cust-phone" placeholder="Phone (10 digits)" style="padding:10px; border:1px solid #ddd; border-radius:8px;">
+              <input type="text" id="new-cust-house" placeholder="House No / Address" style="padding:10px; border:1px solid #ddd; border-radius:8px;">
+              <button class="btn btn-primary" onclick="startOrderForNewCustomer()">Start Order</button>
+            </div>
+          </div>
+          <div style="margin:20px 0; text-align:center; position:relative;">
+            <hr style="border:0; border-top:1px solid #eee;">
+            <span style="position:absolute; top:-10px; left:50%; transform:translateX(-50%); background:white; padding:0 12px; color:#999; font-size:12px;">OR SELECT EXISTING</span>
+          </div>
+          <input type="text" id="cust-select-search" placeholder="Search saved customers..." style="width:100%; padding:12px; border:1px solid #ddd; border-radius:8px; margin-bottom:16px;" onkeyup="filterSelectCustomers()">
+          <div id="cust-select-list" style="display:flex; flex-direction:column; gap:10px; max-height:400px; overflow-y:auto;">
+            ${customerList.map(c => `
+              <div class="cust-select-card" style="padding:14px; border:1px solid #eee; border-radius:10px; cursor:pointer;" onclick="startOrderForCustomer('${c.name.replace(/'/g, "\\'")}', '${c.phone}', '${(c.house || '').replace(/'/g, "\\'")}')">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <div><div style="font-weight:600;">${c.name}</div><div style="font-size:12px; color:#666;">📞 ${c.phone} | 🏠 ${c.house || 'N/A'}</div></div>
+                  <span class="material-icons-round" style="color:var(--primary);">chevron_right</span>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+    `;
+    window.filterSelectCustomers = () => {
+      const q = document.getElementById('cust-select-search').value.toLowerCase();
+      document.querySelectorAll('.cust-select-card').forEach(el => el.style.display = el.innerText.toLowerCase().includes(q) ? '' : 'none');
+    };
+  } catch (e) { container.innerHTML = '<p class="text-danger">Error loading list</p>'; }
+};
+
+window.startOrderForNewCustomer = () => {
+  const name = document.getElementById('new-cust-name').value.trim();
+  const phone = document.getElementById('new-cust-phone').value.replace(/\D/g, '');
+  const house = document.getElementById('new-cust-house').value.trim();
+  if(!name || phone.length !== 10) { alert('Valid name and 10-digit phone required'); return; }
+  startOrderForCustomer(name, phone, house);
+};
+
+window.startOrderForCustomer = async function(name, phone, house) {
+  setLoading(true);
+  try {
+    const { data, error } = await _supabase.from('orders').insert([{
+      customer_name: name, customer_phone: phone, house_no: house,
+      items: JSON.stringify([]), status: 'pending', total_amount: 0,
+      created_at: new Date().toISOString()
+    }]).select();
+    if (error) throw error;
+    toast('Draft order created!');
+    await switchAdminTab('pending');
+    showAddItemModal(data[0].id);
+  } catch (e) { alert('Failed: ' + e.message); }
+  finally { setLoading(false); }
+};
+
 // Start App
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', init);
