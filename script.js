@@ -785,13 +785,21 @@ async function renderAdminDashboard() {
 
       <div class="category-tabs" style="overflow-x:auto; flex-wrap:nowrap; -webkit-overflow-scrolling:touch;">
         <div class="cat-chip active" id="tab-pending" onclick="switchAdminTab('pending')" style="flex-shrink:0;">Pending</div>
-        <div class="cat-chip" id="tab-create" onclick="switchAdminTab('create')" style="flex-shrink:0;">➕ Create</div>
         <div class="cat-chip" id="tab-finalized" onclick="switchAdminTab('finalized')" style="flex-shrink:0;">Finalized</div>
         <div class="cat-chip" id="tab-sent" onclick="switchAdminTab('sent')" style="flex-shrink:0;">Sent</div>
-        <div class="cat-chip" id="tab-products" onclick="switchAdminTab('products')" style="flex-shrink:0;">Products</div>
-        <div class="cat-chip" id="tab-shopping" onclick="switchAdminTab('shopping')" style="flex-shrink:0;">Shopping</div>
-        <div class="cat-chip" id="tab-profit" onclick="switchAdminTab('profit')" style="flex-shrink:0;">💰 Profit</div>
+        <div id="tab-products" class="cat-chip" onclick="switchAdminTab('products')" style="flex-shrink:0;">Products</div>
+        <div id="tab-shopping" class="cat-chip" onclick="switchAdminTab('shopping')" style="flex-shrink:0;">Shopping</div>
+        <div id="tab-customers" class="cat-chip" onclick="switchAdminTab('customers')" style="flex-shrink:0;">Customers</div>
+        <div id="tab-profit" class="cat-chip" onclick="switchAdminTab('profit')" style="flex-shrink:0;">💰 Profit</div>
       </div>
+
+      <div style="margin-bottom: 20px;">
+        <button class="btn btn-primary btn-block" onclick="showCustomerSelectorForNewOrder()" style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+          <span class="material-icons-round">add_shopping_cart</span>
+          Create New Order
+        </button>
+      </div>
+
       <div id="admin-orders-list"></div>
     </div>
   `;
@@ -2099,9 +2107,6 @@ window.switchAdminTab = function (tab) {
     case 'sent':
       loadAdminOrders(tab);
       break;
-    case 'create':
-      renderCreateOrderForm();
-      break;
     case 'products':
       loadAdminProducts();
       break;
@@ -2119,198 +2124,6 @@ window.switchAdminTab = function (tab) {
       if (window.renderCustomerHistory) window.renderCustomerHistory();
       else list.innerHTML = '<p class="text-center">History Module Loading...</p>';
       break;
-  }
-};
-
-window.renderCreateOrderForm = async function () {
-  const container = document.getElementById('admin-orders-list');
-  if (!container) return;
-  container.innerHTML = '<div class="spinner"></div>';
-
-  try {
-    const { data: products, error } = await _supabase.from('products').select('*').eq('available', true).order('name');
-    if (error) throw error;
-
-    // Reset local state for new order
-    window._newAdminOrderItems = [];
-
-    container.innerHTML = `
-      <div style="padding:16px;">
-        <div style="background:white; border-radius:12px; padding:20px; box-shadow:var(--shadow);">
-          <h3 style="margin-top:0; border-bottom:1px solid #eee; padding-bottom:10px;">Create New Order 🛒</h3>
-          
-          <div style="margin-bottom:16px;">
-            <label style="display:block; margin-bottom:4px; font-weight:600; font-size:14px;">Customer Name</label>
-            <input type="text" id="cao-name" placeholder="Rahul Kumar" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;">
-          </div>
-          
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;">
-             <div>
-               <label style="display:block; margin-bottom:4px; font-weight:600; font-size:14px;">Phone Number</label>
-               <input type="tel" id="cao-phone" placeholder="9876543210" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;">
-             </div>
-             <div>
-               <label style="display:block; margin-bottom:4px; font-weight:600; font-size:14px;">House No.</label>
-               <input type="text" id="cao-house" placeholder="B-402" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;">
-             </div>
-          </div>
-
-          <div style="border:1px solid #eee; border-radius:12px; padding:16px; margin-bottom:20px; background:#f8f9fa;">
-            <h4 style="margin-top:0;">Add Products</h4>
-            <div style="display:grid; gap:10px;">
-              <select id="cao-product-select" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;" onchange="updateCaoUnit()">
-                ${products.map(p => `
-                  <option value="${p.id}" data-name="${p.name}" data-unit="${p.minimum_quantity_unit || '250g'}">${p.name} (${p.minimum_quantity_unit || '250g'})</option>
-                `).join('')}
-              </select>
-              
-              <div style="display:flex; gap:10px; align-items:center;">
-                <div style="flex:1;">
-                  <label id="cao-qty-label" style="display:block; font-size:12px; color:#666;">Weight (g)</label>
-                  <input type="number" id="cao-qty" value="250" min="1" step="50" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;">
-                </div>
-                <button class="btn btn-primary" style="margin-top:18px; padding:10px 20px;" onclick="addItemToCao()">Add Item</button>
-              </div>
-            </div>
-          </div>
-
-          <div id="cao-items-list" style="margin-bottom:20px;">
-             <p style="text-align:center; color:#999; font-style:italic;">No items added yet</p>
-          </div>
-
-          <button class="btn btn-primary btn-block" style="padding:16px;" onclick="saveNewAdminOrder()">Create Order</button>
-        </div>
-      </div>
-    `;
-
-    updateCaoUnit();
-  } catch (e) {
-    console.error(e);
-    container.innerHTML = '<p class="text-danger">Error loading products</p>';
-  }
-};
-
-window.updateCaoUnit = function() {
-  const sel = document.getElementById('cao-product-select');
-  const label = document.getElementById('cao-qty-label');
-  const qtyInput = document.getElementById('cao-qty');
-  if(!sel || !label || !qtyInput) return;
-  const opt = sel.options[sel.selectedIndex];
-  if(!opt) return;
-  const unit = opt.getAttribute('data-unit');
-  
-  if (unit === 'packet') {
-    label.innerText = 'Quantity (Pkts)';
-    if (qtyInput.value > 100) qtyInput.value = 1;
-    qtyInput.step = 1;
-  } else {
-    label.innerText = 'Weight (grams)';
-    if (qtyInput.value < 50) qtyInput.value = 250;
-    qtyInput.step = 50;
-  }
-};
-
-window.addItemToCao = function() {
-  const sel = document.getElementById('cao-product-select');
-  const qtyInput = document.getElementById('cao-qty');
-  const opt = sel.options[sel.selectedIndex];
-  
-  const productId = sel.value;
-  const name = opt.getAttribute('data-name');
-  const unit = opt.getAttribute('data-unit');
-  const val = parseFloat(qtyInput.value);
-
-  if (!val || val <= 0) return;
-
-  const existing = window._newAdminOrderItems.find(i => i.productId === productId);
-  if (existing) {
-    if (unit === 'packet') {
-      existing.orderedQuantity += val;
-    } else {
-      existing.customGrams = (existing.customGrams || (existing.orderedQuantity * 250)) + val;
-      existing.orderedQuantity = Math.ceil(existing.customGrams / 250);
-    }
-  } else {
-    window._newAdminOrderItems.push({
-      productId, name, 
-      orderedQuantity: unit === 'packet' ? val : Math.ceil(val / 250), 
-      minQtyUnit: unit,
-      customGrams: unit === 'packet' ? null : val,
-      pricePer250gAtOrder: 0, actualWeight: 0, finalPrice: 0
-    });
-  }
-
-  renderCaoItems();
-};
-
-window.removeItemsFromCao = function(index) {
-  window._newAdminOrderItems.splice(index, 1);
-  renderCaoItems();
-};
-
-window.renderCaoItems = function() {
-  const container = document.getElementById('cao-items-list');
-  if(!container) return;
-
-  if (window._newAdminOrderItems.length === 0) {
-    container.innerHTML = '<p style="text-align:center; color:#999; font-style:italic;">No items added yet</p>';
-    return;
-  }
-
-  container.innerHTML = `
-    <table style="width:100%; border-collapse:collapse; font-size:14px;">
-      <thead style="background:#f1f1f1;"><tr style="text-align:left;"><th style="padding:8px;">Item</th><th style="padding:8px;">Qty</th><th style="padding:8px; width:40px;"></th></tr></thead>
-      <tbody>
-        ${window._newAdminOrderItems.map((item, idx) => `
-          <tr style="border-bottom:1px solid #eee;">
-            <td style="padding:8px;">${item.name}</td>
-            <td style="padding:8px;">${item.minQtyUnit === 'packet' ? item.orderedQuantity + ' pkt' : (item.customGrams || (item.orderedQuantity * 250)) + 'g'}</td>
-            <td style="padding:8px;"><span onclick="removeItemsFromCao(${idx})" style="color:red; cursor:pointer;">✕</span></td>
-          </tr>
-        `).join('')}
-      </tbody>
-    </table>
-  `;
-};
-
-window.saveNewAdminOrder = async function() {
-  const name = document.getElementById('cao-name').value.trim();
-  const phone = document.getElementById('cao-phone').value.trim();
-  const house = document.getElementById('cao-house').value.trim();
-
-  if (!name || !phone || !house) {
-    alert("Please fill all customer details (Name, Phone, House)");
-    return;
-  }
-
-  if (window._newAdminOrderItems.length === 0) {
-    alert("Please add at least one item to the order.");
-    return;
-  }
-
-  setLoading(true);
-
-  try {
-    const orderPayload = {
-      customer_name: name,
-      customer_phone: phone,
-      house_no: house,
-      items: JSON.stringify(window._newAdminOrderItems),
-      status: 'pending',
-      total_amount: 0,
-      created_at: new Date().toISOString()
-    };
-
-    const { error } = await _supabase.from('orders').insert([orderPayload]);
-    if (error) throw error;
-
-    toast('Order created successfully! ✅');
-    switchAdminTab('pending');
-  } catch (err) {
-    console.error(err);
-    alert('Failed to create order: ' + err.message);
-  } finally {
-    setLoading(false);
   }
 };
 
