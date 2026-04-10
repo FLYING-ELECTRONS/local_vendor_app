@@ -2962,6 +2962,7 @@ window.saveCustomerToMasterList = async function (name, phone, house) {
       name: name || 'Unknown', phone: cleanPhone, house_no: house || '' 
     }, { onConflict: 'phone' });
     if (error) {
+      console.warn('customers table error, using legacy:', error.message);
       const { data: settings } = await _supabase.from('app_settings').select('value').eq('key', 'master_customers').single();
       let masterList = settings && settings.value ? (typeof settings.value === 'string' ? JSON.parse(settings.value) : settings.value) : [];
       const existingIdx = masterList.findIndex(c => c.phone === cleanPhone);
@@ -3017,7 +3018,8 @@ window.editMasterCustomer = async function (oldPhone) {
 };
 
 window.renderCustomerHistory = async function () {
-  const container = document.getElementById('admin-orders-list'); if (!container) return;
+  const container = document.getElementById('admin-orders-list');
+  if (!container) return;
   container.innerHTML = '<div class="spinner"></div>';
   try {
     let { data: masterList } = await _supabase.from('customers').select('*').order('name');
@@ -3028,160 +3030,228 @@ window.renderCustomerHistory = async function () {
     const { data: orders } = await _supabase.from('orders').select('customer_name, customer_phone, house_no').order('created_at', { ascending: false });
     const masterPhones = new Set(masterList.map(c => c.phone));
     const unsaved = []; const seen = new Set();
-    if (orders) orders.forEach(o => { if (!masterPhones.has(o.customer_phone) && !seen.has(o.customer_phone)) { seen.add(o.customer_phone); unsaved.push({ name: o.customer_name, phone: o.customer_phone, house: o.house_no }); } });
+    if (orders) orders.forEach(o => {
+      if (!masterPhones.has(o.customer_phone) && !seen.has(o.customer_phone)) {
+        seen.add(o.customer_phone);
+        unsaved.push({ name: o.customer_name, phone: o.customer_phone, house: o.house_no });
+      }
+    });
 
-    container.innerHTML = \`
-      <div style="padding:16px;">
-        <div style="background: linear-gradient(135deg, #e8f5e9, #c8e6c9); padding:14px 16px; border-radius:12px; margin-bottom:16px; border:1px solid #a5d6a7;">
-          <div style="display:flex; align-items:center; gap:10px;"><span class="material-icons-round" style="color:#2e7d32; font-size:24px;">verified_user</span><div><div style="font-weight:600; color:#1b5e20; font-size:14px;">Persistent Customer Database</div><div style="font-size:12px; color:#2e7d32;">Items here are saved forever in a dedicated database table.</div></div></div>
-        </div>
-        <div style="background:white; border-radius:12px; padding:16px; box-shadow:0 4px 15px rgba(0,0,0,0.05);">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:8px;">
-            <h3 style="margin:0;">✅ Saved Customers (\${masterList.length})</h3>
-            <div style="display:flex; gap:8px;">
-              <button class="btn btn-outline" style="font-size:12px;" onclick="migrateLegacyCustomers()">⬇️ Migrate Old</button>
-              <button class="btn btn-outline" style="font-size:12px;" onclick="showAddSingleCustomerForm()">+ Add One</button>
-              <button class="btn btn-outline" style="font-size:12px;" onclick="showBulkImportModal()">📋 Bulk Import</button>
-            </div>
-          </div>
-          <input type="text" id="cust-search" placeholder="Search name or phone..." style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; margin-bottom:16px;" onkeyup="filterCustomers()">
-          <div id="add-single-cust-form" style="display:none; margin-bottom:20px; padding:16px; background:#f0f7ff; border-radius:12px; border:1px dashed #2196f3;">
-            <h4 style="margin:0 0 12px 0; color:#1565c0;">Add New Customer</h4>
-            <div style="display:grid; gap:10px;">
-              <input type="text" id="add-cust-name" placeholder="Full Name" style="padding:10px; border:1px solid #ddd; border-radius:8px;">
-              <input type="tel" id="add-cust-phone" placeholder="Phone (10 digits)" style="padding:10px; border:1px solid #ddd; border-radius:8px;">
-              <input type="text" id="add-cust-house" placeholder="House No / Address" style="padding:10px; border:1px solid #ddd; border-radius:8px;">
-              <div style="display:flex; gap:8px;"><button class="btn btn-primary" style="flex:1;" onclick="addSingleCustomer()">Save Customer</button><button class="btn btn-outline" onclick="document.getElementById('add-single-cust-form').style.display='none'">Cancel</button></div>
-            </div>
-          </div>
-          <div id="cust-list" style="display:flex; flex-direction:column; gap:10px; max-height:500px; overflow-y:auto;">
-            \${masterList.length === 0 ? '<p style="text-align:center; color:#999; padding:20px;">No saved customers yet.</p>' : ''}
-            \${masterList.map(c => \`
-              <div class="customer-card" data-search="\${(c.name + ' ' + c.phone + ' ' + (c.house_no||c.house||'')).toLowerCase()}" style="padding:12px; border:1px solid #e8f5e9; background:#f9fff9; border-radius:10px; display:flex; justify-content:space-between; align-items:center;">
-                <div style="flex:1; min-width:0;"><div style="font-weight:600;">\${c.name}</div><div style="font-size:12px; color:#666;">📞 \${c.phone} | 🏠 \${c.house_no || c.house || 'N/A'}</div></div>
-                <div style="display:flex; gap:4px; flex-shrink:0;">
-                  <button class="btn btn-outline" style="font-size:11px; padding:5px 8px;" onclick="editMasterCustomer('\${c.phone}')">✏️</button>
-                  <button class="btn btn-outline" style="font-size:11px; padding:5px 8px; color:#f44336; border-color:#f44336;" onclick="deleteCustomerFromMasterList('\${c.phone}')">🗑️</button>
-                  <button class="btn btn-primary" style="font-size:11px; padding:5px 8px;" onclick="startOrderForCustomer('\${c.name.replace(/'/g, "\\\'")}', '\${c.phone}', '\${(c.house_no || c.house || '').replace(/'/g, "\\\'")}')">Order</button>
-                </div>
-              </div>\`).join('')}
-          </div>
-          \${unsaved.length > 0 ? \`
-          <div style="margin-top:24px; padding-top:16px; border-top:2px solid #eee;">
-            <h4 style="margin:0 0 12px 0; color:#ff9800;">⚠️ Unsaved from Orders (\${unsaved.length})</h4>
-            <button class="btn btn-outline" style="font-size:12px; margin-bottom:12px; color:#4caf50; border-color:#4caf50;" onclick="saveAllUnsaved()">💾 Save All to Database</button>
-            <div style="display:flex; flex-direction:column; gap:8px;">
-              \${unsaved.map(c => \`<div class="customer-card" style="padding:10px; border:1px solid #fff3e0; background:#fffde7; border-radius:8px; display:flex; justify-content:space-between; align-items:center;"><div style="flex:1;"><div style="font-weight:500; font-size:14px;">\${c.name}</div><div style="font-size:11px; color:#666;">📞 \${c.phone} | 🏠 \${c.house || 'N/A'}</div></div><button class="btn btn-outline" style="font-size:11px;" onclick="saveCustomerToMasterList('\${c.name.replace(/'/g, "\\\'")}', '\${c.phone}', '\${(c.house || '').replace(/'/g, "\\\'")}').then(() => renderCustomerHistory())">💾 Save</button></div>\`).join('')}
-            </div>
-          </div>\` : ''}
-        </div>
-      </div>
-    \`;
-    window.filterCustomers = () => { const q = document.getElementById('cust-search').value.toLowerCase(); document.querySelectorAll('.customer-card').forEach(el => { el.style.display = el.innerText.toLowerCase().includes(q) ? '' : 'none'; }); };
-  } catch (e) { console.error(e); container.innerHTML = '<p class="text-danger">Error</p>'; }
+    let html = '<div style="padding:16px;">';
+    html += '<div style="background: linear-gradient(135deg, #e8f5e9, #c8e6c9); padding:14px 16px; border-radius:12px; margin-bottom:16px; border:1px solid #a5d6a7;">';
+    html += '<div style="display:flex; align-items:center; gap:10px;"><span class="material-icons-round" style="color:#2e7d32; font-size:24px;">verified_user</span><div><div style="font-weight:600; color:#1b5e20; font-size:14px;">Persistent Customer Database</div><div style="font-size:12px; color:#2e7d32;">Items here are saved forever in a dedicated database table.</div></div></div>';
+    html += '</div>';
+    html += '<div style="background:white; border-radius:12px; padding:16px; box-shadow:0 4px 15px rgba(0,0,0,0.05);">';
+    html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:8px;">';
+    html += '<h3 style="margin:0;">✅ Saved Customers (' + masterList.length + ')</h3>';
+    html += '<div style="display:flex; gap:8px;">';
+    html += '<button class="btn btn-outline" style="font-size:12px;" onclick="migrateLegacyCustomers()">⬇️ Migrate Old</button>';
+    html += '<button class="btn btn-outline" style="font-size:12px;" onclick="showAddSingleCustomerForm()">+ Add One</button>';
+    html += '<button class="btn btn-outline" style="font-size:12px;" onclick="showBulkImportModal()">📋 Bulk Import</button>';
+    html += '</div></div>';
+    html += '<input type="text" id="cust-search" placeholder="Search name or phone..." style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; margin-bottom:16px;" onkeyup="filterCustomers()">';
+    html += '<div id="add-single-cust-form" style="display:none; margin-bottom:20px; padding:16px; background:#f0f7ff; border-radius:12px; border:1px dashed #2196f3;">';
+    html += '<h4 style="margin:0 0 12px 0; color:#1565c0;">Add New Customer</h4>';
+    html += '<div style="display:grid; gap:10px;">';
+    html += '<input type="text" id="add-cust-name" placeholder="Full Name" style="padding:10px; border:1px solid #ddd; border-radius:8px;">';
+    html += '<input type="tel" id="add-cust-phone" placeholder="Phone (10 digits)" style="padding:10px; border:1px solid #ddd; border-radius:8px;">';
+    html += '<input type="text" id="add-cust-house" placeholder="House No / Address" style="padding:10px; border:1px solid #ddd; border-radius:8px;">';
+    html += '<div style="display:flex; gap:8px;"><button class="btn btn-primary" style="flex:1;" onclick="addSingleCustomer()">Save Customer</button><button class="btn btn-outline" onclick="document.getElementById('add-single-cust-form').style.display='none'">Cancel</button></div>';
+    html += '</div></div>';
+    html += '<div id="cust-list" style="display:flex; flex-direction:column; gap:10px; max-height:500px; overflow-y:auto;">';
+
+    if (masterList.length === 0) {
+      html += '<p style="text-align:center; color:#999; padding:20px;">No saved customers yet.</p>';
+    }
+
+    masterList.forEach(c => {
+      const safeName = (c.name || '').replace(/'/g, "\\'");
+      const safeHouse = (c.house_no || c.house || '').replace(/'/g, "\\'");
+      const searchStr = ((c.name || '') + ' ' + (c.phone || '') + ' ' + (c.house_no || c.house || '')).toLowerCase();
+      html += '<div class="customer-card" data-search="' + searchStr + '" style="padding:12px; border:1px solid #e8f5e9; background:#f9fff9; border-radius:10px; display:flex; justify-content:space-between; align-items:center;">';
+      html += '<div style="flex:1; min-width:0;"><div style="font-weight:600;">' + c.name + '</div><div style="font-size:12px; color:#666;">📞 ' + c.phone + ' | 🏠 ' + (c.house_no || c.house || 'N/A') + '</div></div>';
+      html += '<div style="display:flex; gap:4px; flex-shrink:0;">';
+      html += '<button class="btn btn-outline" style="font-size:11px; padding:5px 8px;" onclick="editMasterCustomer(\''+c.phone+'\')">✏️</button>';
+      html += '<button class="btn btn-outline" style="font-size:11px; padding:5px 8px; color:#f44336; border-color:#f44336;" onclick="deleteCustomerFromMasterList(\''+c.phone+'\')">🗑️</button>';
+      html += '<button class="btn btn-primary" style="font-size:11px; padding:5px 8px;" onclick="startOrderForCustomer(\''+safeName+'\', \''+c.phone+'\', \''+safeHouse+'\')">Order</button>';
+      html += '</div></div>';
+    });
+    html += '</div>';
+
+    if (unsaved.length > 0) {
+      html += '<div style="margin-top:24px; padding-top:16px; border-top:2px solid #eee;">';
+      html += '<h4 style="margin:0 0 12px 0; color:#ff9800;">⚠️ Unsaved from Orders (' + unsaved.length + ')</h4>';
+      html += '<button class="btn btn-outline" style="font-size:12px; margin-bottom:12px; color:#4caf50; border-color:#4caf50;" onclick="saveAllUnsaved()">💾 Save All to Database</button>';
+      html += '<div style="display:flex; flex-direction:column; gap:8px;">';
+      unsaved.forEach(c => {
+        const safeName = (c.name || '').replace(/'/g, "\\'");
+        const safeHouse = (c.house || '').replace(/'/g, "\\'");
+        html += '<div class="customer-card" style="padding:10px; border:1px solid #fff3e0; background:#fffde7; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">';
+        html += '<div style="flex:1;"><div style="font-weight:500; font-size:14px;">' + c.name + '</div><div style="font-size:11px; color:#666;">📞 ' + c.phone + ' | 🏠 ' + (c.house || 'N/A') + '</div></div>';
+        html += '<button class="btn btn-outline" style="font-size:11px;" onclick="saveCustomerToMasterList(\''+safeName+'\', \''+c.phone+'\', \''+safeHouse+'\').then(() => renderCustomerHistory())">💾 Save</button>';
+        html += '</div>';
+      });
+      html += '</div></div>';
+    }
+    html += '</div></div>';
+    container.innerHTML = html;
+
+    window.filterCustomers = function() {
+      var q = document.getElementById('cust-search').value.toLowerCase();
+      document.querySelectorAll('.customer-card').forEach(function(el) {
+        el.style.display = el.innerText.toLowerCase().indexOf(q) >= 0 ? '' : 'none';
+      });
+    };
+  } catch (e) { console.error(e); container.innerHTML = '<p class="text-danger">Error loading customers</p>'; }
 };
 
 window.migrateLegacyCustomers = async function () {
-  if (!confirm('Migrate to new database table?')) return;
+  if (!confirm('Migrate all customers from old storage to new database table?')) return;
   setLoading(true);
   try {
     const { data: s } = await _supabase.from('app_settings').select('value').eq('key', 'master_customers').single();
-    if (!s || !s.value) { alert('No old data'); return; }
+    if (!s || !s.value) { alert('No old data found'); setLoading(false); return; }
     const legacy = typeof s.value === 'string' ? JSON.parse(s.value) : s.value;
     let count = 0;
-    for (const c of legacy) { const { error } = await _supabase.from('customers').upsert({ name: c.name, phone: c.phone, house_no: c.house || '' }, { onConflict: 'phone' }); if (!error) count++; }
-    alert(\`Migrated \${count} customers!\`); renderCustomerHistory();
+    for (const c of legacy) {
+      const { error } = await _supabase.from('customers').upsert({ name: c.name, phone: c.phone, house_no: c.house || '' }, { onConflict: 'phone' });
+      if (!error) count++;
+    }
+    alert('Migrated ' + count + ' customers!');
+    renderCustomerHistory();
   } catch (e) { alert(e.message); } finally { setLoading(false); }
 };
 
 window.saveAllUnsaved = async function () {
-  if (!confirm('Save all?')) return;
+  if (!confirm('Save all unsaved customers to database?')) return;
   setLoading(true);
   try {
     const { data: orders } = await _supabase.from('orders').select('customer_name, customer_phone, house_no');
-    if (!orders) return;
+    if (!orders) { setLoading(false); return; }
     const seen = new Set(); let count = 0;
-    for (const o of orders) { if (!seen.has(o.customer_phone)) { seen.add(o.customer_phone); const { error } = await _supabase.from('customers').upsert({ name: o.customer_name, phone: o.customer_phone, house_no: o.house_no || '' }, { onConflict: 'phone' }); if (!error) count++; } }
-    toast(\`\${count} saved!\`); renderCustomerHistory();
+    for (const o of orders) {
+      if (!seen.has(o.customer_phone)) {
+        seen.add(o.customer_phone);
+        const { error } = await _supabase.from('customers').upsert({ name: o.customer_name, phone: o.customer_phone, house_no: o.house_no || '' }, { onConflict: 'phone' });
+        if (!error) count++;
+      }
+    }
+    toast(count + ' customers saved!');
+    renderCustomerHistory();
   } catch (e) { alert(e.message); } finally { setLoading(false); }
 };
 
-window.showAddSingleCustomerForm = () => { const f = document.getElementById('add-single-cust-form'); if(f) f.style.display = 'block'; };
-window.addSingleCustomer = async () => {
-  const n = document.getElementById('add-cust-name').value.trim(); const p = document.getElementById('add-cust-phone').value.replace(/\\D/g, '').slice(-10); const h = document.getElementById('add-cust-house').value.trim();
-  if(!n || p.length !== 10) { alert('Invalid'); return; }
-  setLoading(true); try { await saveCustomerToMasterList(n, p, h); toast('Saved! ✅'); renderCustomerHistory(); } catch (e) { alert(e.message); } finally { setLoading(false); }
+window.showAddSingleCustomerForm = function () {
+  var f = document.getElementById('add-single-cust-form');
+  if (f) { f.style.display = 'block'; document.getElementById('add-cust-name').focus(); }
 };
 
-window.showBulkImportModal = () => {
-    document.getElementById('admin-orders-list').innerHTML = \`
-    <div style="padding:16px;"><div style="background:white; border-radius:12px; padding:20px;"><h3>Bulk Import</h3><p style="font-size:12px; color:#666;">Name, Phone, HouseNo</p><textarea id="import-data" style="width:100%; height:200px; padding:12px; border:1px solid #ddd; border-radius:8px; margin-bottom:16px;"></textarea><div style="display:flex; gap:12px;"><button class="btn btn-primary btn-block" onclick="processBulkImport()">Import</button><button class="btn btn-outline" onclick="renderCustomerHistory()">Cancel</button></div></div></div>
-  \`;
+window.addSingleCustomer = async function () {
+  var n = document.getElementById('add-cust-name').value.trim();
+  var p = document.getElementById('add-cust-phone').value.replace(/\D/g, '').slice(-10);
+  var h = document.getElementById('add-cust-house').value.trim();
+  if (!n) { alert('Please enter customer name'); return; }
+  if (p.length !== 10) { alert('Please enter a valid 10-digit phone number'); return; }
+  setLoading(true);
+  try { await saveCustomerToMasterList(n, p, h); toast('Customer saved! ✅'); renderCustomerHistory(); }
+  catch (e) { alert(e.message); } finally { setLoading(false); }
 };
 
-window.processBulkImport = async () => {
-  const raw = document.getElementById('import-data').value.trim(); if(!raw) return;
-  const newEntries = raw.split('\n').map(l => { const p = l.split(/[,|;]/).map(x => x.trim()); if(p.length >= 2) return { name: p[0], phone: p[1].replace(/\\D/g, '').slice(-10), house: p[2]||'' }; return null; }).filter(x => x && x.phone.length === 10);
-  if(newEntries.length === 0) { alert('Invalid'); return; }
-  setLoading(true); try { for(const e of newEntries) await saveCustomerToMasterList(e.name, e.phone, e.house); toast('Imported!'); renderCustomerHistory(); } catch (e) { alert(e.message); } finally { setLoading(false); }
-};\n\nwindow.showCustomerSelectorForNewOrder = async function () {
-  const container = document.getElementById('admin-orders-list');
+window.showBulkImportModal = function () {
+  var container = document.getElementById('admin-orders-list');
+  var html = '<div style="padding:16px;"><div style="background:white; border-radius:12px; padding:20px; box-shadow:0 4px 15px rgba(0,0,0,0.1);">';
+  html += '<h3>Bulk Import Customers</h3>';
+  html += '<p style="font-size:12px; color:#666; margin-bottom:4px;">Paste your list here. Format: <b>Name, Phone, HouseNo</b> (one per line)</p>';
+  html += '<p style="font-size:11px; color:#4caf50; margin-bottom:12px;">✅ New customers will be ADDED (duplicates are skipped automatically)</p>';
+  html += '<textarea id="import-data" style="width:100%; height:200px; padding:12px; border:1px solid #ddd; border-radius:8px; margin-bottom:16px; font-size:13px;" placeholder="Amit Shah, 9876543210, A-101"></textarea>';
+  html += '<div style="display:flex; gap:12px;"><button class="btn btn-primary btn-block" onclick="processBulkImport()">Import & Save Forever</button><button class="btn btn-outline" onclick="renderCustomerHistory()">Cancel</button></div>';
+  html += '</div></div>';
+  container.innerHTML = html;
+};
+
+window.processBulkImport = async function () {
+  var raw = document.getElementById('import-data').value.trim();
+  if (!raw) return;
+  var lines = raw.split('\n');
+  var newEntries = [];
+  lines.forEach(function(l) {
+    var parts = l.split(/[,|;]/).map(function(p) { return p.trim(); });
+    if (parts.length >= 2) {
+      var phone = parts[1].replace(/\D/g, '').slice(-10);
+      if (phone.length === 10) {
+        newEntries.push({ name: parts[0], phone: phone, house: parts[2] || '' });
+      }
+    }
+  });
+  if (newEntries.length === 0) { alert('Invalid format. Use: Name, Phone, HouseNo'); return; }
+  setLoading(true);
+  try {
+    for (var i = 0; i < newEntries.length; i++) {
+      await saveCustomerToMasterList(newEntries[i].name, newEntries[i].phone, newEntries[i].house);
+    }
+    toast('Imported ' + newEntries.length + ' customers!');
+    renderCustomerHistory();
+  } catch (e) { alert(e.message); } finally { setLoading(false); }
+};
+
+window.showCustomerSelectorForNewOrder = async function () {
+  var container = document.getElementById('admin-orders-list');
   if (!container) return;
   container.innerHTML = '<div class="spinner"></div>';
   try {
-    // Only use master list — this is the permanent source of truth
-    const { data: settings } = await _supabase.from('app_settings').select('value').eq('key', 'master_customers').single();
-    const masterList = settings && settings.value ? JSON.parse(settings.value) : [];
-    const customerList = [...masterList].sort((a, b) => a.name.localeCompare(b.name));
+    var { data: customerList } = await _supabase.from('customers').select('*').order('name');
+    if (!customerList || customerList.length === 0) {
+      var { data: settings } = await _supabase.from('app_settings').select('value').eq('key', 'master_customers').single();
+      var legacy = settings && settings.value ? (typeof settings.value === 'string' ? JSON.parse(settings.value) : settings.value) : [];
+      customerList = legacy.map(function(c) { return { name: c.name, phone: c.phone, house_no: c.house }; });
+    }
 
-    container.innerHTML = `
-      <div style="padding:16px;">
-        <div style="background:white; border-radius:12px; padding:20px; box-shadow:0 4px 15px rgba(0,0,0,0.05);">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-            <h3 style="margin:0;">Select Customer</h3>
-            <button class="btn btn-outline" onclick="switchAdminTab('pending')">Cancel</button>
-          </div>
-          <div style="margin-bottom:24px; padding:16px; background:var(--primary-light); border-radius:12px; border:1px dashed var(--primary);">
-            <h4 style="margin:0 0 12px 0;">New Customer</h4>
-            <div style="display:grid; gap:10px;">
-              <input type="text" id="new-cust-name" placeholder="Full Name" style="padding:10px; border:1px solid #ddd; border-radius:8px;">
-              <input type="tel" id="new-cust-phone" placeholder="Phone (10 digits)" style="padding:10px; border:1px solid #ddd; border-radius:8px;">
-              <input type="text" id="new-cust-house" placeholder="House No / Address" style="padding:10px; border:1px solid #ddd; border-radius:8px;">
-              <button class="btn btn-primary" onclick="startOrderForNewCustomer()">Start Order</button>
-            </div>
-          </div>
-          <div style="margin:20px 0; text-align:center; position:relative;">
-            <hr style="border:0; border-top:1px solid #eee;">
-            <span style="position:absolute; top:-10px; left:50%; transform:translateX(-50%); background:white; padding:0 12px; color:#999; font-size:12px;">OR SELECT SAVED CUSTOMER</span>
-          </div>
-          <input type="text" id="cust-select-search" placeholder="Search saved customers..." style="width:100%; padding:12px; border:1px solid #ddd; border-radius:8px; margin-bottom:16px;" onkeyup="filterSelectCustomers()">
-          <div id="cust-select-list" style="display:flex; flex-direction:column; gap:10px; max-height:400px; overflow-y:auto;">
-            ${customerList.length === 0 ? '<p style="text-align:center; color:#999; padding:20px;">No saved customers. Add customers in the Customers tab first, or enter details above.</p>' : ''}
-            ${customerList.map(c => `
-              <div class="cust-select-card" style="padding:14px; border:1px solid #e8f5e9; background:#f9fff9; border-radius:10px; cursor:pointer;" onclick="startOrderForCustomer('${c.name.replace(/'/g, "\\'")}', '${c.phone}', '${(c.house || '').replace(/'/g, "\\'")}')">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                  <div><div style="font-weight:600;">${c.name} ${c.type==='master'?'<span style="font-size:10px; color:#2e7d32; background:#e8f5e9; padding:2px 6px; border-radius:10px; margin-left:4px;">SAVED</span>':''}</div><div style="font-size:12px; color:#666;">📞 ${c.phone} | 🏠 ${c.house || 'N/A'}</div></div>
-                  <span class="material-icons-round" style="color:var(--primary);">chevron_right</span>
-                </div>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-      </div>
-    `;
-    window.filterSelectCustomers = () => {
-      const q = document.getElementById('cust-select-search').value.toLowerCase();
-      document.querySelectorAll('.cust-select-card').forEach(el => el.style.display = el.innerText.toLowerCase().includes(q) ? '' : 'none');
+    var html = '<div style="padding:16px;"><div style="background:white; border-radius:12px; padding:20px; box-shadow:0 4px 15px rgba(0,0,0,0.05);">';
+    html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">';
+    html += '<h3 style="margin:0;">Select Customer</h3>';
+    html += '<button class="btn btn-outline" onclick="switchAdminTab(\'pending\')">Cancel</button></div>';
+    html += '<div style="margin-bottom:24px; padding:16px; background:#f0f7ff; border-radius:12px; border:1px dashed #2196f3;">';
+    html += '<h4 style="margin:0 0 12px 0;">New Customer</h4>';
+    html += '<div style="display:grid; gap:10px;">';
+    html += '<input type="text" id="new-cust-name" placeholder="Full Name" style="padding:10px; border:1px solid #ddd; border-radius:8px;">';
+    html += '<input type="tel" id="new-cust-phone" placeholder="Phone (10 digits)" style="padding:10px; border:1px solid #ddd; border-radius:8px;">';
+    html += '<input type="text" id="new-cust-house" placeholder="House No / Address" style="padding:10px; border:1px solid #ddd; border-radius:8px;">';
+    html += '<button class="btn btn-primary" onclick="startOrderForNewCustomer()">Start Order</button>';
+    html += '</div></div>';
+    html += '<div style="margin:20px 0; text-align:center; position:relative;"><hr style="border:0; border-top:1px solid #eee;"><span style="position:absolute; top:-10px; left:50%; transform:translateX(-50%); background:white; padding:0 12px; color:#999; font-size:12px;">OR SELECT SAVED CUSTOMER</span></div>';
+    html += '<input type="text" id="cust-select-search" placeholder="Search saved customers..." style="width:100%; padding:12px; border:1px solid #ddd; border-radius:8px; margin-bottom:16px;" onkeyup="filterSelectCustomers()">';
+    html += '<div id="cust-select-list" style="display:flex; flex-direction:column; gap:10px; max-height:400px; overflow-y:auto;">';
+
+    if (customerList.length === 0) {
+      html += '<p style="text-align:center; color:#999; padding:20px;">No saved customers yet.</p>';
+    }
+
+    customerList.forEach(function(c) {
+      var safeName = (c.name || '').replace(/'/g, "\\'");
+      var safeHouse = (c.house_no || c.house || '').replace(/'/g, "\\'");
+      html += '<div class="cust-select-card" style="padding:14px; border:1px solid #e8f5e9; background:#f9fff9; border-radius:10px; cursor:pointer;" onclick="startOrderForCustomer(\''+safeName+'\', \''+c.phone+'\', \''+safeHouse+'\')">';
+      html += '<div style="display:flex; justify-content:space-between; align-items:center;">';
+      html += '<div><div style="font-weight:600;">' + c.name + '</div><div style="font-size:12px; color:#666;">📞 ' + c.phone + ' | 🏠 ' + (c.house_no || c.house || 'N/A') + '</div></div>';
+      html += '<span class="material-icons-round" style="color:var(--primary);">chevron_right</span>';
+      html += '</div></div>';
+    });
+    html += '</div></div></div>';
+    container.innerHTML = html;
+
+    window.filterSelectCustomers = function() {
+      var q = document.getElementById('cust-select-search').value.toLowerCase();
+      document.querySelectorAll('.cust-select-card').forEach(function(el) {
+        el.style.display = el.innerText.toLowerCase().indexOf(q) >= 0 ? '' : 'none';
+      });
     };
   } catch (e) { container.innerHTML = '<p class="text-danger">Error loading list</p>'; }
 };
 
-window.startOrderForNewCustomer = async () => {
-  const name = document.getElementById('new-cust-name').value.trim();
-  const phone = document.getElementById('new-cust-phone').value.replace(/\D/g, '').slice(-10);
-  const house = document.getElementById('new-cust-house').value.trim();
-  if(!name || phone.length !== 10) { alert('Valid name and 10-digit phone required'); return; }
-  // Auto-save new customer to master list
+window.startOrderForNewCustomer = async function() {
+  var name = document.getElementById('new-cust-name').value.trim();
+  var phone = document.getElementById('new-cust-phone').value.replace(/\D/g, '').slice(-10);
+  var house = document.getElementById('new-cust-house').value.trim();
+  if (!name || phone.length !== 10) { alert('Valid name and 10-digit phone required'); return; }
   await saveCustomerToMasterList(name, phone, house);
   startOrderForCustomer(name, phone, house);
 };
@@ -3189,9 +3259,8 @@ window.startOrderForNewCustomer = async () => {
 window.startOrderForCustomer = async function(name, phone, house) {
   setLoading(true);
   try {
-    // Auto-save customer to master list
     await saveCustomerToMasterList(name, phone, house);
-    const { data, error } = await _supabase.from('orders').insert([{
+    var { data, error } = await _supabase.from('orders').insert([{
       customer_name: name, customer_phone: phone, house_no: house,
       items: JSON.stringify([]), status: 'pending', total_amount: 0,
       created_at: new Date().toISOString()
