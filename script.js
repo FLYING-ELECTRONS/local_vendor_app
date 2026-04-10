@@ -3056,7 +3056,7 @@ window.renderCustomerHistory = async function () {
     html += '<input type="text" id="add-cust-name" placeholder="Full Name" style="padding:10px; border:1px solid #ddd; border-radius:8px;">';
     html += '<input type="tel" id="add-cust-phone" placeholder="Phone (10 digits)" style="padding:10px; border:1px solid #ddd; border-radius:8px;">';
     html += '<input type="text" id="add-cust-house" placeholder="House No / Address" style="padding:10px; border:1px solid #ddd; border-radius:8px;">';
-    html += '<div style="display:flex; gap:8px;"><button class="btn btn-primary" style="flex:1;" onclick="addSingleCustomer()">Save Customer</button><button class="btn btn-outline" onclick="document.getElementById('add-single-cust-form').style.display='none'">Cancel</button></div>';
+    html += '<div style="display:flex; gap:8px;"><button class="btn btn-primary" style="flex:1;" onclick="addSingleCustomer()">Save Customer</button><button class="btn btn-outline" onclick="document.getElementById(&quot;add-single-cust-form&quot;).style.display=&quot;none&quot;">Cancel</button></div>';
     html += '</div></div>';
     html += '<div id="cust-list" style="display:flex; flex-direction:column; gap:10px; max-height:500px; overflow-y:auto;">';
 
@@ -3071,9 +3071,9 @@ window.renderCustomerHistory = async function () {
       html += '<div class="customer-card" data-search="' + searchStr + '" style="padding:12px; border:1px solid #e8f5e9; background:#f9fff9; border-radius:10px; display:flex; justify-content:space-between; align-items:center;">';
       html += '<div style="flex:1; min-width:0;"><div style="font-weight:600;">' + c.name + '</div><div style="font-size:12px; color:#666;">📞 ' + c.phone + ' | 🏠 ' + (c.house_no || c.house || 'N/A') + '</div></div>';
       html += '<div style="display:flex; gap:4px; flex-shrink:0;">';
-      html += '<button class="btn btn-outline" style="font-size:11px; padding:5px 8px;" onclick="editMasterCustomer(\''+c.phone+'\')">✏️</button>';
-      html += '<button class="btn btn-outline" style="font-size:11px; padding:5px 8px; color:#f44336; border-color:#f44336;" onclick="deleteCustomerFromMasterList(\''+c.phone+'\')">🗑️</button>';
-      html += '<button class="btn btn-primary" style="font-size:11px; padding:5px 8px;" onclick="startOrderForCustomer(\''+safeName+'\', \''+c.phone+'\', \''+safeHouse+'\')">Order</button>';
+      html += '<button class="btn btn-outline" style="font-size:11px; padding:5px 8px;" onclick="editMasterCustomer(\'' + c.phone + '\')">✏️</button>';
+      html += '<button class="btn btn-outline" style="font-size:11px; padding:5px 8px; color:#f44336; border-color:#f44336;" onclick="deleteCustomerFromMasterList(\'' + c.phone + '\')">🗑️</button>';
+      html += '<button class="btn btn-primary" style="font-size:11px; padding:5px 8px;" onclick="startOrderForCustomer(\'' + safeName + '\', \'' + c.phone + '\', \'' + safeHouse + '\')">Order</button>';
       html += '</div></div>';
     });
     html += '</div>';
@@ -3088,7 +3088,7 @@ window.renderCustomerHistory = async function () {
         const safeHouse = (c.house || '').replace(/'/g, "\\'");
         html += '<div class="customer-card" style="padding:10px; border:1px solid #fff3e0; background:#fffde7; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">';
         html += '<div style="flex:1;"><div style="font-weight:500; font-size:14px;">' + c.name + '</div><div style="font-size:11px; color:#666;">📞 ' + c.phone + ' | 🏠 ' + (c.house || 'N/A') + '</div></div>';
-        html += '<button class="btn btn-outline" style="font-size:11px;" onclick="saveCustomerToMasterList(\''+safeName+'\', \''+c.phone+'\', \''+safeHouse+'\').then(() => renderCustomerHistory())">💾 Save</button>';
+        html += '<button class="btn btn-outline" style="font-size:11px;" onclick="saveCustomerToMasterList(\'' + safeName + '\', \'' + c.phone + '\', \'' + safeHouse + '\').then(function(){renderCustomerHistory()})">💾 Save</button>';
         html += '</div>';
       });
       html += '</div></div>';
@@ -3229,7 +3229,7 @@ window.showCustomerSelectorForNewOrder = async function () {
     customerList.forEach(function(c) {
       var safeName = (c.name || '').replace(/'/g, "\\'");
       var safeHouse = (c.house_no || c.house || '').replace(/'/g, "\\'");
-      html += '<div class="cust-select-card" style="padding:14px; border:1px solid #e8f5e9; background:#f9fff9; border-radius:10px; cursor:pointer;" onclick="startOrderForCustomer(\''+safeName+'\', \''+c.phone+'\', \''+safeHouse+'\')">';
+      html += '<div class="cust-select-card" style="padding:14px; border:1px solid #e8f5e9; background:#f9fff9; border-radius:10px; cursor:pointer;" onclick="startOrderForCustomer(\'' + safeName + '\', \'' + c.phone + '\', \'' + safeHouse + '\')">';
       html += '<div style="display:flex; justify-content:space-between; align-items:center;">';
       html += '<div><div style="font-weight:600;">' + c.name + '</div><div style="font-size:12px; color:#666;">📞 ' + c.phone + ' | 🏠 ' + (c.house_no || c.house || 'N/A') + '</div></div>';
       html += '<span class="material-icons-round" style="color:var(--primary);">chevron_right</span>';
