@@ -593,7 +593,7 @@
     // Register service worker when page loads
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        registerServiceWorker();
+        if (typeof registerServiceWorker === 'function') registerServiceWorker();
       });
     }
   </script>
