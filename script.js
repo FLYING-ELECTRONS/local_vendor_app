@@ -1893,7 +1893,22 @@ window.deleteItemFromOrder = async function (orderId, productId) {
   if (!order) return;
 
   const items = typeof order.items === 'string' ? JSON.parse(order.items) : order.items;
-  const newItems = items.filter(i => i.productId !== productId);
+  
+  // CAPTURE CURRENT DOM VALUES FOR REMAINING ITEMS
+  const capturedItems = items.map(item => {
+    const wtInp = document.getElementById(`wt-${orderId}-${item.productId}`);
+    const prInp = document.getElementById(`price-${orderId}-${item.productId}`);
+    if (wtInp && prInp) {
+      return { 
+        ...item, 
+        actualWeight: parseFloat(wtInp.value) || 0, 
+        pricePer250gAtOrder: parseFloat(prInp.value) || 0 
+      };
+    }
+    return item;
+  });
+
+  const newItems = capturedItems.filter(i => i.productId !== productId);
 
   if (newItems.length === 0) {
     if (confirm('This is the last item. Delete the entire order?')) {
@@ -1902,7 +1917,18 @@ window.deleteItemFromOrder = async function (orderId, productId) {
       await _supabase.from('orders').update({ items: JSON.stringify([]) }).eq('id', orderId);
     }
   } else {
-    await _supabase.from('orders').update({ items: JSON.stringify(newItems) }).eq('id', orderId);
+    // Recalculate total for the order based on captured values
+    const newTotal = newItems.reduce((acc, i) => {
+      let finalPrice = 0;
+      if (i.minQtyUnit !== '250g') finalPrice = i.actualWeight * i.pricePer250gAtOrder;
+      else finalPrice = (i.actualWeight / 250) * i.pricePer250gAtOrder;
+      return acc + (Math.round(finalPrice * 100) / 100);
+    }, 0);
+
+    await _supabase.from('orders').update({ 
+      items: JSON.stringify(newItems),
+      total_amount: Math.round(newTotal * 100) / 100
+    }).eq('id', orderId);
   }
 
   const activeTab = document.querySelector('.cat-chip.active');
@@ -1949,21 +1975,51 @@ window.confirmAddItem = async function () {
   const order = app.adminOrdersCache.find(o => o.id === orderId);
   let items = typeof order.items === 'string' ? JSON.parse(order.items) : order.items;
 
+  // CAPTURE CURRENT DOM VALUES FOR EXISTING ITEMS
+  items = items.map(item => {
+    const wtInp = document.getElementById(`wt-${orderId}-${item.productId}`);
+    const prInp = document.getElementById(`price-${orderId}-${item.productId}`);
+    if (wtInp && prInp) {
+      return { 
+        ...item, 
+        actualWeight: parseFloat(wtInp.value) || 0, 
+        pricePer250gAtOrder: parseFloat(prInp.value) || 0 
+      };
+    }
+    return item;
+  });
+
   const existing = items.find(i => i.productId === productId);
   if (existing) {
     existing.orderedQuantity += qty;
     if (unit === '250g') {
       existing.customGrams = (existing.customGrams || (existing.orderedQuantity * 250)) + (qty * 250);
+      existing.actualWeight = (existing.actualWeight || 0) + (qty * 250); // Also update actual weight if adjusted
     }
   } else {
     items.push({
       productId, name, orderedQuantity: qty, minQtyUnit: unit,
       customGrams: unit === '250g' ? qty * 250 : null,
-      pricePer250gAtOrder: 0, actualWeight: 0, finalPrice: 0
+      pricePer250gAtOrder: 0, actualWeight: unit === '250g' ? qty * 250 : qty, finalPrice: 0
     });
   }
 
-  await _supabase.from('orders').update({ items: JSON.stringify(items) }).eq('id', orderId);
+  // Recalculate total
+  const newTotal = items.reduce((acc, i) => {
+    let finalPrice = 0;
+    if (i.minQtyUnit !== '250g') finalPrice = i.actualWeight * i.pricePer250gAtOrder;
+    else finalPrice = (i.actualWeight / 250) * i.pricePer250gAtOrder;
+    return acc + (Math.round(finalPrice * 100) / 100);
+  }, 0);
+
+  await _supabase.from('orders').update({ 
+    items: JSON.stringify(items),
+    total_amount: Math.round(newTotal * 100) / 100
+  }).eq('id', orderId);
+
+  // Auto-save customer to master list if they aren't already there
+  await saveCustomerToMasterList(order.customer_name, order.customer_phone, order.house_no);
+
   document.getElementById('add-to-order-modal').style.display = 'none';
   loadAdminOrders('pending');
 };
